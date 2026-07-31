@@ -2,106 +2,94 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>早押しクイズ学習アプリ（AI音声対応）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>早押しクイズ学習アプリ</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@500;700&display=swap" rel="stylesheet">
-    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'M PLUS Rounded 1c', 'sans-serif'],
-                    },
                     colors: {
                         'soft-green': {
                             50: '#f2fbf5',
                             100: '#e1f6e8',
-                            200: '#c3ecd2',
-                            300: '#95dbb2',
-                            400: '#5fc38a',
-                            500: '#3ba56b',
-                            600: '#2b8453',
-                            700: '#256943',
-                            800: '#205337',
-                            900: '#1b442e',
+                            200: '#c3ecd4',
+                            300: '#95dbb4',
+                            400: '#5fc28f',
+                            500: '#3ba471',
+                            600: '#2a8459',
+                            700: '#236948',
+                            800: '#1f533a',
+                            900: '#1a4431',
                         }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'M PLUS Rounded 1c', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@500;700&display=swap" rel="stylesheet">
+    <!-- MP3 Encoder -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
     <style>
         body {
-            background-color: #f2fbf5; /* soft-green-50 */
-            color: #1b442e; /* soft-green-900 */
+            background-color: #f2fbf5;
+            color: #1a4431;
             overscroll-behavior: none;
         }
-        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
         .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         .buzzer-btn {
-            background: radial-gradient(circle at 30% 30%, #f43f5e, #be123c);
-            box-shadow: 0 10px 25px rgba(225, 29, 72, 0.4), inset 0 5px 15px rgba(255, 255, 255, 0.4);
+            background: radial-gradient(circle at 30% 30%, #ef4444, #b91c1c);
+            box-shadow: 0 10px 25px rgba(220, 38, 38, 0.4), inset 0 5px 15px rgba(255, 255, 255, 0.4);
             transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .buzzer-btn:active {
             transform: scale(0.95) translateY(5px);
-            box-shadow: 0 5px 15px rgba(225, 29, 72, 0.4), inset 0 2px 5px rgba(255, 255, 255, 0.4);
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.5), inset 0 2px 5px rgba(255, 255, 255, 0.4);
         }
-
-        /* Loading spinner */
+        /* Loader */
         .loader {
-            border: 3px solid #e1f6e8;
-            border-top: 3px solid #3ba56b;
+            border-top-color: #3ba471;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body class="h-screen w-full flex flex-col overflow-hidden">
+<body class="h-screen w-full overflow-hidden flex flex-col font-sans">
 
-    <!-- Header Navigation -->
-    <header class="bg-soft-green-500 text-white p-4 shadow-md flex justify-between items-center shrink-0 z-10">
-        <h1 class="text-lg md:text-xl font-bold tracking-wider flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            早押しクイズ学習アプリ
+    <header class="bg-soft-green-600 text-white p-3 md:p-4 shadow-md flex justify-between items-center shrink-0 z-20">
+        <h1 class="text-lg md:text-xl font-bold tracking-wider flex items-center gap-2 cursor-pointer truncate" onclick="app.switchView('dashboard')">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            <span class="hidden sm:inline">早押しクイズ学習アプリ</span>
+            <span class="sm:hidden">クイズ</span>
         </h1>
-        <div class="flex gap-1 md:gap-2">
-            <button onclick="app.switchView('dashboard')" class="p-2 hover:bg-soft-green-600 rounded-full transition-colors" title="ホーム">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
+        <div class="flex gap-1 md:gap-2 overflow-x-auto no-scrollbar shrink-0">
+            <button onclick="app.switchView('manager')" class="p-2 hover:bg-soft-green-700 rounded-full transition-colors" title="問題管理">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" /></svg>
             </button>
-            <button onclick="app.switchView('ai-generator')" class="p-2 hover:bg-soft-green-600 rounded-full transition-colors" title="AI問題生成">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd" /></svg>
-            </button>
-            <button onclick="app.switchView('audio-export')" class="p-2 hover:bg-soft-green-600 rounded-full transition-colors" title="音声出力">
+            <button onclick="app.switchView('audio-export')" class="p-2 hover:bg-soft-green-700 rounded-full transition-colors" title="音声出力">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd" /></svg>
             </button>
-            <button onclick="app.switchView('manage-questions')" class="p-2 hover:bg-soft-green-600 rounded-full transition-colors" title="問題管理">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
+            <button onclick="app.switchView('ai-generator')" class="p-2 hover:bg-soft-green-700 rounded-full transition-colors" title="AI問題生成">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd" /></svg>
             </button>
-            <button onclick="app.switchView('dictionary')" class="p-2 hover:bg-soft-green-600 rounded-full transition-colors" title="辞書管理">
+            <button onclick="app.switchView('dictionary')" class="p-2 hover:bg-soft-green-700 rounded-full transition-colors" title="辞書管理">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v2H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd" /></svg>
             </button>
-            <button onclick="app.switchView('settings')" class="p-2 hover:bg-soft-green-600 rounded-full transition-colors" title="設定">
+            <button onclick="app.switchView('settings')" class="p-2 hover:bg-soft-green-700 rounded-full transition-colors" title="設定">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
             </button>
         </div>
@@ -109,17 +97,16 @@
 
     <main class="flex-1 relative overflow-hidden flex flex-col">
         
-        <!-- Dashboard View -->
-        <div id="view-dashboard" class="absolute inset-0 overflow-y-auto no-scrollbar p-4 md:p-8 fade-in flex flex-col items-center">
+        <!-- View: Dashboard -->
+        <div id="view-dashboard" class="absolute inset-0 overflow-y-auto no-scrollbar p-4 md:p-8 fade-in flex flex-col items-center pb-24">
             <div class="w-full max-w-2xl space-y-6">
                 
-                <!-- Status Card -->
-                <div class="bg-white rounded-2xl shadow-sm border border-soft-green-200 p-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-soft-green-100 p-6">
                     <h2 class="text-xl font-bold text-soft-green-800 mb-2">学習ステータス</h2>
                     <div class="grid grid-cols-2 gap-4 mt-4">
                         <div class="bg-soft-green-50 p-4 rounded-xl text-center">
                             <p class="text-sm text-soft-green-600 font-semibold">登録問題数</p>
-                            <p class="text-3xl font-bold text-soft-green-900 mt-1" id="stat-total-questions">0</p>
+                            <p class="text-3xl font-bold text-soft-green-900 mt-1"><span id="stat-total-questions">0</span><span class="text-sm font-normal text-soft-green-600 ml-1">/ 10,000</span></p>
                         </div>
                         <div class="bg-soft-green-50 p-4 rounded-xl text-center">
                             <p class="text-sm text-soft-green-600 font-semibold">平均正解率</p>
@@ -128,23 +115,17 @@
                     </div>
                 </div>
 
-                <!-- Action Cards -->
                 <div class="grid md:grid-cols-2 gap-4">
-                    <button onclick="app.startQuiz()" class="bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-2xl p-6 shadow-md transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span class="text-xl font-bold">アプリ内で学習</span>
-                        <span class="text-sm text-soft-green-100">登録問題からランダム出題</span>
+                    <button onclick="app.startQuiz()" class="bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-2xl p-6 shadow-md shadow-soft-green-200 transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span class="text-xl font-bold">トレーニング開始</span>
+                        <span class="text-sm text-soft-green-100">ブラウザでクイズに挑戦</span>
                     </button>
 
-                    <div class="bg-white border border-soft-green-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-soft-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        <span class="text-lg font-bold text-soft-green-800">CSVから問題を取り込む</span>
-                        <span class="text-xs text-center text-soft-green-500">1列目:問題文、2列目:解答<br>(ヘッダー行なし)</span>
+                    <div class="bg-white border border-soft-green-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-soft-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                        <span class="text-lg font-bold text-soft-green-800">CSVから取り込む</span>
+                        <span class="text-xs text-center text-soft-green-500">1列:問題, 2列:解答, 3列:解説<br>※解説なしはAIが自動生成</span>
                         
                         <div class="mt-2 w-full max-w-[200px]">
                             <select id="csv-encoding" class="w-full px-3 py-1.5 text-sm rounded-lg border border-soft-green-200 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-soft-green-700 bg-soft-green-50">
@@ -154,31 +135,153 @@
                         </div>
 
                         <input type="file" id="csv-upload" accept=".csv" class="hidden" onchange="app.handleFileUpload(event)">
-                        <button onclick="document.getElementById('csv-upload').click()" class="mt-1 px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-700 rounded-full font-semibold transition-colors text-sm">
+                        <button id="btn-csv-upload-trigger" onclick="document.getElementById('csv-upload').click()" class="mt-1 px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-700 rounded-full font-semibold transition-colors text-sm">
                             ファイルを選択
+                        </button>
+                        
+                        <div id="csv-loading" class="hidden flex-col items-center justify-center mt-2 w-full">
+                            <div class="loader mb-2 w-6 h-6 border-2"></div>
+                            <p class="text-xs text-soft-green-700 font-semibold text-center" id="csv-loading-text">解説生成中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Manager -->
+        <div id="view-manager" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            <div class="w-full max-w-2xl space-y-6">
+                <div class="flex items-center gap-2 mb-4 text-soft-green-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" /></svg>
+                    <h2 class="text-2xl font-bold">問題管理</h2>
+                </div>
+                
+                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-100 shadow-sm space-y-6">
+                    
+                    <div>
+                        <h3 class="text-lg font-bold text-soft-green-800 mb-2">現在の登録状況</h3>
+                        <div class="w-full bg-soft-green-200 rounded-full h-4 mb-1 overflow-hidden">
+                            <div id="manager-capacity-bar" class="bg-soft-green-500 h-4 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-soft-green-700 text-right"><span id="manager-total-count" class="font-bold">0</span> / 10,000 問</p>
+                    </div>
+
+                    <div class="border-t border-soft-green-200 pt-4">
+                        <h3 class="text-lg font-bold text-soft-green-800 mb-4">正解率分布</h3>
+                        <div id="manager-stats-chart" class="space-y-2">
+                            <!-- JS will populate this -->
+                        </div>
+                    </div>
+
+                    <div class="border-t border-soft-green-200 pt-4">
+                        <h3 class="text-lg font-bold text-soft-green-800 mb-2">問題の整理</h3>
+                        <p class="text-sm text-soft-green-600 mb-4">正解率が高く、すでに定着している問題を一括で削除します。</p>
+                        
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-4 rounded-xl border border-soft-green-200">
+                            <label class="text-sm font-semibold text-soft-green-800">削除対象: 上位</label>
+                            <select id="manager-delete-percent" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                                <option value="10">10%</option>
+                                <option value="20">20%</option>
+                                <option value="30">30%</option>
+                                <option value="40">40%</option>
+                                <option value="50">50%</option>
+                                <option value="60">60%</option>
+                                <option value="70">70%</option>
+                                <option value="80">80%</option>
+                                <option value="90">90%</option>
+                            </select>
+                            <button onclick="app.deleteHighAccuracyQuestions()" class="sm:ml-auto bg-soft-green-600 hover:bg-soft-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm w-full sm:w-auto">
+                                実行
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-soft-green-200 pt-4 flex justify-end">
+                        <button onclick="app.clearAllData()" class="text-sm text-red-500 hover:text-red-700 font-semibold px-4 py-2 border border-red-200 hover:bg-red-50 rounded-lg transition-colors">
+                            全問題データをリセット
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- AI Generator View -->
-        <div id="view-ai-generator" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center">
+        <!-- View: Audio Export -->
+        <div id="view-audio-export" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
             <div class="w-full max-w-2xl space-y-6">
-                <div class="flex items-center gap-2 mb-2 text-soft-green-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <h2 class="text-2xl font-bold">AI問題自動作成</h2>
+                <div class="flex items-center gap-2 mb-4 text-soft-green-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd" /></svg>
+                    <h2 class="text-2xl font-bold">音声作成 (AI & Cloud TTS)</h2>
                 </div>
-                <p class="text-sm text-soft-green-600 mb-6">Gemini AIを使用して、指定した条件でクイズを自動生成し、リストに追加します。</p>
+                
+                <p class="text-sm text-soft-green-700 bg-soft-green-50 p-4 rounded-xl border border-soft-green-100">
+                    設定されたAPIを使用して、問題と解答を自然な音声で読み上げるMP3ファイルを作成します。<br>
+                    生成形式: <span class="font-bold">「問題」→(1秒)→問題文→(1秒)→解答→(1秒)→解説→(2秒)→...</span>
+                </p>
 
-                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-200 shadow-sm space-y-4">
-                    
+                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-100 shadow-sm space-y-4">
                     <div>
-                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">ジャンル選択</label>
-                        <select id="ai-genre" class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
-                            <option value="おまかせ">おまかせ</option>
+                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">出力する問題数</label>
+                        <select id="audio-export-count" class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                            <option value="10">10問</option>
+                            <option value="20">20問</option>
+                            <option value="30">30問</option>
+                            <option value="40">40問</option>
+                            <option value="50">50問</option>
+                        </select>
+                        <p class="text-xs text-soft-green-600 mt-2">※現在登録されている問題からランダムに選択されます。</p>
+                    </div>
+                    
+                    <div class="flex items-center mt-2 bg-white p-3 rounded-lg border border-soft-green-200">
+                        <input type="checkbox" id="audio-export-explanation" checked class="w-5 h-5 text-soft-green-600 border-soft-green-300 rounded focus:ring-soft-green-500 cursor-pointer">
+                        <label for="audio-export-explanation" class="ml-2 text-sm font-semibold text-soft-green-800 cursor-pointer">解答の後に解説を読み上げる</label>
+                    </div>
+                    
+                    <button onclick="app.startAudioExport()" id="btn-start-export" class="w-full py-4 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold text-lg shadow-md transition-colors flex justify-center items-center gap-2 mt-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                        音声を作成する
+                    </button>
+                    
+                    <!-- Progress Area -->
+                    <div id="audio-export-progress-container" class="hidden flex flex-col items-center justify-center py-4 space-y-3">
+                        <div class="w-full bg-soft-green-200 rounded-full h-3 mb-1">
+                            <div id="audio-export-progress-bar" class="bg-soft-green-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p id="audio-export-status" class="text-sm font-semibold text-soft-green-800">準備中...</p>
+                        <p class="text-xs text-soft-green-600">※APIを利用して音声を生成するため、数十秒かかる場合があります。</p>
+                    </div>
+
+                    <!-- Result Area -->
+                    <div id="audio-export-result" class="hidden flex flex-col gap-3 mt-4 border-t border-soft-green-200 pt-4">
+                        <p class="text-sm font-bold text-soft-green-800 text-center mb-2">作成完了！</p>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <button id="btn-play-audio" onclick="app.playExportedAudio()" class="flex-1 py-3 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors flex justify-center items-center gap-2">
+                                ブラウザで再生
+                            </button>
+                            <button id="btn-stop-audio" onclick="app.stopExportedAudio()" class="hidden flex-1 py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors justify-center items-center gap-2">
+                                停止
+                            </button>
+                            <button id="btn-download-audio" onclick="app.downloadExportedAudio()" class="flex-1 py-3 bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-xl font-bold shadow-md transition-colors flex justify-center items-center gap-2">
+                                MP3保存
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: AI Generator -->
+        <div id="view-ai-generator" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            <div class="w-full max-w-2xl space-y-6">
+                <div class="flex items-center gap-2 mb-4 text-soft-green-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <h2 class="text-2xl font-bold">AI問題自動生成</h2>
+                </div>
+
+                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-100 shadow-sm space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">ジャンル</label>
+                        <select id="ai-genre" class="w-full px-4 py-3 rounded-xl border border-soft-green-200 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                            <option value="">(指定なし / フリーワードのみ)</option>
                             <option value="理系">理系</option>
                             <option value="文学">文学</option>
                             <option value="言葉">言葉</option>
@@ -191,19 +294,17 @@
                             <option value="生活">生活</option>
                             <option value="スポーツ">スポーツ</option>
                             <option value="芸能">芸能</option>
-                            <option value="ノンセクション">ノンセク</option>
+                            <option value="ノンセク">ノンセク</option>
                         </select>
                     </div>
-
                     <div>
-                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">テーマ・キーワード (任意)</label>
-                        <input type="text" id="ai-topic" placeholder="例: 徳川家康、宇宙、ノーベル賞 など" class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400">
+                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">テーマ・キーワード (フリーワード)</label>
+                        <input type="text" id="ai-topic" placeholder="例: 徳川家康、プログラミング、宇宙" class="w-full px-4 py-3 rounded-xl border border-soft-green-200 focus:outline-none focus:ring-2 focus:ring-soft-green-400">
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-soft-green-800 mb-2">追加する問題数</label>
-                            <select id="ai-count" class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-semibold text-soft-green-800 mb-2">生成する問題数</label>
+                            <select id="ai-count" class="w-full px-4 py-3 rounded-xl border border-soft-green-200 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
                                 <option value="10">10問</option>
                                 <option value="20">20問</option>
                                 <option value="30">30問</option>
@@ -211,209 +312,95 @@
                                 <option value="50">50問</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-soft-green-800 mb-2">難易度</label>
-                            <select id="ai-difficulty" class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
-                                <option value="初級">初級</option>
-                                <option value="中級" selected>中級</option>
-                                <option value="上級">上級</option>
-                            </select>
-                        </div>
                     </div>
                     
                     <button onclick="app.generateQuestionsWithAI()" id="btn-generate-ai" class="w-full py-4 bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-xl font-bold text-lg shadow-md transition-colors flex justify-center items-center gap-2 mt-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd" /></svg>
-                        問題を生成して追加
+                        問題を生成する
                     </button>
                     
-                    <div id="ai-loading" class="hidden flex flex-col items-center justify-center py-4">
-                        <div class="loader mb-3"></div>
-                        <p class="text-sm text-soft-green-700 font-semibold" id="ai-loading-text">AIが問題を考えています... (数秒〜数十秒かかります)</p>
+                    <div id="ai-loading" class="hidden flex-col items-center justify-center py-4">
+                        <div class="loader mb-2 w-8 h-8 border-4 border-soft-green-600"></div>
+                        <p class="text-sm text-soft-green-700 font-bold">AIが問題を考えています...</p>
+                        <p class="text-xs text-soft-green-500 mt-1">※数十秒かかる場合があります</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Audio Export View -->
-        <div id="view-audio-export" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center">
+        <!-- View: Dictionary -->
+        <div id="view-dictionary" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
             <div class="w-full max-w-2xl space-y-6">
-                <div class="flex items-center gap-2 mb-2 text-soft-green-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                    <h2 class="text-2xl font-bold">音声データ出力</h2>
-                </div>
-                <p class="text-sm text-soft-green-600 mb-6">
-                    登録されている問題から音声を生成し、耳学習用のMP3ファイルを作成します。<br>
-                    Gemini AIが辞書を元にふりがな（SSML）を調整し、Google Cloud Text-to-Speech APIで自然な音声を合成します。
-                </p>
-
-                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-200 shadow-sm space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">読み上げる問題数</label>
-                        <select id="audio-export-count" class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
-                            <option value="10">10問</option>
-                            <option value="20">20問</option>
-                            <option value="30">30問</option>
-                            <option value="40">40問</option>
-                            <option value="50">50問</option>
-                        </select>
-                        <p class="text-xs text-soft-green-600 mt-2">※現在登録されている問題からランダムに選択されます。</p>
-                    </div>
-                    
-                    <button onclick="app.startAudioExport()" id="btn-start-export" class="w-full py-4 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold text-lg shadow-md transition-colors flex justify-center items-center gap-2 mt-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
-                        音声データの作成を開始
-                    </button>
-                    
-                    <div id="export-progress-container" class="hidden py-4">
-                        <div class="flex justify-between text-sm text-soft-green-700 font-semibold mb-2">
-                            <span id="export-status-text">準備中...</span>
-                            <span id="export-percent">0%</span>
-                        </div>
-                        <div class="w-full bg-soft-green-200 rounded-full h-2.5">
-                            <div id="export-progress-bar" class="bg-soft-green-600 h-2.5 rounded-full" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <div id="export-result-container" class="hidden pt-4 border-t border-soft-green-200">
-                        <p class="text-sm font-semibold text-soft-green-800 mb-3 text-center">🎉 音声の生成が完了しました！</p>
-                        <div class="flex gap-3">
-                            <button id="btn-play-exported" onclick="app.playExportedAudio()" class="flex-1 py-3 bg-white border-2 border-soft-green-500 text-soft-green-700 hover:bg-soft-green-50 rounded-xl font-bold transition-colors">
-                                ブラウザで再生
-                            </button>
-                            <button id="btn-stop-exported" onclick="app.stopExportedAudio()" class="hidden flex-1 py-3 bg-rose-50 border-2 border-rose-500 text-rose-600 hover:bg-rose-100 rounded-xl font-bold transition-colors">
-                                停止
-                            </button>
-                            <a id="link-download-mp3" class="flex-1 py-3 bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-xl font-bold transition-colors text-center cursor-pointer flex items-center justify-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                MP3保存
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Manage Questions View -->
-        <div id="view-manage-questions" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center">
-            <div class="w-full max-w-2xl space-y-6">
-                <div class="flex items-center gap-2 mb-2 text-soft-green-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    <h2 class="text-2xl font-bold">問題管理</h2>
-                </div>
-                
-                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-200 shadow-sm space-y-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-soft-green-800 mb-2">登録問題のリセット</h3>
-                        <p class="text-sm text-soft-green-600 mb-3">登録されているすべての問題データを削除します。この操作は取り消せません。</p>
-                        <button onclick="app.clearAllQuestions()" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition-colors">
-                            すべての問題を削除する
-                        </button>
-                    </div>
-
-                    <hr class="border-soft-green-200">
-
-                    <div>
-                        <h3 class="text-lg font-bold text-soft-green-800 mb-2">正解率の高い問題を削除</h3>
-                        <p class="text-sm text-soft-green-600 mb-3">正解率が高い順に、指定した割合の問題を削除して学習データを整理します。</p>
-                        
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <select id="manage-delete-percent" class="flex-1 px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
-                                <option value="10">上位 10% を削除</option>
-                                <option value="20">上位 20% を削除</option>
-                                <option value="30">上位 30% を削除</option>
-                                <option value="40">上位 40% を削除</option>
-                                <option value="50">上位 50% を削除</option>
-                                <option value="60">上位 60% を削除</option>
-                                <option value="70">上位 70% を削除</option>
-                                <option value="80">上位 80% を削除</option>
-                                <option value="90">上位 90% を削除</option>
-                            </select>
-                            <button onclick="app.deleteByAccuracy()" class="sm:w-32 py-3 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold transition-colors">
-                                削除実行
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dictionary View -->
-        <div id="view-dictionary" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center">
-            <div class="w-full max-w-2xl space-y-6">
-                <div class="flex items-center gap-2 mb-2 text-soft-green-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                <div class="flex items-center gap-2 mb-4 text-soft-green-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v2H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd" /></svg>
                     <h2 class="text-2xl font-bold">読み上げ辞書管理</h2>
                 </div>
-                <p class="text-sm text-soft-green-600 mb-6">音声合成時に読み間違えやすい単語を登録します。</p>
+                <p class="text-sm text-soft-green-700 mb-6 bg-soft-green-50 p-3 rounded-lg border border-soft-green-100">
+                    AI音声が読み間違える単語を登録し、正しい発音（ひらがな等）に変換して読み上げさせます。<br>
+                    ※この辞書はGemini APIによるSSMLふりがな付与処理の際にも参照されます。
+                </p>
 
-                <div class="bg-soft-green-50 p-4 rounded-xl flex flex-col sm:flex-row gap-3 shadow-sm border border-soft-green-200">
-                    <input type="text" id="dict-word" placeholder="単語 (例: 徳川家康)" class="flex-1 px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500">
+                <div class="bg-soft-green-50 p-4 rounded-xl flex flex-col sm:flex-row gap-3 border border-soft-green-200">
+                    <input type="text" id="dict-word" placeholder="変換前の単語 (例: 徳川家康)" class="flex-1 px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500">
                     <input type="text" id="dict-pronunciation" placeholder="読み方 (例: とくがわいえやす)" class="flex-1 px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500">
                     <button onclick="app.addDictionaryEntry()" class="bg-soft-green-600 hover:bg-soft-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors whitespace-nowrap">
                         登録
                     </button>
                 </div>
-                
-                <div class="flex justify-end gap-3">
-                    <button onclick="document.getElementById('dict-csv-upload').click()" class="text-sm text-soft-green-700 hover:text-soft-green-900 bg-soft-green-100 px-3 py-1.5 rounded border border-soft-green-300">
-                        CSVインポート
-                    </button>
-                    <input type="file" id="dict-csv-upload" accept=".csv" class="hidden" onchange="app.importDictionaryCSV(event)">
-                    
-                    <button onclick="app.exportDictionaryCSV()" class="text-sm text-soft-green-700 hover:text-soft-green-900 bg-soft-green-100 px-3 py-1.5 rounded border border-soft-green-300">
-                        CSVエクスポート
-                    </button>
-                </div>
 
                 <div class="border border-soft-green-200 rounded-xl overflow-hidden shadow-sm">
-                    <table class="w-full text-left text-sm bg-white">
+                    <table class="w-full text-left text-sm">
                         <thead class="bg-soft-green-100 text-soft-green-800">
                             <tr>
-                                <th class="px-4 py-3 font-semibold">単語</th>
+                                <th class="px-4 py-3 font-semibold">変換前の単語</th>
                                 <th class="px-4 py-3 font-semibold">読み方</th>
                                 <th class="px-4 py-3 font-semibold text-right">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="dict-list" class="divide-y divide-soft-green-100">
+                        <tbody id="dict-list" class="divide-y divide-soft-green-100 bg-white">
                             <!-- Dynamic Dictionary Rows -->
                         </tbody>
                     </table>
-                    <div id="dict-empty" class="p-8 text-center text-soft-green-400 hidden bg-white">
+                    <div id="dict-empty" class="p-8 text-center text-soft-green-400 bg-white hidden">
                         辞書に登録された単語はありません。
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Settings View -->
-        <div id="view-settings" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center">
+        <!-- View: Settings -->
+        <div id="view-settings" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
             <div class="w-full max-w-2xl space-y-6">
-                <div class="flex items-center gap-2 mb-2 text-soft-green-800">
+                <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <h2 class="text-2xl font-bold">設定</h2>
+                    <h2 class="text-2xl font-bold">APIキー設定</h2>
                 </div>
 
-                <div class="bg-soft-green-50 rounded-2xl shadow-sm border border-soft-green-200 p-6">
-                    <h3 class="text-lg font-bold text-soft-green-800 mb-4">API キー設定</h3>
-                    <p class="text-sm text-soft-green-700 mb-4">
-                        各機能を利用するためのAPIキーを設定してください。<br>
-                        ※キーはブラウザにのみ保存され、外部サーバには送信されません。
+                <div class="bg-soft-green-50 rounded-2xl shadow-sm border border-soft-green-100 p-6">
+                    <p class="text-sm text-soft-green-700 mb-6 bg-white p-4 rounded-xl border border-soft-green-200">
+                        各機能を利用するためにはAPIキーが必要です。<br>
+                        キーはブラウザのLocalStorageにのみ保存されます。
                     </p>
                     
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-soft-green-800 mb-1">Gemini APIキー (問題生成・ふりがな付与)</label>
-                            <input type="password" id="setting-gemini-key" placeholder="AIzaSy..." class="w-full px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500">
+                        <div class="bg-white p-4 rounded-xl border border-soft-green-200">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mb-1">
+                                <label class="block text-sm font-bold text-soft-green-800">Gemini APIキー</label>
+                                <span class="text-xs font-semibold text-soft-green-700 bg-soft-green-100 px-2 py-1 rounded-md self-start sm:self-auto">適用中モデル: gemini-3.6-flash</span>
+                            </div>
+                            <p class="text-xs text-soft-green-600 mb-2">用途: AI問題生成、CSV取り込み時の自動解説生成、読み上げ用SSML(ふりがな)付与</p>
+                            <input type="text" id="setting-gemini-key" placeholder="AIzaSy... (未設定時はCanvas内蔵キーを試行します)" class="w-full px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500 text-sm font-mono">
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-soft-green-800 mb-1">Google Cloud TTS APIキー (音声ファイル作成)</label>
-                            <input type="password" id="setting-tts-key" placeholder="AIzaSy..." class="w-full px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500">
+                        
+                        <div class="bg-white p-4 rounded-xl border border-soft-green-200">
+                            <label class="block text-sm font-bold text-soft-green-800 mb-1">Google Cloud Text-to-Speech APIキー</label>
+                            <p class="text-xs text-soft-green-600 mb-2">用途: MP3音声ファイルの作成<br><span class="text-red-500">※GCPプロジェクトでText-to-Speech APIを有効化したキーが必要です。</span></p>
+                            <input type="text" id="setting-tts-key" placeholder="AIzaSy..." class="w-full px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500 text-sm font-mono">
                         </div>
+                        
                         <div class="flex justify-end pt-2">
-                            <button onclick="app.saveSettings()" class="bg-soft-green-600 hover:bg-soft-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">
-                                保存する
+                            <button onclick="app.saveSettings()" class="bg-soft-green-600 hover:bg-soft-green-700 text-white px-8 py-3 rounded-xl font-bold transition-colors shadow-md w-full sm:w-auto">
+                                設定を保存する
                             </button>
                         </div>
                     </div>
@@ -421,53 +408,51 @@
             </div>
         </div>
 
-        <!-- Quiz View -->
-        <div id="view-quiz" class="absolute inset-0 bg-soft-green-900 text-white hidden flex flex-col fade-in">
-            <div class="p-4 flex justify-between items-center bg-soft-green-950">
+        <!-- View: Quiz -->
+        <div id="view-quiz" class="absolute inset-0 bg-soft-green-900 text-white hidden flex flex-col fade-in overflow-y-auto">
+            <div class="p-3 md:p-4 flex justify-between items-center bg-soft-green-950 shrink-0 sticky top-0 z-10">
                 <button onclick="app.switchView('dashboard')" class="text-soft-green-300 hover:text-white flex items-center gap-1 text-sm font-semibold transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
                     終了
                 </button>
-                <div class="text-soft-green-200 text-sm font-medium bg-soft-green-800 px-3 py-1 rounded-full border border-soft-green-700">
-                    正解率: <span id="quiz-current-accuracy">--</span>%
-                </div>
             </div>
-
-            <div class="flex-1 flex flex-col items-center justify-center p-6 w-full max-w-3xl mx-auto relative">
-                
-                <!-- Play state -->
-                <div id="quiz-state-playing" class="w-full flex flex-col items-center justify-center space-y-12 h-full">
-                    <div class="text-center animate-pulse text-soft-green-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                        <p class="text-xl font-bold tracking-widest">読み上げ中...</p>
+            
+            <div class="flex-1 flex flex-col items-center justify-start md:justify-center p-4 md:p-6 w-full max-w-3xl mx-auto pb-24">
+                <!-- State: Playing Audio -->
+                <div id="quiz-state-playing" class="w-full flex flex-col items-center justify-center space-y-8 md:space-y-12 my-auto h-full">
+                    <div class="text-center text-soft-green-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                        <p class="text-lg md:text-xl font-bold tracking-widest">ブラウザの合成音声で出題中</p>
                     </div>
-                    <button onclick="app.buzz()" class="buzzer-btn w-48 h-48 rounded-full flex items-center justify-center text-white font-bold text-3xl outline-none focus:ring-4 focus:ring-rose-400 focus:ring-opacity-50">
+                    <button onclick="app.buzz()" class="buzzer-btn w-40 h-40 md:w-48 md:h-48 rounded-full flex items-center justify-center text-white font-bold text-2xl md:text-3xl outline-none focus:ring-4 focus:ring-red-400">
                         早押し！
                     </button>
                 </div>
 
-                <!-- Thinking/Answer state -->
-                <div id="quiz-state-thinking" class="w-full flex flex-col items-center justify-center h-full hidden">
-                    <div class="bg-soft-green-800 rounded-2xl p-6 md:p-10 w-full shadow-xl border border-soft-green-700 text-center relative overflow-hidden">
-                        <span class="absolute top-2 left-4 text-6xl text-soft-green-700 opacity-50 font-serif">"</span>
-                        <p id="quiz-question-text" class="text-xl md:text-2xl font-medium leading-relaxed mb-8 relative z-10 text-white"></p>
+                <!-- State: Show Answer -->
+                <div id="quiz-state-thinking" class="w-full flex flex-col items-center justify-center h-full hidden w-full mt-4 md:mt-0">
+                    <div class="bg-soft-green-800 rounded-2xl p-5 md:p-10 w-full shadow-xl shadow-soft-green-950 border border-soft-green-700 text-center relative overflow-hidden">
+                        <span class="absolute top-2 left-4 text-5xl md:text-6xl text-soft-green-700 opacity-50 font-serif">"</span>
+                        <p id="quiz-question-text" class="text-lg md:text-2xl font-medium leading-relaxed mb-6 md:mb-8 relative z-10 text-soft-green-50"></p>
                         
-                        <button id="btn-show-answer" onclick="app.showAnswer()" class="w-full py-4 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-xl font-bold text-lg shadow-lg transition-colors">
+                        <button id="btn-show-answer" onclick="app.showAnswer()" class="w-full py-3 md:py-4 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-xl font-bold text-lg shadow-lg transition-colors">
                             解答を表示
                         </button>
 
-                        <div id="answer-container" class="hidden mt-6 animate-fadeIn">
-                            <hr class="border-soft-green-600 mb-6">
-                            <p class="text-sm text-soft-green-400 mb-2 font-semibold tracking-widest">解答</p>
-                            <p id="quiz-answer-text" class="text-3xl md:text-4xl font-bold text-rose-300 mb-4"></p>
-                            <p id="quiz-explanation-text" class="text-sm text-soft-green-200 mb-8 whitespace-pre-wrap leading-relaxed text-left"></p>
+                        <div id="answer-container" class="hidden mt-4 md:mt-6 animate-fadeIn">
+                            <hr class="border-soft-green-600 mb-4 md:mb-6">
+                            <p class="text-sm text-soft-green-400 mb-1 md:mb-2 font-semibold tracking-widest">解答</p>
+                            <p id="quiz-answer-text" class="text-2xl md:text-4xl font-bold text-red-300 mb-6 md:mb-8"></p>
+                            <p id="quiz-explanation-text" class="text-sm md:text-base text-soft-green-200 mb-6 md:mb-8 text-left bg-soft-green-900 p-4 rounded-xl border border-soft-green-700"></p>
                             
-                            <p class="text-sm text-soft-green-300 mb-4">この問題は正解できましたか？</p>
-                            <div class="flex gap-4 w-full">
-                                <button onclick="app.recordResult(false)" class="flex-1 py-4 bg-soft-green-700 hover:bg-soft-green-600 border border-soft-green-600 text-white rounded-xl font-bold text-lg transition-colors">
+                            <p class="text-sm text-soft-green-300 mb-3">この問題は正解できましたか？</p>
+                            <div class="flex flex-col sm:flex-row gap-3 md:gap-4 w-full">
+                                <button onclick="app.recordResult(false)" class="flex-1 py-3 md:py-4 bg-soft-green-700 hover:bg-soft-green-600 border border-soft-green-600 text-white rounded-xl font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                     不正解
                                 </button>
-                                <button onclick="app.recordResult(true)" class="flex-1 py-4 bg-soft-green-600 hover:bg-soft-green-500 border border-soft-green-400 text-white rounded-xl font-bold text-lg transition-colors shadow-[0_0_15px_rgba(59,165,107,0.4)]">
+                                <button onclick="app.recordResult(true)" class="flex-1 py-3 md:py-4 bg-soft-green-600 hover:bg-soft-green-500 border border-soft-green-400 text-white rounded-xl font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,164,113,0.4)]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                                     正解！
                                 </button>
                             </div>
@@ -478,44 +463,40 @@
         </div>
     </main>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-soft-green-800 text-white px-6 py-3 rounded-full shadow-lg transition-all duration-300 translate-y-20 opacity-0 z-50 flex items-center gap-2">
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-soft-green-800 text-white px-6 py-3 rounded-full shadow-lg transition-all duration-300 translate-y-24 opacity-0 z-50 flex items-center gap-2 whitespace-nowrap">
         <span id="toast-icon">ℹ️</span>
-        <span id="toast-message">メッセージ</span>
+        <span id="toast-message" class="text-sm md:text-base">メッセージ</span>
     </div>
 
     <script>
+        const MAX_QUESTIONS = 10000;
+
         const app = {
             questions: [],
             dictionary: [],
-            geminiApiKey: "",
-            ttsApiKey: "",
+            currentQuestionIndex: -1,
             synth: window.speechSynthesis,
             voices: [],
-            currentQuestionIndex: -1,
+            geminiApiKey: "",
+            ttsApiKey: "",
             
-            // Audio Export Variables
-            exportAudioBlob: null,
-            audioContextForExport: null,
-            audioPlayer: null,
+            // Audio Export state
+            exportedAudioBlob: null,
+            exportedAudioUrl: null,
+            audioElement: null,
 
             init() {
                 this.loadData();
                 this.renderDictionary();
                 this.updateStats();
                 
-                if(this.geminiApiKey) {
-                    document.getElementById('setting-gemini-key').value = this.geminiApiKey;
-                }
-                if(this.ttsApiKey) {
-                    document.getElementById('setting-tts-key').value = this.ttsApiKey;
-                }
-
-                // Load voices for Web Speech API fallback in Quiz view
-                speechSynthesis.onvoiceschanged = () => {
-                    this.voices = speechSynthesis.getVoices().filter(v => v.lang.includes('ja'));
+                // Initialize voices
+                this.synth.onvoiceschanged = () => {
+                    this.voices = this.synth.getVoices();
                 };
 
+                // Spacebar buzzer support
                 document.addEventListener('keydown', (e) => {
                     if (e.code === 'Space') {
                         const viewQuiz = document.getElementById('view-quiz');
@@ -528,75 +509,53 @@
                 });
             },
 
-            // --- Data Management ---
             loadData() {
                 try {
-                    this.questions = JSON.parse(localStorage.getItem('quiz_questions') || '[]');
-                    this.dictionary = JSON.parse(localStorage.getItem('quiz_dictionary') || '[]');
-                    this.geminiApiKey = localStorage.getItem('quiz_gemini_key') || '';
-                    this.ttsApiKey = localStorage.getItem('quiz_tts_key') || '';
-                } catch(e) { console.error("Load error", e); }
+                    const savedQ = localStorage.getItem('quiz_questions');
+                    if (savedQ) this.questions = JSON.parse(savedQ);
+                    
+                    const savedD = localStorage.getItem('quiz_dictionary');
+                    if (savedD) this.dictionary = JSON.parse(savedD);
+                    
+                    this.geminiApiKey = localStorage.getItem('quiz_gemini_key') || "";
+                    this.ttsApiKey = localStorage.getItem('quiz_tts_key') || "";
+                    
+                    document.getElementById('setting-gemini-key').value = this.geminiApiKey;
+                    document.getElementById('setting-tts-key').value = this.ttsApiKey;
+                } catch (e) {
+                    console.error("Data loading error", e);
+                }
             },
+
             saveQuestions() {
                 localStorage.setItem('quiz_questions', JSON.stringify(this.questions));
                 this.updateStats();
             },
+            
             saveDictionary() {
                 localStorage.setItem('quiz_dictionary', JSON.stringify(this.dictionary));
             },
+
             saveSettings() {
                 this.geminiApiKey = document.getElementById('setting-gemini-key').value.trim();
                 this.ttsApiKey = document.getElementById('setting-tts-key').value.trim();
                 localStorage.setItem('quiz_gemini_key', this.geminiApiKey);
                 localStorage.setItem('quiz_tts_key', this.ttsApiKey);
-                this.showToast('設定を保存しました', 'success');
+                this.showToast('APIキーを保存しました', 'success');
             },
 
-            clearAllQuestions() {
-                if (confirm('すべての登録問題データを削除します。本当によろしいですか？')) {
-                    this.questions = [];
-                    this.saveQuestions();
-                    this.showToast('すべての問題を削除しました', 'info');
-                }
-            },
-
-            deleteByAccuracy() {
-                if (this.questions.length === 0) return this.showToast('問題がありません', 'error');
-                
-                const percent = parseInt(document.getElementById('manage-delete-percent').value, 10);
-                if (!confirm(`正解率上位 ${percent}% の問題を削除します。よろしいですか？`)) return;
-
-                // 正解率計算
-                const getAccuracy = (q) => q.total > 0 ? (q.correct / q.total) : -1;
-
-                // 降順ソート (正解率が高い順。-1(未回答)は最後)
-                const sorted = [...this.questions].sort((a, b) => getAccuracy(b) - getAccuracy(a));
-                
-                const deleteCount = Math.floor(sorted.length * (percent / 100));
-                
-                if (deleteCount === 0) {
-                    this.showToast('削除対象の問題がありませんでした', 'info');
-                    return;
-                }
-
-                const toDeleteIds = new Set(sorted.slice(0, deleteCount).map(q => q.id));
-                this.questions = this.questions.filter(q => !toDeleteIds.has(q.id));
-                this.saveQuestions();
-                
-                this.showToast(`${deleteCount}問削除しました`, 'success');
-            },
-
-            // --- UI Helpers ---
             switchView(viewId) {
                 this.synth.cancel();
-                if(this.audioPlayer) {
-                    this.audioPlayer.pause();
+                if (this.audioElement) {
+                    this.audioElement.pause();
                 }
 
-                ['dashboard', 'ai-generator', 'audio-export', 'dictionary', 'manage-questions', 'settings', 'quiz'].forEach(id => {
+                ['dashboard', 'manager', 'dictionary', 'ai-generator', 'audio-export', 'settings', 'quiz'].forEach(id => {
                     document.getElementById(`view-${id}`).classList.add('hidden');
                 });
                 document.getElementById(`view-${viewId}`).classList.remove('hidden');
+                
+                if (viewId === 'manager') this.renderManagerStats();
             },
 
             showToast(message, type = 'info') {
@@ -604,48 +563,123 @@
                 document.getElementById('toast-message').textContent = message;
                 document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
                 
-                toast.classList.remove('translate-y-20', 'opacity-0');
-                setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+                toast.classList.remove('translate-y-24', 'opacity-0');
+                setTimeout(() => toast.classList.add('translate-y-24', 'opacity-0'), 4000);
             },
 
-            updateStats() {
-                const total = this.questions.length;
-                document.getElementById('stat-total-questions').textContent = total;
+            
+            // --- API Helpers ---
+            async fetchGemini(prompt, isJson = false) {
+                const key = this.geminiApiKey || ""; 
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`;
                 
-                let totalAttempted = 0, totalCorrect = 0;
-                this.questions.forEach(q => {
-                    totalAttempted += (q.total || 0);
-                    totalCorrect += (q.correct || 0);
-                });
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }]
+                };
+                if (isJson) payload.generationConfig = { responseMimeType: "application/json" };
 
-                const accuracy = totalAttempted === 0 ? 0 : Math.round((totalCorrect / totalAttempted) * 100);
-                document.getElementById('stat-accuracy').textContent = totalAttempted > 0 ? `${accuracy}%` : '--%';
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error?.message || `HTTP ${res.status}`);
+                    }
+                    const data = await res.json();
+                    return data.candidates[0].content.parts[0].text;
+                } catch (e) {
+                    console.error("Gemini API Error:", e);
+                    throw new Error("Gemini APIエラー: " + e.message);
+                }
             },
 
-            // --- CSV Import (Questions) ---
-            handleFileUpload(event) {
+            async fetchCloudTextToSpeechAPI(ssml) {
+                if (!this.ttsApiKey) throw new Error("Google Cloud Text-to-Speech APIキーが設定されていません。");
+                const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${this.ttsApiKey}`;
+                
+                const payload = {
+                    input: { ssml: ssml },
+                    voice: { languageCode: "ja-JP", name: "ja-JP-Neural2-B" },
+                    audioConfig: { audioEncoding: "LINEAR16", sampleRateHertz: 24000 }
+                };
+
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error?.message || `HTTP ${res.status}`);
+                    }
+                    const data = await res.json();
+                    return data.audioContent; // Base64 string
+                } catch (e) {
+                    console.error("Cloud TTS API Error:", e);
+                    throw new Error("Cloud TTS APIエラー: " + e.message);
+                }
+            },
+
+            // SSML Generator (Fallback to simple dictionary if Gemini fails)
+            async fetchGeminiSSML(text) {
+                if (!this.geminiApiKey) {
+                    return `<speak>${this.applyDictionary(text)}</speak>`;
+                }
+                
+                let dictPrompt = "";
+                if (this.dictionary.length > 0) {
+                    dictPrompt = "以下の固有の読み方辞書を最優先で適用してください。\n" + 
+                                 this.dictionary.map(d => `${d.word}: ${d.pronunciation}`).join("\n") + "\n\n";
+                }
+
+                const prompt = `
+あなたはText-to-Speech用のSSML生成アシスタントです。
+入力された日本語のテキストを読み上げるためのSSMLタグを生成してください。
+括弧書きによる読みの指定がある場合や、読み方が不定な漢字（人名、地名、専門用語など）には、必ず<sub alias="ひらがな">対象語</sub>タグを付与してください。
+${dictPrompt}
+出力は必ず <speak> タグで囲まれたSSMLテキストのみとしてください。
+
+入力テキスト:
+${text}
+`;
+                try {
+                    const result = await this.fetchGemini(prompt, false);
+                    if (result.includes("<speak>")) {
+                        return result.trim();
+                    }
+                    throw new Error("Invalid SSML format returned");
+                } catch (e) {
+                    console.warn("SSML生成に失敗。フォールバックを使用します。", e);
+                    return `<speak>${this.applyDictionary(text)}</speak>`;
+                }
+            },
+
+
+            // --- CSV Handling ---
+            async handleFileUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
 
                 const encoding = document.getElementById('csv-encoding').value;
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.parseQuestionsCSV(e.target.result);
+                reader.onload = async (e) => {
+                    await this.parseQuestionsCSV(e.target.result);
                     event.target.value = '';
                 };
                 reader.readAsText(file, encoding);
             },
 
-            parseQuestionsCSV(text) {
-                // Check for generic replacement character (mojibake)
+            async parseQuestionsCSV(text) {
                 if (text.includes('\uFFFD')) {
-                    this.showToast('文字化けを検知しました。文字コード設定を確認してください。', 'error');
+                    this.showToast('文字化けを検知しました。文字コード(UTF-8 / Shift_JIS)の設定を確認してください。', 'error');
                     return;
                 }
 
-                // Normalize newlines to \n
                 text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
                 const rows = [];
                 let row = [], cell = '', inQuotes = false;
                 
@@ -665,52 +699,174 @@
                     if (row.some(c => c !== '')) rows.push(row);
                 }
 
+                const validRows = rows.filter(r => r[0] && r[1]);
+                if (validRows.length === 0) {
+                    this.showToast('有効な問題データが見つかりませんでした。', 'error');
+                    return;
+                }
+
+                if (this.questions.length + validRows.length > MAX_QUESTIONS) {
+                    this.showToast(`登録上限(${MAX_QUESTIONS}問)を超過します。`, 'error');
+                    return;
+                }
+
+                const uploadBtn = document.getElementById('btn-csv-upload-trigger');
+                const loadingDiv = document.getElementById('csv-loading');
+                const loadingText = document.getElementById('csv-loading-text');
+
+                uploadBtn.classList.add('hidden');
+                loadingDiv.classList.remove('hidden');
+                loadingDiv.classList.add('flex');
+
+                const hasApiKey = !!this.geminiApiKey;
+                if (!hasApiKey && validRows.some(r => !r[2])) {
+                    this.showToast('Gemini APIキー未設定のため、解説自動生成はスキップされます', 'info');
+                }
+
                 let added = 0;
-                rows.forEach(r => {
-                    if (r[0] && r[1]) {
-                        this.questions.push({
-                            id: Date.now() + Math.random().toString(36).substring(2),
-                            q: r[0],
-                            a: r[1],
-                            explanation: r[2] || '', // optional 3rd col
-                            correct: 0, total: 0
-                        });
-                        added++;
+                for (let i = 0; i < validRows.length; i++) {
+                    const r = validRows[i];
+                    let explanation = r[2] || '';
+
+                    if (!explanation && hasApiKey) {
+                        loadingText.textContent = `解説生成中... (${i + 1}/${validRows.length})`;
+                        try {
+                            const prompt = `以下のクイズ問題と解答に対する簡潔な解説(1〜2文程度)を作成してください。出力は解説のテキストのみにしてください。\n問題: ${r[0]}\n解答: ${r[1]}`;
+                            explanation = await this.fetchGemini(prompt, false);
+                        } catch (e) {
+                            console.warn("解説生成スキップ", e);
+                            explanation = '';
+                        }
                     }
-                });
+
+                    this.questions.push({
+                        id: Date.now() + Math.random().toString(36).substring(2),
+                        q: r[0],
+                        a: r[1],
+                        explanation: explanation,
+                        correct: 0, total: 0
+                    });
+                    added++;
+                }
+
+                uploadBtn.classList.remove('hidden');
+                loadingDiv.classList.add('hidden');
+                loadingDiv.classList.remove('flex');
 
                 if (added > 0) {
                     this.saveQuestions();
                     this.showToast(`${added}件の問題を取り込みました！`, 'success');
-                } else {
-                    this.showToast('有効な問題データが見つかりませんでした。', 'error');
                 }
             },
 
-            // --- Dictionary Management ---
-            renderDictionary() {
-                const tbody = document.getElementById('dict-list');
-                const empty = document.getElementById('dict-empty');
-                tbody.innerHTML = '';
 
-                if (this.dictionary.length === 0) {
-                    empty.classList.remove('hidden'); return;
-                }
-                empty.classList.add('hidden');
+            // --- Stats & Management ---
+            updateStats() {
+                const total = this.questions.length;
+                document.getElementById('stat-total-questions').textContent = total;
                 
-                this.dictionary.forEach((entry, i) => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-soft-green-50 transition-colors';
-                    tr.innerHTML = `
-                        <td class="px-4 py-3 border-t border-soft-green-100">${entry.word}</td>
-                        <td class="px-4 py-3 border-t border-soft-green-100">${entry.pronunciation}</td>
-                        <td class="px-4 py-3 border-t border-soft-green-100 text-right">
-                            <button onclick="app.removeDictionaryEntry(${i})" class="text-rose-500 hover:text-rose-700 text-sm font-semibold p-1">削除</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                let attempted = 0, correct = 0;
+                this.questions.forEach(q => { attempted += q.total; correct += q.correct; });
+                
+                const acc = attempted === 0 ? 0 : Math.round((correct / attempted) * 100);
+                document.getElementById('stat-accuracy').textContent = attempted > 0 ? `${acc}%` : '--%';
             },
+
+            renderManagerStats() {
+                const total = this.questions.length;
+                document.getElementById('manager-total-count').textContent = total;
+                const capacityPct = Math.min(100, (total / MAX_QUESTIONS) * 100);
+                document.getElementById('manager-capacity-bar').style.width = `${capacityPct}%`;
+
+                const chartContainer = document.getElementById('manager-stats-chart');
+                chartContainer.innerHTML = '';
+
+                if (total === 0) {
+                    chartContainer.innerHTML = '<p class="text-sm text-soft-green-500 py-2">データがありません</p>';
+                    return;
+                }
+
+                // Calculate bins
+                const bins = { unattempted: 0 };
+                for (let i = 0; i < 10; i++) bins[`${i*10}-${i*10+9}`] = 0;
+                bins['100'] = 0;
+
+                this.questions.forEach(q => {
+                    if (q.total === 0) {
+                        bins.unattempted++;
+                    } else {
+                        const acc = Math.floor((q.correct / q.total) * 100);
+                        if (acc === 100) bins['100']++;
+                        else {
+                            const range = Math.floor(acc / 10);
+                            bins[`${range*10}-${range*10+9}`]++;
+                        }
+                    }
+                });
+
+                const maxVal = Math.max(...Object.values(bins));
+                
+                const createBar = (label, count, isSpecial) => {
+                    if (count === 0 && !isSpecial) return;
+                    const w = maxVal > 0 ? (count / maxVal) * 100 : 0;
+                    return `
+                        <div class="flex items-center text-xs">
+                            <div class="w-20 text-right pr-2 text-soft-green-700">${label}</div>
+                            <div class="flex-1 bg-soft-green-100 rounded-sm h-4 flex items-center">
+                                <div class="${isSpecial ? 'bg-soft-green-400' : 'bg-soft-green-600'} h-4 rounded-sm transition-all" style="width: ${w}%"></div>
+                                <span class="ml-2 text-soft-green-800 font-semibold">${count}問</span>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                let html = createBar('未回答', bins.unattempted, true) || '';
+                for (let i = 0; i < 10; i++) {
+                    html += createBar(`${i*10}%~`, bins[`${i*10}-${i*10+9}`], false) || '';
+                }
+                html += createBar('100%', bins['100'], false) || '';
+                
+                chartContainer.innerHTML = html || '<p class="text-sm text-soft-green-500">グラフデータなし</p>';
+            },
+
+            clearAllData() {
+                if (confirm('すべての問題データを削除しますか？\n（辞書・API設定は保持されます）')) {
+                    this.questions = [];
+                    this.saveQuestions();
+                    this.renderManagerStats();
+                    this.showToast('データをリセットしました', 'info');
+                }
+            },
+
+            deleteHighAccuracyQuestions() {
+                if (this.questions.length === 0) return this.showToast('問題がありません', 'error');
+                const p = parseInt(document.getElementById('manager-delete-percent').value, 10);
+                if (!confirm(`正解率上位 ${p}% の問題を削除しますか？`)) return;
+
+                const attempted = this.questions.filter(q => q.total > 0);
+                if (attempted.length === 0) return this.showToast('回答済みの問題がありません', 'error');
+
+                // Sort by accuracy descending, then by total attempts descending
+                attempted.sort((a, b) => {
+                    const accA = a.correct / a.total;
+                    const accB = b.correct / b.total;
+                    if (accA !== accB) return accB - accA;
+                    return b.total - a.total;
+                });
+
+                const deleteCount = Math.ceil(attempted.length * (p / 100));
+                const toDeleteIds = new Set(attempted.slice(0, deleteCount).map(q => q.id));
+
+                const initialLen = this.questions.length;
+                this.questions = this.questions.filter(q => !toDeleteIds.has(q.id));
+                
+                this.saveQuestions();
+                this.renderManagerStats();
+                this.showToast(`${initialLen - this.questions.length}問を削除しました`, 'success');
+            },
+
+
+            // --- Dictionary ---
             addDictionaryEntry() {
                 const w = document.getElementById('dict-word').value.trim();
                 const p = document.getElementById('dict-pronunciation').value.trim();
@@ -720,374 +876,334 @@
                 if (idx >= 0) this.dictionary[idx].pronunciation = p;
                 else this.dictionary.push({ word: w, pronunciation: p });
                 
-                this.saveDictionary(); this.renderDictionary();
+                this.saveDictionary();
+                this.renderDictionary();
                 document.getElementById('dict-word').value = '';
                 document.getElementById('dict-pronunciation').value = '';
+                this.showToast('登録しました', 'success');
             },
-            removeDictionaryEntry(index) {
-                this.dictionary.splice(index, 1);
-                this.saveDictionary(); this.renderDictionary();
+
+            removeDictionaryEntry(i) {
+                this.dictionary.splice(i, 1);
+                this.saveDictionary();
+                this.renderDictionary();
             },
-            exportDictionaryCSV() {
-                if(this.dictionary.length === 0) return this.showToast('出力するデータがありません', 'error');
-                const csv = this.dictionary.map(d => `"${d.word.replace(/"/g, '""')}","${d.pronunciation.replace(/"/g, '""')}"`).join('\n');
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = 'dictionary.csv';
-                a.click(); URL.revokeObjectURL(url);
-            },
-            importDictionaryCSV(e) {
-                const file = e.target.files[0];
-                if(!file) return;
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    let text = evt.target.result.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-                    const lines = text.split('\n');
-                    let added = 0;
-                    lines.forEach(line => {
-                        const parts = line.split(',').map(p => p.replace(/(^"|"$)/g, '').trim());
-                        if(parts.length >= 2 && parts[0] && parts[1]) {
-                            const idx = this.dictionary.findIndex(d => d.word === parts[0]);
-                            if (idx >= 0) this.dictionary[idx].pronunciation = parts[1];
-                            else this.dictionary.push({ word: parts[0], pronunciation: parts[1] });
-                            added++;
-                        }
+
+            renderDictionary() {
+                const tbody = document.getElementById('dict-list');
+                const empty = document.getElementById('dict-empty');
+                tbody.innerHTML = '';
+                
+                if (this.dictionary.length === 0) {
+                    empty.classList.remove('hidden');
+                } else {
+                    empty.classList.add('hidden');
+                    this.dictionary.forEach((d, i) => {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-soft-green-50">
+                                <td class="px-4 py-3 border-t border-soft-green-100">${d.word}</td>
+                                <td class="px-4 py-3 border-t border-soft-green-100">${d.pronunciation}</td>
+                                <td class="px-4 py-3 border-t border-soft-green-100 text-right">
+                                    <button onclick="app.removeDictionaryEntry(${i})" class="text-red-500 hover:text-red-700 text-sm font-bold">削除</button>
+                                </td>
+                            </tr>`;
                     });
-                    this.saveDictionary(); this.renderDictionary();
-                    this.showToast(`${added}件の辞書データをインポートしました`, 'success');
-                    e.target.value = '';
-                };
-                reader.readAsText(file, 'UTF-8');
+                }
             },
 
-            // --- AI Core API ---
-            async fetchGemini(prompt, isJSON = false) {
-                const key = this.geminiApiKey;
-                if (!key) {
-                    throw new Error("Gemini APIキーが設定されていません。設定画面で入力してください。");
-                }
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`;
-                
-                const payload = {
-                    contents: [{ parts: [{ text: prompt }] }]
-                };
-                if (isJSON) payload.generationConfig = { responseMimeType: "application/json" };
-
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!res.ok) {
-                    const err = await res.json();
-                    let msg = err.error?.message || res.statusText;
-                    if (res.status === 400 || res.status === 403) {
-                        msg = "Gemini APIキーが無効か、権限がありません。設定画面を確認してください。";
-                    }
-                    throw new Error(msg);
-                }
-                const result = await res.json();
-                return result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            applyDictionary(text) {
+                let res = text;
+                const sorted = [...this.dictionary].sort((a, b) => b.word.length - a.word.length);
+                sorted.forEach(d => { res = res.split(d.word).join(d.pronunciation); });
+                return res;
             },
 
-            // --- AI Question Generation ---
+
+            // --- AI Generation ---
             async generateQuestionsWithAI() {
+                if (!this.geminiApiKey) return this.showToast('Gemini APIキーを設定画面で登録してください', 'error');
+                
                 const genre = document.getElementById('ai-genre').value;
                 const topic = document.getElementById('ai-topic').value.trim();
-                const count = document.getElementById('ai-count').value;
-                const diff = document.getElementById('ai-difficulty').value;
+                const count = parseInt(document.getElementById('ai-count').value, 10);
                 
+                if (!genre && !topic) return this.showToast('ジャンルまたはテーマを入力してください', 'error');
+                if (this.questions.length + count > MAX_QUESTIONS) return this.showToast(`登録上限(${MAX_QUESTIONS}問)を超過します。`, 'error');
+
                 const btn = document.getElementById('btn-generate-ai');
                 const loader = document.getElementById('ai-loading');
-                btn.classList.add('hidden'); loader.classList.remove('hidden');
+                btn.classList.add('hidden');
+                loader.classList.remove('hidden');
+                loader.classList.add('flex');
 
-                let themeStr = genre !== 'おまかせ' ? `ジャンル: ${genre}` : '';
-                if (topic) themeStr += `\nキーワード: ${topic}`;
-                if (!themeStr) themeStr = "一般的な常識問題（おまかせ）";
+                let contextStr = [];
+                if (genre) contextStr.push(`ジャンル: ${genre}`);
+                if (topic) contextStr.push(`テーマ・キーワード: ${topic}`);
 
                 const prompt = `
-早押しクイズの問題を作成し、以下のJSON配列スキーマで出力してください。
-${themeStr}
-難易度: ${diff}
-問題数: ${count}問
+以下の条件で、早押しクイズの問題を作成し、JSONの配列形式で出力してください。
+早押しクイズらしく、最初は漠然として徐々に特定できるような文章にしてください。
+豆知識などの簡単な解説(1〜2文)も含めてください。
 
-[ { "q": "問題文(徐々に特定できるような長文)", "a": "解答", "explanation": "簡潔な解説(1〜2文)" } ]
+${contextStr.join('\n')}
+問題数: ${count}
+
+出力JSONスキーマ:
+[
+  {
+    "q": "問題文",
+    "a": "解答（短い単語）",
+    "explanation": "解説文"
+  }
+]
 `;
                 try {
                     const jsonStr = await this.fetchGemini(prompt, true);
-                    const newQ = JSON.parse(jsonStr.replace(/```(json)?|```/g, '').trim());
-                    
-                    if (Array.isArray(newQ) && newQ.length > 0) {
-                        newQ.forEach(item => {
-                            if(item.q && item.a) {
+                    let parsed = [];
+                    try { parsed = JSON.parse(jsonStr); } 
+                    catch(e) {
+                        const m = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                        if (m) parsed = JSON.parse(m[1]);
+                        else throw new Error("JSON parse failed");
+                    }
+
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(item => {
+                            if (item.q && item.a) {
                                 this.questions.push({
                                     id: Date.now() + Math.random().toString(36).substring(2),
-                                    q: item.q, a: item.a, explanation: item.explanation || '',
+                                    q: item.q, a: item.a, explanation: item.explanation || "",
                                     correct: 0, total: 0
                                 });
                             }
                         });
                         this.saveQuestions();
-                        this.showToast(`${newQ.length}問追加しました！`, 'success');
+                        this.showToast(`${parsed.length}問生成しました！`, 'success');
                         document.getElementById('ai-topic').value = '';
-                    } else throw new Error("Invalid format");
+                    } else throw new Error("Not an array");
                 } catch (e) {
                     this.showToast('生成失敗: ' + e.message, 'error');
                 } finally {
-                    btn.classList.remove('hidden'); loader.classList.add('hidden');
+                    btn.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                    loader.classList.remove('flex');
                 }
             },
 
-            // --- Audio Export Logic (Gemini SSML -> Cloud TTS -> MP3) ---
-            async fetchGeminiSSML(text) {
-                try {
-                    const dictStr = this.dictionary.map(d => `${d.word}: ${d.pronunciation}`).join("\n");
-                    const prompt = `以下のテキストを音声読み上げ用のSSMLに変換してください。
-条件:
-1. 読み方が不定な漢字や特殊な読みは <sub alias="ふりがな">漢字</sub> とする。
-2. 以下の辞書を優先適用すること。\n【辞書】\n${dictStr || "なし"}
-3. カッコ書き（ふりがな）があれば参考にする。
-4. 出力は <speak> タグで囲まれたXMLのみ。Markdownや解説は一切含めない。
 
-【原文】
-${text}`;
-                    let ssml = await this.fetchGemini(prompt, false);
-                    ssml = ssml.replace(/```xml|```/gi, "").trim();
-                    if (!ssml.includes("<speak>")) ssml = `<speak>${ssml}</speak>`;
-                    return ssml;
-                } catch (e) {
-                    console.warn("Gemini SSML生成に失敗したため、基本の辞書置換にフォールバックします:", e);
-                    let processedText = text;
-                    this.dictionary.forEach(d => { processedText = processedText.split(d.word).join(d.pronunciation); });
-                    // XML予約語のエスケープ
-                    processedText = processedText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    return `<speak>${processedText}</speak>`;
-                }
-            },
-
-            async fetchCloudTextToSpeechAPI(ssml) {
-                const key = this.ttsApiKey; 
-                if (!key) {
-                    throw new Error("Cloud TTS APIキーが設定されていません。設定画面で入力してください。");
-                }
-                const apiUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`;
-                const payload = {
-                    input: { ssml: ssml },
-                    voice: { languageCode: "ja-JP", name: "ja-JP-Neural2-B" },
-                    audioConfig: { audioEncoding: "MP3" } // Requesting MP3 natively to decode
-                };
+            // --- Audio Export (MP3 Generation) ---
+            base64ToAudioBuffer(base64, ctx) {
+                const bin = atob(base64);
+                const bytes = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
                 
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!res.ok) {
-                    const err = await res.json();
-                    let errMsg = err.error?.message || "Google Cloud Text-to-Speech API エラー";
-                    if (res.status === 400 || res.status === 403) {
-                        errMsg = "Cloud TTS APIキーが無効か、権限が不足しています。設定画面を確認してください。";
-                    }
-                    throw new Error(errMsg);
-                }
-                return (await res.json()).audioContent;
-            },
-
-            async base64ToAudioBuffer(base64, ctx) {
-                const binary = atob(base64);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                return await ctx.decodeAudioData(bytes.buffer);
+                // Assuming LINEAR16 24000Hz mono from Cloud TTS
+                const samples = bytes.length / 2;
+                const buffer = ctx.createBuffer(1, samples, 24000);
+                const view = new DataView(bytes.buffer);
+                const channel = buffer.getChannelData(0);
+                for (let i = 0; i < samples; i++) channel[i] = view.getInt16(i * 2, true) / 32768;
+                return buffer;
             },
 
             createSilentBuffer(ctx, seconds) {
                 return ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate);
             },
 
-            async startAudioExport() {
-                const count = parseInt(document.getElementById('audio-export-count').value, 10);
-                if (this.questions.length === 0) return this.showToast('問題が登録されていません', 'error');
-                
-                // Randomize and slice
-                const shuffled = [...this.questions].sort(() => 0.5 - Math.random());
-                const selected = shuffled.slice(0, Math.min(count, shuffled.length));
-
-                document.getElementById('btn-start-export').classList.add('hidden');
-                document.getElementById('export-progress-container').classList.remove('hidden');
-                document.getElementById('export-result-container').classList.add('hidden');
-                
-                const status = document.getElementById('export-status-text');
-                const percent = document.getElementById('export-percent');
-                const bar = document.getElementById('export-progress-bar');
-                
-                const updateProg = (text, p) => {
-                    status.textContent = text;
-                    percent.textContent = `${Math.round(p)}%`;
-                    bar.style.width = `${p}%`;
-                };
-
-                try {
-                    // We use an OfflineAudioContext later to combine, but first we need standard context to decode
-                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    this.audioContextForExport = audioCtx; // Keep alive for playing later if needed
-                    
-                    updateProg("共通ヘッダーを生成中...", 5);
-                    const headB64 = await this.fetchCloudTextToSpeechAPI(await this.fetchGeminiSSML("問題"));
-                    const headBuf = await this.base64ToAudioBuffer(headB64, audioCtx);
-                    
-                    const lastB64 = await this.fetchCloudTextToSpeechAPI(await this.fetchGeminiSSML("最終問題です"));
-                    const lastBuf = await this.base64ToAudioBuffer(lastB64, audioCtx);
-
-                    const oneSecSilence = this.createSilentBuffer(audioCtx, 1.0);
-                    const threeSecSilence = this.createSilentBuffer(audioCtx, 3.0);
-                    const twoSecSilence = this.createSilentBuffer(audioCtx, 2.0);
-
-                    const sequenceBuffers = [];
-                    let totalLength = 0;
-
-                    for (let i = 0; i < selected.length; i++) {
-                        const q = selected[i];
-                        const isLast = (i === selected.length - 1);
-                        updateProg(`問題 ${i+1}/${selected.length} 処理中...`, 10 + (80 * (i / selected.length)));
-
-                        // 1. Header ("問題" or "最終問題です") + 1s break
-                        const hBuf = isLast ? lastBuf : headBuf;
-                        sequenceBuffers.push(hBuf, oneSecSilence);
-                        totalLength += hBuf.length + oneSecSilence.length;
-
-                        // 2. Question Text + 1s break (変更: 3秒から1秒へ)
-                        const qB64 = await this.fetchCloudTextToSpeechAPI(await this.fetchGeminiSSML(q.q));
-                        const qBuf = await this.base64ToAudioBuffer(qB64, audioCtx);
-                        sequenceBuffers.push(qBuf, oneSecSilence);
-                        totalLength += qBuf.length + oneSecSilence.length;
-
-                        // 3. Answer Text + Explanation + 2s break
-                        let ansText = q.a;
-                        if(q.explanation) ansText += "。 " + q.explanation;
-                        const aB64 = await this.fetchCloudTextToSpeechAPI(await this.fetchGeminiSSML(ansText));
-                        const aBuf = await this.base64ToAudioBuffer(aB64, audioCtx);
-                        sequenceBuffers.push(aBuf, twoSecSilence);
-                        totalLength += aBuf.length + twoSecSilence.length;
-                    }
-
-                    updateProg("音声トラックを結合・MP3エンコード中...", 95);
-                    
-                    // Combine into single buffer (Mono mixdown for simplicity & speed)
-                    const offlineCtx = new OfflineAudioContext(1, totalLength, audioCtx.sampleRate);
-                    let offset = 0;
-                    for (const buf of sequenceBuffers) {
-                        const source = offlineCtx.createBufferSource();
-                        // Mix down to mono if stereo
-                        const monoBuffer = offlineCtx.createBuffer(1, buf.length, buf.sampleRate);
-                        monoBuffer.copyToChannel(buf.getChannelData(0), 0);
-                        source.buffer = monoBuffer;
-                        source.connect(offlineCtx.destination);
-                        source.start(offset / audioCtx.sampleRate);
-                        offset += buf.length;
-                    }
-
-                    const renderedBuffer = await offlineCtx.startRendering();
-                    
-                    // Encode to MP3 using lamejs
-                    const mp3Blob = this.encodeAudioBufferToMp3(renderedBuffer);
-                    this.exportAudioBlob = mp3Blob;
-
-                    const url = URL.createObjectURL(mp3Blob);
-                    const link = document.getElementById('link-download-mp3');
-                    link.href = url;
-                    link.download = `quiz_training_${count}q.mp3`;
-
-                    updateProg("完了", 100);
-                    document.getElementById('export-progress-container').classList.add('hidden');
-                    document.getElementById('export-result-container').classList.remove('hidden');
-
-                } catch(e) {
-                    console.error(e);
-                    this.showToast('音声生成エラー: ' + e.message, 'error');
-                    document.getElementById('export-progress-container').classList.add('hidden');
-                } finally {
-                    document.getElementById('btn-start-export').classList.remove('hidden');
-                }
-            },
-
-            encodeAudioBufferToMp3(audioBuffer) {
-                // Using lamejs to create a real MP3 file
-                const sampleRate = audioBuffer.sampleRate;
-                const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, 128); // Mono, 128kbps
+            encodeMonoAudioBufferToMP3(buffer) {
+                const samples = buffer.getChannelData(0);
+                const sampleRate = buffer.sampleRate;
+                const mp3enc = new lamejs.Mp3Encoder(1, sampleRate, 128);
                 const mp3Data = [];
                 
-                const floatSamples = audioBuffer.getChannelData(0);
                 const sampleBlockSize = 1152;
-                const intSamples = new Int16Array(floatSamples.length);
-                
-                // Convert Float32 to Int16
-                for (let i = 0; i < floatSamples.length; i++) {
-                    let s = Math.max(-1, Math.min(1, floatSamples[i]));
-                    intSamples[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                for (let i = 0; i < samples.length; i += sampleBlockSize) {
+                    const chunk = samples.subarray(i, i + sampleBlockSize);
+                    const int16Chunk = new Int16Array(chunk.length);
+                    for (let j = 0; j < chunk.length; j++) {
+                        let val = chunk[j] * 32767.5;
+                        int16Chunk[j] = val < -32768 ? -32768 : val > 32767 ? 32767 : val;
+                    }
+                    const mp3buf = mp3enc.encodeBuffer(int16Chunk);
+                    if (mp3buf.length > 0) mp3Data.push(mp3buf);
                 }
-
-                for (let i = 0; i < intSamples.length; i += sampleBlockSize) {
-                    const chunk = intSamples.subarray(i, i + sampleBlockSize);
-                    const mp3buf = mp3encoder.encodeBuffer(chunk);
-                    if (mp3buf.length > 0) mp3Data.push(new Int8Array(mp3buf));
-                }
-                const tail = mp3encoder.flush();
-                if (tail.length > 0) mp3Data.push(new Int8Array(tail));
+                const end = mp3enc.flush();
+                if (end.length > 0) mp3Data.push(end);
                 
                 return new Blob(mp3Data, { type: 'audio/mp3' });
             },
 
-            playExportedAudio() {
-                if(!this.exportAudioBlob) return;
+            async startAudioExport() {
+                if (!this.ttsApiKey) return this.showToast('設定画面でGoogle Cloud Text-to-Speech APIキーを登録してください', 'error');
+                if (this.questions.length === 0) return this.showToast('問題が登録されていません', 'error');
+
+                const count = parseInt(document.getElementById('audio-export-count').value, 10);
+                const includeExp = document.getElementById('audio-export-explanation').checked;
                 
-                if (this.audioPlayer) {
-                    this.audioPlayer.pause();
-                    this.audioPlayer.currentTime = 0;
+                const shuffled = [...this.questions].sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, Math.min(count, shuffled.length));
+
+                document.getElementById('btn-start-export').classList.add('hidden');
+                document.getElementById('audio-export-result').classList.add('hidden');
+                const progContainer = document.getElementById('audio-export-progress-container');
+                const progBar = document.getElementById('audio-export-progress-bar');
+                const progStatus = document.getElementById('audio-export-status');
+                
+                progContainer.classList.remove('hidden');
+                progContainer.classList.add('flex');
+                progBar.style.width = '0%';
+
+                const updateProg = (msg, pct) => {
+                    progStatus.textContent = msg;
+                    progBar.style.width = `${pct}%`;
+                };
+
+                // Use OfflineAudioContext for rendering to buffer without playing
+                let audioCtx = null;
+                
+                try {
+                    // Create dummy context to get sample rate for initial silence buffers
+                    const dummyCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const targetSampleRate = 24000; // Cloud TTS Target
+                    dummyCtx.close();
+                    
+                    audioCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 1, targetSampleRate);
+
+                    const sequenceBuffers = [];
+                    let totalLength = 0;
+                    const oneSecSilence = this.createSilentBuffer(audioCtx, 1.0);
+                    const twoSecSilence = this.createSilentBuffer(audioCtx, 2.0);
+
+                    for (let i = 0; i < selected.length; i++) {
+                        const q = selected[i];
+                        updateProg(`音声生成中 (${i + 1}/${selected.length})...`, (i / selected.length) * 90);
+
+                        // 1. Prefix ("問題" or "最終問題です") -> 1s pause
+                        const prefixText = (i === selected.length - 1) ? "最終問題です" : "問題";
+                        const prefixB64 = await this.fetchCloudTextToSpeechAPI(`<speak>${prefixText}</speak>`);
+                        const prefixBuf = this.base64ToAudioBuffer(prefixB64, audioCtx);
+                        sequenceBuffers.push(prefixBuf, oneSecSilence);
+                        totalLength += prefixBuf.length + oneSecSilence.length;
+
+                        // 2. Question -> 1s pause
+                        const qSSML = await this.fetchGeminiSSML(q.q);
+                        const qB64 = await this.fetchCloudTextToSpeechAPI(qSSML);
+                        const qBuf = this.base64ToAudioBuffer(qB64, audioCtx);
+                        sequenceBuffers.push(qBuf, oneSecSilence);
+                        totalLength += qBuf.length + oneSecSilence.length;
+
+                        // 3. Answer -> Pause varies
+                        const aSSML = await this.fetchGeminiSSML(q.a);
+                        const aB64 = await this.fetchCloudTextToSpeechAPI(aSSML);
+                        const aBuf = this.base64ToAudioBuffer(aB64, audioCtx);
+                        
+                        if (includeExp && q.explanation) {
+                            // Explanation: Answer -> 1s pause -> Explanation -> 2s pause
+                            sequenceBuffers.push(aBuf, oneSecSilence);
+                            totalLength += aBuf.length + oneSecSilence.length;
+                            
+                            const eSSML = await this.fetchGeminiSSML(q.explanation);
+                            const eB64 = await this.fetchCloudTextToSpeechAPI(eSSML);
+                            const eBuf = this.base64ToAudioBuffer(eB64, audioCtx);
+                            
+                            sequenceBuffers.push(eBuf, twoSecSilence);
+                            totalLength += eBuf.length + twoSecSilence.length;
+                        } else {
+                            // No Explanation: Answer -> 2s pause
+                            sequenceBuffers.push(aBuf, twoSecSilence);
+                            totalLength += aBuf.length + twoSecSilence.length;
+                        }
+                    }
+
+                    updateProg("音声を結合・MP3変換中...", 95);
+                    
+                    // Re-create final rendering context with exact total length
+                    const renderCtx = new OfflineAudioContext(1, totalLength, targetSampleRate);
+                    let offset = 0;
+                    for (const buf of sequenceBuffers) {
+                        const source = renderCtx.createBufferSource();
+                        source.buffer = buf;
+                        source.connect(renderCtx.destination);
+                        source.start(offset / targetSampleRate);
+                        offset += buf.length;
+                    }
+
+                    const finalBuffer = await renderCtx.startRendering();
+                    this.exportedAudioBlob = this.encodeMonoAudioBufferToMP3(finalBuffer);
+                    
+                    if (this.exportedAudioUrl) URL.revokeObjectURL(this.exportedAudioUrl);
+                    this.exportedAudioUrl = URL.createObjectURL(this.exportedAudioBlob);
+
+                    updateProg("完了！", 100);
+                    setTimeout(() => {
+                        progContainer.classList.add('hidden');
+                        progContainer.classList.remove('flex');
+                        document.getElementById('audio-export-result').classList.remove('hidden');
+                        document.getElementById('btn-start-export').classList.remove('hidden');
+                        document.getElementById('btn-start-export').textContent = "もう一度作成する";
+                    }, 500);
+
+                } catch (e) {
+                    this.showToast(e.message, 'error');
+                    progContainer.classList.add('hidden');
+                    progContainer.classList.remove('flex');
+                    document.getElementById('btn-start-export').classList.remove('hidden');
+                }
+            },
+
+            playExportedAudio() {
+                if (!this.exportedAudioUrl) return;
+                
+                if (!this.audioElement) {
+                    this.audioElement = new Audio(this.exportedAudioUrl);
+                    this.audioElement.onended = () => this.stopExportedAudio();
+                } else {
+                    this.audioElement.src = this.exportedAudioUrl;
                 }
                 
-                this.audioPlayer = new Audio(URL.createObjectURL(this.exportAudioBlob));
-                this.audioPlayer.play();
-                
-                document.getElementById('btn-play-exported').classList.add('hidden');
-                document.getElementById('btn-stop-exported').classList.remove('hidden');
-                
-                this.audioPlayer.onended = () => {
-                    document.getElementById('btn-play-exported').classList.remove('hidden');
-                    document.getElementById('btn-stop-exported').classList.add('hidden');
-                };
-                
-                this.showToast('再生を開始しました', 'success');
+                this.audioElement.play();
+                document.getElementById('btn-play-audio').classList.add('hidden');
+                document.getElementById('btn-stop-audio').classList.remove('hidden');
+                document.getElementById('btn-stop-audio').classList.add('flex');
             },
 
             stopExportedAudio() {
-                if(this.audioPlayer) {
-                    this.audioPlayer.pause();
-                    this.audioPlayer.currentTime = 0;
+                if (this.audioElement) {
+                    this.audioElement.pause();
+                    this.audioElement.currentTime = 0;
                 }
-                document.getElementById('btn-play-exported').classList.remove('hidden');
-                document.getElementById('btn-stop-exported').classList.add('hidden');
-                this.showToast('再生を停止しました', 'info');
+                document.getElementById('btn-stop-audio').classList.add('hidden');
+                document.getElementById('btn-stop-audio').classList.remove('flex');
+                document.getElementById('btn-play-audio').classList.remove('hidden');
             },
 
-            // --- In-App Quiz Logic ---
+            downloadExportedAudio() {
+                if (!this.exportedAudioUrl) return;
+                const a = document.createElement('a');
+                a.href = this.exportedAudioUrl;
+                a.download = `quiz_audio_${new Date().getTime()}.mp3`;
+                a.click();
+            },
+
+
+            // --- Quiz Execution (Browser TTS) ---
             startQuiz() {
-                if (this.questions.length === 0) return this.showToast('問題を取り込んでください', 'error');
+                if (this.questions.length === 0) return this.showToast('問題がありません', 'error');
                 this.switchView('quiz');
                 this.nextQuestion();
             },
 
             nextQuestion() {
                 this.synth.cancel();
-                // Randomly select favoring unplayed/failed
-                const pool = this.questions.map((q, i) => {
-                    let w = q.total === 0 ? 10 : Math.max(0.1, 5 * (1 - (q.correct/q.total)));
-                    return { i, w: w * Math.random() };
-                }).sort((a,b) => b.w - a.w);
                 
-                this.currentQuestionIndex = pool[0].i;
+                // Select prioritized question (simple weighted random based on accuracy)
+                const weighted = this.questions.map((q, index) => {
+                    let weight = q.total === 0 ? 10.0 : Math.max(0.1, 5.0 * (1.0 - (q.correct / q.total)));
+                    return { index, weight: weight * (0.8 + Math.random() * 0.4) };
+                }).sort((a, b) => b.weight - a.weight);
+                
+                const poolSize = Math.max(1, Math.ceil(weighted.length * 0.2));
+                this.currentQuestionIndex = weighted[Math.floor(Math.random() * poolSize)].index;
                 const q = this.questions[this.currentQuestionIndex];
 
                 document.getElementById('quiz-state-playing').classList.remove('hidden');
@@ -1095,19 +1211,17 @@ ${text}`;
                 document.getElementById('answer-container').classList.add('hidden');
                 document.getElementById('btn-show-answer').classList.remove('hidden');
 
-                document.getElementById('quiz-current-accuracy').textContent = q.total > 0 ? Math.round((q.correct/q.total)*100) : '--';
                 document.getElementById('quiz-question-text').textContent = q.q;
                 document.getElementById('quiz-answer-text').textContent = q.a;
-                document.getElementById('quiz-explanation-text').textContent = q.explanation || '';
+                document.getElementById('quiz-explanation-text').textContent = q.explanation || '解説はありません。';
 
-                // Apply simple dictionary string replacement for Web Speech API fallback
-                let speakText = q.q;
-                this.dictionary.forEach(d => { speakText = speakText.split(d.word).join(d.pronunciation); });
-                
-                const ut = new SpeechSynthesisUtterance(speakText);
-                ut.lang = 'ja-JP'; ut.rate = 0.9;
-                if(this.voices.length) ut.voice = this.voices.find(v => v.name.includes('Premium')) || this.voices[0];
-                this.synth.speak(ut);
+                // Speak using browser TTS for live training
+                const utterance = new SpeechSynthesisUtterance(this.applyDictionary(q.q));
+                utterance.lang = 'ja-JP';
+                utterance.rate = 0.9;
+                const jpVoices = this.voices.filter(v => v.lang.includes('ja'));
+                if (jpVoices.length > 0) utterance.voice = jpVoices[0];
+                this.synth.speak(utterance);
             },
 
             buzz() {
@@ -1121,17 +1235,15 @@ ${text}`;
                 document.getElementById('answer-container').classList.remove('hidden');
                 
                 const q = this.questions[this.currentQuestionIndex];
-                let speakText = q.a;
-                this.dictionary.forEach(d => { speakText = speakText.split(d.word).join(d.pronunciation); });
-                const ut = new SpeechSynthesisUtterance(speakText);
-                ut.lang = 'ja-JP';
-                this.synth.speak(ut);
+                const utterance = new SpeechSynthesisUtterance(this.applyDictionary(q.a));
+                utterance.lang = 'ja-JP';
+                this.synth.speak(utterance);
             },
 
             recordResult(isCorrect) {
                 const q = this.questions[this.currentQuestionIndex];
-                q.total = (q.total || 0) + 1;
-                if (isCorrect) q.correct = (q.correct || 0) + 1;
+                q.total++;
+                if (isCorrect) q.correct++;
                 this.saveQuestions();
                 setTimeout(() => this.nextQuestion(), 200);
             }

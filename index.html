@@ -149,6 +149,26 @@
                         <span class="text-sm text-soft-green-100">ブラウザでクイズに挑戦</span>
                     </button>
 
+                    <button onclick="app.switchView('csv-import')" class="bg-white border border-soft-green-100 hover:border-soft-green-300 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-soft-green-400 group-hover:text-soft-green-500 group-hover:scale-110 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                        <span class="text-xl font-bold text-soft-green-800">CSV取込</span>
+                        <span class="text-sm text-soft-green-500 text-center">CSVファイルから問題を追加</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- View: CsvImport -->
+        <div id="view-csv-import" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            <div class="w-full max-w-2xl space-y-6">
+                <div class="flex items-center gap-2 mb-4 text-soft-green-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                    <h2 class="text-2xl font-bold">CSV取込</h2>
+                </div>
+                <p class="text-sm text-soft-green-700 bg-soft-green-50 p-4 rounded-xl border border-soft-green-100">
+                    CSVファイルから問題を追加します。1列目が問題、2列目が解答、3列目が解説です。解説が空欄の場合は、チェックを入れるとAIで補完できます。
+                </p>
                     <div class="bg-white border border-soft-green-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-soft-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                         <span class="text-lg font-bold text-soft-green-800">CSVから取り込む</span>
@@ -171,6 +191,9 @@
                             <input type="checkbox" id="csv-add-explanation" class="w-4 h-4 text-soft-green-600 bg-soft-green-50 border-soft-green-300 rounded focus:ring-soft-green-500">
                             <label for="csv-add-explanation" class="text-xs font-semibold text-soft-green-700 cursor-pointer">AI解説を追加する</label>
                         </div>
+                        <p class="text-[11px] text-soft-green-600 bg-soft-green-50 border border-soft-green-100 rounded-lg px-3 py-2 text-center w-full max-w-[320px]">
+                            AI解説生成上限: 最大<span id="csv-explanation-limit">15</span>問（5問 × 3回のプロンプト）<br>CSVの取り込みを先に完了し、その後に解説を付与します。
+                        </p>
 
                         <input type="file" id="csv-upload" accept=".csv" class="hidden" onchange="app.handleFileUpload(event)">
                         <button id="btn-csv-upload-trigger" onclick="document.getElementById('csv-upload').click()" class="mt-1 px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-700 rounded-full font-semibold transition-colors text-sm">
@@ -182,10 +205,8 @@
                             <p class="text-xs text-soft-green-700 font-semibold text-center" id="csv-loading-text">解説生成中...</p>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
-
         <!-- View: Manager -->
         <div id="view-manager" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
             <div class="w-full max-w-4xl space-y-6">
@@ -243,7 +264,19 @@
                     </div>
 
                     <div id="manager-tab-questions" class="manager-questions-section hidden border-t border-soft-green-200 pt-4">
-                        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4"><div><h3 class="text-lg font-bold text-soft-green-800 mb-1">問題一覧・個別編集</h3><p class="text-sm text-soft-green-600">学習セットを選択し、問題の詳細確認・編集・削除・AI補完ができます。</p></div><div class="text-xs font-semibold text-soft-green-700 bg-white border border-soft-green-200 rounded-lg px-3 py-2 self-start sm:self-auto">表示: <span id="manager-question-visible-count">0</span> / <span id="manager-question-total-count">0</span> 問</div></div>
+                        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-soft-green-800 mb-1">問題一覧・個別編集</h3>
+                                <p class="text-sm text-soft-green-600">学習セットを選択し、問題の詳細確認・編集・削除・AI補完ができます。</p>
+                            </div>
+                            <div class="flex flex-col items-start sm:items-end gap-2">
+                                <div class="text-xs font-semibold text-soft-green-700 bg-white border border-soft-green-200 rounded-lg px-3 py-2 self-start sm:self-auto">表示: <span id="manager-question-visible-count">0</span> / <span id="manager-question-total-count">0</span> 問</div>
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <div id="manager-bulk-genre-status" class="text-xs font-semibold text-soft-green-700 bg-soft-green-50 border border-soft-green-200 rounded-lg px-3 py-2">未設定: 0問 / 1回あたり最大30問</div>
+                                    <button id="manager-bulk-genre-btn" onclick="app.classifyUnsetGenresForManagerSet()" class="px-3 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold transition-colors text-xs shadow-sm whitespace-nowrap">ジャンル一括自動判定</button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="bg-white p-4 rounded-xl border border-soft-green-200 space-y-3">
                             <div><label class="block text-xs font-semibold text-soft-green-700 mb-1">表示する学習セット</label><select id="manager-question-set-select" onchange="app.changeQuestionListSet(this.value)" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm font-semibold text-soft-green-900"></select></div>
                             <input type="text" id="manager-question-search" oninput="app.questionListPage = 1; app.renderQuestionList()" placeholder="問題文・解答・解説・タグで検索" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm">
@@ -256,8 +289,12 @@
                         <p class="text-sm text-soft-green-600 mb-4">正解率が高く、すでに定着している問題を一括で削除します。</p>
                         
                         <div class="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-4 rounded-xl border border-soft-green-200">
-                            <label class="text-sm font-semibold text-soft-green-800">削除対象: 上位</label>
-                            <select id="manager-delete-percent" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                            <label class="text-sm font-semibold text-soft-green-800">削除対象</label>
+                            <select id="manager-delete-mode" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                                <option value="percent">上位割合</option>
+                                <option value="count">上位問題数</option>
+                            </select>
+                            <select id="manager-delete-percent" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
                                 <option value="10">10%</option>
                                 <option value="20">20%</option>
                                 <option value="30">30%</option>
@@ -268,6 +305,7 @@
                                 <option value="80">80%</option>
                                 <option value="90">90%</option>
                             </select>
+                            <input type="text" id="manager-delete-count" maxlength="3" inputmode="numeric" pattern="\d{1,3}" placeholder="問題数（1〜999）" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3)" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm w-full sm:w-40">
                             <button onclick="app.deleteHighAccuracyQuestions()" class="sm:ml-auto bg-soft-green-600 hover:bg-soft-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm w-full sm:w-auto">
                                 実行
                             </button>
@@ -288,7 +326,7 @@
             <div class="w-full max-w-2xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd" /></svg>
-                    <h2 class="text-2xl font-bold">音声作成 (AI & Cloud TTS)</h2>
+                    <h2 class="text-2xl font-bold">音声作成</h2>
                 </div>
                 
                 <p class="text-sm text-soft-green-700 bg-soft-green-50 p-4 rounded-xl border border-soft-green-100">
@@ -354,7 +392,7 @@
             <div class="w-full max-w-2xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 4l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3zM7 13l.8 2.2L10 16l-2.2.8L7 19l-.8-2.2L4 16l2.2-.8L7 13zM14 14l6 6M13 15l2-2 6 6-2 2-6-6z" /></svg>
-                    <h2 class="text-2xl font-bold">音声作成</h2>
+                    <h2 class="text-2xl font-bold">AI問題生成</h2>
                 </div>
 
                 <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-100 shadow-sm space-y-4">
@@ -619,6 +657,10 @@
         const MAX_QUESTIONS_PER_SET = 1500;
         const MAX_TOTAL_QUESTIONS = 10000;
         const MAX_SET_NAME_LENGTH = 30;
+        const BULK_GENRE_CLASSIFY_LIMIT = 30; // 1回のプロンプトで安定してJSON判定しやすい上限の目安
+        const CSV_EXPLANATION_BATCH_SIZE = 5;
+        const CSV_EXPLANATION_PROMPT_LIMIT = 3;
+        const CSV_EXPLANATION_LIMIT = CSV_EXPLANATION_BATCH_SIZE * CSV_EXPLANATION_PROMPT_LIMIT;
         const HIGH_ACCURACY_THRESHOLD = 0.8;
         const HIGH_ACCURACY_MIN_ATTEMPTS = 3;
         const HIGH_ACCURACY_COOLDOWN_DAYS = 7;
@@ -791,7 +833,7 @@
                     this.audioElement.pause();
                 }
 
-                ['dashboard', 'manager', 'dictionary', 'ai-generator', 'audio-export', 'settings', 'quiz'].forEach(id => {
+                ['dashboard', 'csv-import', 'manager', 'dictionary', 'ai-generator', 'audio-export', 'settings', 'quiz'].forEach(id => {
                     document.getElementById(`view-${id}`).classList.add('hidden');
                 });
                 document.getElementById(`view-${viewId}`).classList.remove('hidden');
@@ -1204,7 +1246,7 @@
             switchGenreAnalysisTab(standard) { this.managerGenreStandard = standard === 'qma' ? 'qma' : 'aql'; this.renderManagerStats(); },
             toQMAGenre(aqlGenre) { return QMA_GENRE_MAP[aqlGenre || ''] || 'ノンジャンル'; },
 
-            async getTargetSetId(selectElementId) {
+            async getTargetSetId(selectElementId, defaultSetName = '') {
                 const val = document.getElementById(selectElementId).value;
                 if (val === '_new_') {
                     if (this.studySets.length >= MAX_SETS) {
@@ -1212,7 +1254,8 @@
                         document.getElementById(selectElementId).value = this.studySets[0].id;
                         return null;
                     }
-                    const name = await this.showPromptModal('セットの作成', '新しい学習セットの名前を入力してください', '', '最大30文字', MAX_SET_NAME_LENGTH);
+                    const initialSetName = String(defaultSetName || '').trim().substring(0, MAX_SET_NAME_LENGTH);
+                    const name = await this.showPromptModal('セットの作成', '新しい学習セットの名前を入力してください', initialSetName, '最大30文字', MAX_SET_NAME_LENGTH);
                     if (name === null) {
                         document.getElementById(selectElementId).value = this.studySets[0].id; 
                         return null; 
@@ -1381,7 +1424,7 @@ ${text}
                 const file = input.files[0];
                 if (!file) return;
 
-                const targetSetId = await this.getTargetSetId('csv-target-set');
+                const targetSetId = await this.getTargetSetId('csv-target-set', file.name);
                 if (!targetSetId) {
                     input.value = '';
                     return;
@@ -1449,7 +1492,6 @@ ${text}
             async processCSVText(rawText, targetSet) {
                 let text = rawText;
                 if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-                // 修正: 空文字のチェックを削除し、文字化けを示す置換文字（\uFFFD）が含まれるかを確認
                 if (text.includes('\uFFFD')) {
                     throw new Error('文字化けを検出しました。文字コード(UTF-8 / Shift_JIS)を変更して再試行してください。');
                 }
@@ -1457,7 +1499,6 @@ ${text}
                 
                 const rows = this.parseCSVContent(text);
                 let newItems = [];
-
                 rows.forEach(r => {
                     const q = (r[0] || '').trim();
                     const a = (r[1] || '').trim();
@@ -1473,6 +1514,7 @@ ${text}
 
                 const availableSpace = Math.min(MAX_QUESTIONS_PER_SET - targetSet.questions.length, MAX_TOTAL_QUESTIONS - this.getTotalQuestionCount());
                 if (availableSpace <= 0) throw new Error(`登録上限に達しています（セット上限${MAX_QUESTIONS_PER_SET}問、アプリ全体上限${MAX_TOTAL_QUESTIONS}問）。`);
+
                 if (newItems.length > availableSpace) {
                     const confirmed = await this.showModal('上限オーバー', `セットの登録上限を超えるため、最初の${availableSpace}問のみ追加します。取り込みますか？`);
                     if (!confirmed) return;
@@ -1482,45 +1524,52 @@ ${text}
                     if (!confirmed) return;
                 }
 
-                const uploadBtn = document.getElementById('btn-csv-upload-trigger');
-                const loadingDiv = document.getElementById('csv-loading');
-                const loadingText = document.getElementById('csv-loading-text');
                 const shouldAddExp = document.getElementById('csv-add-explanation')?.checked;
-                const itemsNeedsExp = newItems.filter(item => !item.explanation);
-
-                if (shouldAddExp && itemsNeedsExp.length > 0) {
-                    if (this.geminiApiKey) {
-                        uploadBtn.classList.add('hidden');
-                        loadingDiv.classList.remove('hidden');
-                        loadingDiv.classList.add('flex');
-                        try {
-                            await this.fillExplanationsWithAI(itemsNeedsExp, loadingText);
-                        } catch (e) {
-                            this.showToast(e.message || '一部の解説生成に失敗しましたが、問題は追加します。', 'error');
-                        } finally {
-                            uploadBtn.classList.remove('hidden');
-                            loadingDiv.classList.add('hidden');
-                            loadingDiv.classList.remove('flex');
-                        }
-                    } else {
-                        this.showToast('Gemini APIキー未設定のため、解説自動生成はスキップされます', 'info');
-                    }
-                }
-
                 targetSet.questions.push(...newItems);
                 this.saveStudySets();
                 this.showToast(`${newItems.length}件の問題を取り込みました！`, 'success');
+
+                const itemsNeedsExp = newItems.filter(item => !item.explanation);
+                if (!shouldAddExp || itemsNeedsExp.length === 0) return;
+
+                if (!this.geminiApiKey) {
+                    this.showToast('CSV取り込みは完了しました。Gemini APIキー未設定のため、解説自動生成はスキップしました。', 'info');
+                    return;
+                }
+
+                const targetItems = itemsNeedsExp.slice(0, CSV_EXPLANATION_LIMIT);
+                const skippedCount = Math.max(0, itemsNeedsExp.length - targetItems.length);
+                const uploadBtn = document.getElementById('btn-csv-upload-trigger');
+                const loadingDiv = document.getElementById('csv-loading');
+                const loadingText = document.getElementById('csv-loading-text');
+                if (uploadBtn) uploadBtn.classList.add('hidden');
+                if (loadingDiv) { loadingDiv.classList.remove('hidden'); loadingDiv.classList.add('flex'); }
+
+                try {
+                    if (loadingText) loadingText.textContent = `CSV取り込み完了。AI解説生成中... (0/${targetItems.length})`;
+                    await this.fillExplanationsWithAI(targetItems, loadingText, CSV_EXPLANATION_BATCH_SIZE, CSV_EXPLANATION_PROMPT_LIMIT);
+                    this.saveStudySets();
+                    this.showToast(`AI解説を${targetItems.length}件追加しました${skippedCount ? `（上限超過のため${skippedCount}件は未生成）` : ''}`, 'success');
+                } catch (e) {
+                    this.saveStudySets();
+                    this.showToast(e.message || 'CSV取り込みは完了しましたが、一部の解説生成に失敗しました。', 'error');
+                } finally {
+                    if (uploadBtn) uploadBtn.classList.remove('hidden');
+                    if (loadingDiv) { loadingDiv.classList.add('hidden'); loadingDiv.classList.remove('flex'); }
+                }
             },
 
-            async fillExplanationsWithAI(items, loadingText = null) {
-                const batchSize = 5;
-                for (let i = 0; i < items.length; i += batchSize) {
+            async fillExplanationsWithAI(items, loadingText = null, batchSize = CSV_EXPLANATION_BATCH_SIZE, maxPrompts = Infinity) {
+                let promptsUsed = 0;
+                for (let i = 0; i < items.length && promptsUsed < maxPrompts; i += batchSize) {
                     const batch = items.slice(i, i + batchSize);
+                    promptsUsed++;
                     if (loadingText) loadingText.textContent = `解説生成中... (${Math.min(i + batch.length, items.length)}/${items.length})`;
                     const prompt = `以下の各クイズ問題に対して、簡潔な解説（1〜2文）を作成してください。
 必ず以下のJSON配列形式（文字列の配列）のみを出力してください。Markdownの装飾は不要です。
 ["問題0の解説", "問題1の解説", ...]
 ` + batch.map((item, idx) => `[${idx}] Q:${item.q} A:${item.a}`).join("\n");
+
                     try {
                         const jsonStr = await this.fetchGemini(prompt, true);
                         const cleanStr = jsonStr.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -1543,7 +1592,53 @@ ${text}
             getSubgenreOptionsHTML(genre = '', selectedSubgenre = '', includeAll = false) { const prefix = includeAll ? '<option value="">サブジャンル: すべて</option>' : '<option value="">未設定</option>'; if (genre === '__UNSET__') return prefix; const options = genre ? (this.getAISubgenres()[genre] || []) : []; return prefix + options.map(x=>`<option value="${this.escapeHTML(x)}" ${x===selectedSubgenre?'selected':''}>${this.escapeHTML(x)}</option>`).join(''); },
             updateQuestionFilterOptions() { const gs=document.getElementById('manager-filter-genre'); if(!gs)return; const cur=gs.value||''; gs.innerHTML=this.getGenreOptionsHTML(cur,true); gs.value=cur; this.updateQuestionFilterSubgenreOptions(); },
             updateQuestionFilterSubgenreOptions() { const g=document.getElementById('manager-filter-genre')?.value||''; const ss=document.getElementById('manager-filter-subgenre'); if(!ss)return; const cur=ss.value||''; ss.innerHTML=this.getSubgenreOptionsHTML(g,cur,true); if([...ss.options].some(o=>o.value===cur)) ss.value=cur; },
-            renderQuestionList() { const list=document.getElementById('manager-question-list'), empty=document.getElementById('manager-question-empty'), pager=document.getElementById('manager-question-pager'); if(!list||!empty)return; const set=this.studySets.find(s=>s.id===this.managerSetId); const all=set?set.questions.map(q=>this.normalizeQuestionData(q)):[]; const search=(document.getElementById('manager-question-search')?.value||'').toLowerCase(); const g=document.getElementById('manager-filter-genre')?.value||''; const sg=document.getElementById('manager-filter-subgenre')?.value||''; const filtered=all.filter(q=>((!g)||(g==='__UNSET__'?!q.genre:q.genre===g))&&(!sg||q.subgenre===sg)&&(!search||[q.q,q.a,q.explanation,q.genre,q.subgenre].some(v=>String(v||'').toLowerCase().includes(search)))); const totalEl=document.getElementById('manager-question-total-count'), visibleEl=document.getElementById('manager-question-visible-count'); if(totalEl)totalEl.textContent=all.length; if(visibleEl)visibleEl.textContent=filtered.length; if(filtered.length===0){list.innerHTML='';empty.classList.remove('hidden');if(pager)pager.classList.add('hidden');return;} empty.classList.add('hidden'); const size=10,totalPages=Math.max(1,Math.ceil(filtered.length/size)); this.questionListPage=Math.max(1,Math.min(this.questionListPage||1,totalPages)); const start=(this.questionListPage-1)*size; list.innerHTML=filtered.slice(start,start+size).map((q,i)=>`<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span> / 正解率: ${q.total>0?Math.round((q.correct/q.total)*100)+'%':'--%'}</p></div><button onclick="app.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`).join(''); if(pager){pager.classList.remove('hidden'); const info=document.getElementById('manager-question-page-info'); if(info)info.textContent=`${this.questionListPage} / ${totalPages}`;} },
+            renderQuestionList() { const list=document.getElementById('manager-question-list'), empty=document.getElementById('manager-question-empty'), pager=document.getElementById('manager-question-pager'); if(!list||!empty)return; const set=this.studySets.find(s=>s.id===this.managerSetId); const all=set?set.questions.map(q=>this.normalizeQuestionData(q)):[]; const search=(document.getElementById('manager-question-search')?.value||'').toLowerCase(); const g=document.getElementById('manager-filter-genre')?.value||''; const sg=document.getElementById('manager-filter-subgenre')?.value||''; const filtered=all.filter(q=>((!g)||(g==='__UNSET__'?!q.genre:q.genre===g))&&(!sg||q.subgenre===sg)&&(!search||[q.q,q.a,q.explanation,q.genre,q.subgenre].some(v=>String(v||'').toLowerCase().includes(search)))); const totalEl=document.getElementById('manager-question-total-count'), visibleEl=document.getElementById('manager-question-visible-count'); if(totalEl)totalEl.textContent=all.length; if(visibleEl)visibleEl.textContent=filtered.length; const unsetGenreCount=all.filter(q=>!(q.genre||'').trim()).length; const bulkStatus=document.getElementById('manager-bulk-genre-status'); if(bulkStatus)bulkStatus.textContent=`未設定: ${unsetGenreCount}問 / 1回あたり最大${BULK_GENRE_CLASSIFY_LIMIT}問`; if(filtered.length===0){list.innerHTML='';empty.classList.remove('hidden');if(pager)pager.classList.add('hidden');return;} empty.classList.add('hidden'); const size=10,totalPages=Math.max(1,Math.ceil(filtered.length/size)); this.questionListPage=Math.max(1,Math.min(this.questionListPage||1,totalPages)); const start=(this.questionListPage-1)*size; list.innerHTML=filtered.slice(start,start+size).map((q,i)=>`<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span> / 正解率: ${q.total>0?Math.round((q.correct/q.total)*100)+'%':'--%'}</p></div><button onclick="app.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`).join(''); if(pager){pager.classList.remove('hidden'); const info=document.getElementById('manager-question-page-info'); if(info)info.textContent=`${this.questionListPage} / ${totalPages}`;} },
+            async classifyUnsetGenresForManagerSet(){
+                if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error');
+                const set=this.studySets.find(s=>s.id===this.managerSetId);
+                if(!set)return this.showToast('学習セットが見つかりません','error');
+                const targets=set.questions.filter(q=>!(q.genre||'').trim());
+                if(targets.length===0)return this.showToast('ジャンル未設定の問題はありません','success');
+                const limit=BULK_GENRE_CLASSIFY_LIMIT;
+                const batch=targets.slice(0,limit).map((q,idx)=>({idx,q:this.normalizeQuestionData(q)}));
+                const confirmed=await this.showModal('ジャンル一括自動判定',`ジャンル未設定の問題 ${targets.length}問のうち、1回あたり最大${limit}問を自動判定します。\n今回 ${batch.length}問を判定して保存しますか？`,'判定する','bg-soft-green-600 hover:bg-soft-green-700');
+                if(!confirmed)return;
+                const btn=document.getElementById('manager-bulk-genre-btn');
+                const status=document.getElementById('manager-bulk-genre-status');
+                const oldText=btn?btn.textContent:'';
+                if(btn){btn.disabled=true;btn.textContent='判定中...';btn.classList.add('opacity-70','cursor-not-allowed');}
+                if(status)status.textContent=`${batch.length}問を判定中...`;
+                try{
+                    const candidates=Object.entries(this.getAISubgenres()).map(([g,subs])=>`${g}: ${subs.join('、')}`).join('\n');
+                    const items=batch.map(item=>`[${item.idx}] Q:${item.q.q}\nA:${item.q.a}`).join('\n\n');
+                    const prompt=`以下のクイズ問題を、候補のジャンルとサブジャンルから分類してください。\n出力は必ずJSON配列のみとし、説明文やMarkdownは不要です。\n形式:[{"idx":0,"genre":"ジャンル","subgenre":"サブジャンル"}]\nidxは入力の番号をそのまま返してください。genreは候補ジャンルから、subgenreはそのgenreの候補サブジャンルから選んでください。判断が難しい場合も最も近い候補を1つ選んでください。\n\n候補:\n${candidates}\n\n問題:\n${items}`;
+                    const parsed=this.parseAIJSON(await this.fetchGemini(prompt,true));
+                    if(!Array.isArray(parsed))throw new Error('JSON配列として解析できませんでした');
+                    const defs=this.getAISubgenres();
+                    let updated=0, skipped=0;
+                    parsed.forEach(item=>{
+                        const idx=Number(item.idx);
+                        const target=batch.find(x=>x.idx===idx);
+                        if(!target){skipped++;return;}
+                        const genre=String(item.genre||'').trim();
+                        let subgenre=String(item.subgenre||'').trim();
+                        if(!defs[genre]){skipped++;return;}
+                        if(subgenre&&!defs[genre].includes(subgenre))subgenre='';
+                        target.q.genre=genre;
+                        target.q.subgenre=subgenre;
+                        updated++;
+                    });
+                    this.saveStudySets();
+                    this.renderManagerStats();
+                    this.renderQuestionList();
+                    this.showToast(`${updated}問のジャンルを自動判定して保存しました${skipped?`（スキップ: ${skipped}問）`:''}`,'success');
+                }catch(e){
+                    this.showToast('ジャンル一括自動判定に失敗しました: '+e.message,'error');
+                    this.renderQuestionList();
+                }finally{
+                    if(btn){btn.disabled=false;btn.textContent=oldText||'ジャンル一括自動判定';btn.classList.remove('opacity-70','cursor-not-allowed');}
+                }
+            },
             findManagerQuestionById(id){const set=this.studySets.find(s=>s.id===this.managerSetId); if(!set)return{set:null,q:null,index:-1}; const index=set.questions.findIndex(q=>(q.id||q.questionId)===id); return{set,q:index>=0?this.normalizeQuestionData(set.questions[index]):null,index};},
             openQuestionDetail(id){const r=this.findManagerQuestionById(id); if(!r.q)return this.showToast('問題が見つかりません','error'); document.getElementById('detail-question-id').value=r.q.id; document.getElementById('detail-question-q').value=r.q.q; document.getElementById('detail-question-a').value=r.q.a; document.getElementById('detail-question-explanation').value=r.q.explanation||''; const gs=document.getElementById('detail-question-genre'), ss=document.getElementById('detail-question-subgenre'); gs.innerHTML=this.getGenreOptionsHTML(r.q.genre||'',false); gs.value=r.q.genre||''; ss.innerHTML=this.getSubgenreOptionsHTML(r.q.genre||'',r.q.subgenre||'',false); ss.value=r.q.subgenre||''; const modal=document.getElementById('question-detail-modal'), panel=document.getElementById('question-detail-panel'); modal.classList.remove('hidden'); void modal.offsetWidth; modal.classList.remove('opacity-0'); panel.classList.remove('scale-95');},
             closeQuestionDetail(){const modal=document.getElementById('question-detail-modal'), panel=document.getElementById('question-detail-panel'); modal.classList.add('opacity-0'); panel.classList.add('scale-95'); setTimeout(()=>modal.classList.add('hidden'),300);},
@@ -1568,7 +1663,76 @@ ${text}
                 document.getElementById('stat-accuracy').textContent = attempted > 0 ? `${acc}%` : '--%';
             },
 
-            renderManagerStats() { const set=this.studySets.find(s=>s.id===this.managerSetId); if(!set)return; const total=set.questions.length; document.getElementById('manager-total-count').textContent=total; document.getElementById('manager-capacity-bar').style.width=`${Math.min(100,total/MAX_QUESTIONS_PER_SET*100)}%`; const unanswered=set.questions.filter(q=>(q.total||0)===0).length; const noExp=set.questions.filter(q=>!(q.explanation||'').trim()).length; const noGenre=set.questions.filter(q=>!(q.genre||'').trim()).length; const u=document.getElementById('manager-summary-unanswered'), e=document.getElementById('manager-summary-no-explanation'), g=document.getElementById('manager-summary-no-genre'); if(u)u.textContent=unanswered; if(e)e.textContent=noExp; if(g)g.textContent=noGenre; const chart=document.getElementById('manager-stats-chart'); chart.innerHTML=total?`<p class="text-sm text-soft-green-700">登録済み ${total}問、未回答 ${unanswered}問</p>`:'<p class="text-sm text-soft-green-500 py-2">データがありません</p>'; const tabA=document.getElementById('genre-analysis-tab-aql'), tabQ=document.getElementById('genre-analysis-tab-qma'); if(tabA&&tabQ){tabA.className=`px-3 py-1.5 rounded-lg text-xs font-bold ${this.managerGenreStandard==='aql'?'bg-soft-green-600 text-white':'text-soft-green-800 hover:bg-soft-green-100'}`; tabQ.className=`px-3 py-1.5 rounded-lg text-xs font-bold ${this.managerGenreStandard==='qma'?'bg-soft-green-600 text-white':'text-soft-green-800 hover:bg-soft-green-100'}`;} const genreBox=document.getElementById('manager-genre-summary'); if(genreBox){const map=new Map(); set.questions.forEach(q=>{const aql=q.genre||'未設定'; const name=this.managerGenreStandard==='qma'?this.toQMAGenre(aql):aql; if(!map.has(name))map.set(name,{total:0,attempted:0,correct:0,unanswered:0}); const r=map.get(name); r.total++; r.attempted+=q.total||0; r.correct+=q.correct||0; if((q.total||0)===0)r.unanswered++;}); const label=this.managerGenreStandard==='qma'?'QMA基準':'AQL基準'; const rows=[...map.entries()].sort((a,b)=>b[1].total-a[1].total).map(([name,r])=>`<tr class="border-t border-soft-green-100"><td class="px-3 py-2 font-semibold">${this.escapeHTML(name)}</td><td class="px-3 py-2 text-right">${r.total}</td><td class="px-3 py-2 text-right">${r.attempted?Math.round(r.correct/r.attempted*100)+'%':'--%'}</td><td class="px-3 py-2 text-right">${r.unanswered}</td></tr>`).join(''); genreBox.innerHTML=`<table class="w-full text-sm"><thead class="bg-soft-green-100 text-soft-green-800"><tr><th class="px-3 py-2 text-left">ジャンル（${label}）</th><th class="px-3 py-2 text-right">登録問題数</th><th class="px-3 py-2 text-right">平均正解率</th><th class="px-3 py-2 text-right">未回答数</th></tr></thead><tbody>${rows}</tbody></table>`;} this.updateQuestionFilterOptions(); this.renderQuestionList(); },
+            renderManagerStats() {
+                const set = this.studySets.find(s => s.id === this.managerSetId);
+                if (!set) return;
+                const total = set.questions.length;
+                document.getElementById('manager-total-count').textContent = total;
+                document.getElementById('manager-capacity-bar').style.width = `${Math.min(100, total / MAX_QUESTIONS_PER_SET * 100)}%`;
+
+                const unanswered = set.questions.filter(q => (q.total || 0) === 0).length;
+                const noExp = set.questions.filter(q => !(q.explanation || '').trim()).length;
+                const noGenre = set.questions.filter(q => !(q.genre || '').trim()).length;
+                const u = document.getElementById('manager-summary-unanswered'), e = document.getElementById('manager-summary-no-explanation'), g = document.getElementById('manager-summary-no-genre');
+                if (u) u.textContent = unanswered;
+                if (e) e.textContent = noExp;
+                if (g) g.textContent = noGenre;
+
+                const chart = document.getElementById('manager-stats-chart');
+                if (chart) {
+                    const answered = set.questions.filter(q => (q.total || 0) > 0);
+                    const pctLabel = (count) => total ? `${count}問（${Math.round((count / total) * 100)}%）` : `${count}問（0%）`;
+                    if (!total) {
+                        chart.innerHTML = '<p class="text-sm text-soft-green-500 py-2">データがありません</p>';
+                    } else {
+                        const bins = [
+                            { label: '0〜19%', min: 0, max: 0.2, count: 0 },
+                            { label: '20〜39%', min: 0.2, max: 0.4, count: 0 },
+                            { label: '40〜59%', min: 0.4, max: 0.6, count: 0 },
+                            { label: '60〜79%', min: 0.6, max: 0.8, count: 0 },
+                            { label: '80〜100%', min: 0.8, max: 1.01, count: 0 }
+                        ];
+                        answered.forEach(q => {
+                            const ratio = this.getAccuracyRatio(q);
+                            const bin = bins.find(b => ratio >= b.min && ratio < b.max) || bins[bins.length - 1];
+                            bin.count++;
+                        });
+                        const maxCount = Math.max(1, unanswered, ...bins.map(b => b.count));
+                        const rows = bins.map(b => {
+                            const width = Math.max(2, Math.round((b.count / maxCount) * 100));
+                            return `<div class="flex items-center gap-2"><div class="w-20 text-xs font-bold text-soft-green-700">${b.label}</div><div class="flex-1 bg-soft-green-100 rounded-full h-5 overflow-hidden"><div class="bg-soft-green-500 h-5 rounded-full transition-all" style="width:${width}%"></div></div><div class="w-24 text-right text-xs font-bold text-soft-green-800">${pctLabel(b.count)}</div></div>`;
+                        }).join('');
+                        const unansweredWidth = Math.max(2, Math.round((unanswered / maxCount) * 100));
+                        chart.innerHTML = `<div class="space-y-2"><p class="text-sm text-soft-green-700 font-semibold">登録済み ${total}問、解答済み ${answered.length}問、未回答 ${unanswered}問</p>${rows}<div class="flex items-center gap-2 pt-1 border-t border-soft-green-100"><div class="w-20 text-xs font-bold text-soft-green-500">未回答</div><div class="flex-1 bg-soft-green-50 rounded-full h-5 overflow-hidden"><div class="bg-soft-green-300 h-5 rounded-full transition-all" style="width:${unansweredWidth}%"></div></div><div class="w-24 text-right text-xs font-bold text-soft-green-700">${pctLabel(unanswered)}</div></div></div>`;
+                    }
+                }
+
+                const tabA = document.getElementById('genre-analysis-tab-aql'), tabQ = document.getElementById('genre-analysis-tab-qma');
+                if (tabA && tabQ) {
+                    tabA.className = `px-3 py-1.5 rounded-lg text-xs font-bold ${this.managerGenreStandard === 'aql' ? 'bg-soft-green-600 text-white' : 'text-soft-green-800 hover:bg-soft-green-100'}`;
+                    tabQ.className = `px-3 py-1.5 rounded-lg text-xs font-bold ${this.managerGenreStandard === 'qma' ? 'bg-soft-green-600 text-white' : 'text-soft-green-800 hover:bg-soft-green-100'}`;
+                }
+
+                const genreBox = document.getElementById('manager-genre-summary');
+                if (genreBox) {
+                    const map = new Map();
+                    set.questions.forEach(q => {
+                        const aql = q.genre || '未設定';
+                        const name = this.managerGenreStandard === 'qma' ? this.toQMAGenre(aql) : aql;
+                        if (!map.has(name)) map.set(name, { total: 0, attempted: 0, correct: 0, unanswered: 0 });
+                        const r = map.get(name);
+                        r.total++;
+                        r.attempted += q.total || 0;
+                        r.correct += q.correct || 0;
+                        if ((q.total || 0) === 0) r.unanswered++;
+                    });
+                    const label = this.managerGenreStandard === 'qma' ? 'QMA基準' : 'AQL基準';
+                    const rows = [...map.entries()].sort((a, b) => b[1].total - a[1].total).map(([name, r]) => `<tr class="border-t border-soft-green-100"><td class="px-3 py-2 font-semibold">${this.escapeHTML(name)}</td><td class="px-3 py-2 text-right">${r.total}</td><td class="px-3 py-2 text-right">${r.attempted ? Math.round(r.correct / r.attempted * 100) + '%' : '--%'}</td><td class="px-3 py-2 text-right">${r.unanswered}</td></tr>`).join('');
+                    genreBox.innerHTML = `<table class="w-full text-sm"><thead class="bg-soft-green-100 text-soft-green-800"><tr><th class="px-3 py-2 text-left">ジャンル（${label}）</th><th class="px-3 py-2 text-right">登録問題数</th><th class="px-3 py-2 text-right">平均正解率</th><th class="px-3 py-2 text-right">未回答数</th></tr></thead><tbody>${rows}</tbody></table>`;
+                }
+                this.updateQuestionFilterOptions();
+                this.renderQuestionList();
+            },
             async clearManagerSetData() {
                 const targetSet = this.studySets.find(s => s.id === this.managerSetId);
                 const confirmed = await this.showModal('確認', `学習セット「${targetSet.name}」の問題をすべてリセットしますか？\nセット自体は削除されません。`, 'リセットする', 'bg-red-600 hover:bg-red-700');
@@ -1583,18 +1747,28 @@ ${text}
             async deleteHighAccuracyQuestions() {
                 const targetSet = this.studySets.find(s => s.id === this.managerSetId);
                 if (targetSet.questions.length === 0) return this.showToast('問題がありません', 'error');
-                const p = parseInt(document.getElementById('manager-delete-percent').value, 10);
+                const mode = document.getElementById('manager-delete-mode')?.value || 'percent';
+                const percent = parseInt(document.getElementById('manager-delete-percent').value, 10);
+                const inputCount = parseInt(document.getElementById('manager-delete-count')?.value || '', 10);
                 
-                const confirmed = await this.showModal('確認', `正解率上位 ${p}% の問題を削除しますか？`, '削除する', 'bg-red-600 hover:bg-red-700');
-                if (!confirmed) return;
-
-                // 正解率0%の問題は、定着済みとはみなさず削除対象から除外する
                 const deletable = targetSet.questions.filter(q => q.total > 0 && (q.correct / q.total) > 0);
                 if (deletable.length === 0) return this.showToast('削除対象の問題がありません（正解率0%の問題は削除されません）', 'error');
-                deletable.sort((a, b) => { const accA = a.correct / a.total; const accB = b.correct / b.total; if (accA !== accB) return accB - accA; return b.total - a.total; });
-                const deleteCount = Math.ceil(deletable.length * (p / 100));
-                const toDeleteIds = new Set(deletable.slice(0, deleteCount).map(q => q.id));
 
+                deletable.sort((a, b) => { const accA = a.correct / a.total; const accB = b.correct / b.total; if (accA !== accB) return accB - accA; return b.total - a.total; });
+                let deleteCount = 0;
+                let label = '';
+                if (mode === 'count') {
+                    if (!Number.isInteger(inputCount) || inputCount < 1 || inputCount > 999) return this.showToast('削除する問題数は1〜999の整数で入力してください', 'error');
+                    deleteCount = Math.min(inputCount, deletable.length);
+                    label = `上位 ${deleteCount}問`;
+                } else {
+                    deleteCount = Math.ceil(deletable.length * (percent / 100));
+                    label = `正解率上位 ${percent}%（${deleteCount}問）`;
+                }
+                
+                const confirmed = await this.showModal('確認', `${label} の問題を削除しますか？`, '削除する', 'bg-red-600 hover:bg-red-700');
+                if (!confirmed) return;
+                const toDeleteIds = new Set(deletable.slice(0, deleteCount).map(q => q.id));
                 const initialLen = targetSet.questions.length;
                 targetSet.questions = targetSet.questions.filter(q => !toDeleteIds.has(q.id));
                 
@@ -1602,7 +1776,6 @@ ${text}
                 this.renderManagerStats();
                 this.showToast(`${initialLen - targetSet.questions.length}問を削除しました`, 'success');
             },
-
             async handleDictionaryFileUpload(event) {
                 const input = event.target; const file = input.files[0]; if (!file) return;
                 try {
@@ -1708,9 +1881,12 @@ ${text}
                 loader.classList.add('flex');
 
                 let contextStr = [];
+                const genreDefs = this.getAISubgenres();
+                const genreCandidates = Object.entries(genreDefs).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
                 if (genre) contextStr.push(`ジャンル: ${genre}`);
+                else contextStr.push(`ジャンル: 問題ごとに以下の候補から最も適切なものを必ず1つ選び、JSONのgenreに出力すること\n${genreCandidates}`);
                 contextStr.push(`難易度: ${difficulty}（この難易度に合う語彙・知識レベルで作成すること）`);
-                contextStr.push('各問題には必ずサブジャンルを設定し、JSONのsubgenreに出力すること');
+                contextStr.push('各問題には必ずジャンルとサブジャンルを設定し、JSONのgenreとsubgenreに出力すること');
                 if (subgenre) contextStr.push(`サブジャンル: ${subgenre}（このサブジャンルを全般的に満たす問題を作成すること）`);
                 if (topic) contextStr.push(`テーマ・キーワード: ${topic}`);
 
@@ -1728,6 +1904,7 @@ ${contextStr.join('\n')}
     "q": "問題文",
     "a": "解答（短い単語）",
     "explanation": "解説文",
+    "genre": "ジャンル",
     "subgenre": "サブジャンル"
   }
 ]
@@ -1745,8 +1922,12 @@ ${contextStr.join('\n')}
                     if (Array.isArray(parsed)) {
                         parsed.forEach(item => {
                             if (item.q && item.a) {
-                                const assignedSubgenre = item.subgenre || subgenre || (genre ? ((this.getAISubgenres()[genre] || [])[0] || '') : '');
-                                targetSet.questions.push(this.createQuestionData(item.q, item.a, item.explanation || "", { genre: item.genre || genre, subgenre: assignedSubgenre, difficulty }));
+                                const defs = this.getAISubgenres();
+                                let assignedGenre = item.genre || genre;
+                                if (!defs[assignedGenre]) assignedGenre = genre || 'ノンセク';
+                                let assignedSubgenre = item.subgenre || subgenre || ((defs[assignedGenre] || [])[0] || '');
+                                if (assignedSubgenre && !(defs[assignedGenre] || []).includes(assignedSubgenre)) assignedSubgenre = (defs[assignedGenre] || [])[0] || '';
+                                targetSet.questions.push(this.createQuestionData(item.q, item.a, item.explanation || "", { genre: assignedGenre, subgenre: assignedSubgenre, difficulty }));
                             }
                         });
                         this.saveStudySets();

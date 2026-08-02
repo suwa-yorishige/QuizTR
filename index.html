@@ -513,18 +513,25 @@
 
         <!-- View: Quiz -->
         <div id="view-quiz" class="absolute inset-0 bg-soft-green-900 text-white hidden flex flex-col fade-in overflow-y-auto">
-            <div class="p-3 md:p-4 flex justify-between items-center bg-soft-green-950 shrink-0 sticky top-0 z-10">
-                <div class="flex items-center gap-2">
-                    <button onclick="app.switchView('dashboard')" class="text-soft-green-300 hover:text-white flex items-center gap-1 text-sm font-semibold transition-colors">
+            <div class="p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 bg-soft-green-950 shrink-0 sticky top-0 z-10">
+                <div class="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+                    <button onclick="app.switchView('dashboard')" class="text-soft-green-300 hover:text-white flex items-center gap-1 text-sm font-semibold transition-colors shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
                         終了
                     </button>
-                    <button onclick="app.showQuizShortcutHelp()" class="text-soft-green-200 hover:text-white bg-soft-green-800 hover:bg-soft-green-700 border border-soft-green-700 px-3 py-1.5 rounded-full flex items-center gap-1 text-xs md:text-sm font-semibold transition-colors" title="ショートカットキー" aria-label="ショートカットキーの説明を表示">
+                    <button onclick="app.showQuizShortcutHelp()" class="text-soft-green-200 hover:text-white bg-soft-green-800 hover:bg-soft-green-700 border border-soft-green-700 px-2.5 py-1.5 rounded-full flex items-center gap-1 text-xs md:text-sm font-semibold transition-colors shrink-0" title="ショートカットキー" aria-label="ショートカットキーの説明を表示">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9h.01M12 9h.01M16 9h.01M7 13h10M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" /></svg>
                         <span>ショートカットキー説明</span>
                     </button>
                 </div>
-                <div class="flex flex-col items-end gap-1">
+                <div class="sm:hidden w-full bg-soft-green-900/80 border border-soft-green-800 rounded-xl px-3 py-2 text-soft-green-100 shadow-inner">
+                    <div id="quiz-mobile-source-set" class="text-[11px] font-semibold text-soft-green-200 truncate">出題元：--</div>
+                    <div class="mt-1 flex items-center justify-between gap-2 text-[11px] font-semibold">
+                        <span id="quiz-mobile-progress" class="truncate">--問目／全--問</span>
+                        <span class="shrink-0">正解率: <span id="quiz-mobile-accuracy">--</span>%</span>
+                    </div>
+                </div>
+                <div class="hidden sm:flex flex-col items-end gap-1">
                     <div id="quiz-source-set" class="text-soft-green-100 text-xs md:text-sm font-semibold bg-soft-green-800 px-3 py-1 rounded-full border border-soft-green-700 max-w-[220px] sm:max-w-xs truncate">出題元：--</div>
                     <div id="quiz-progress" class="text-soft-green-100 text-xs md:text-sm font-semibold bg-soft-green-800 px-3 py-1 rounded-full border border-soft-green-700">--問目／全--問（--％完了）</div>
                     <div class="text-soft-green-100 text-sm font-medium bg-soft-green-800 px-3 py-1 rounded-full border border-soft-green-700">現在の問題の正解率: <span id="quiz-current-accuracy">--</span>%</div>
@@ -1961,6 +1968,8 @@ ${contextStr.join('\n')}
                 this.switchView('quiz');
                 const sourceEl = document.getElementById('quiz-source-set');
                 if (sourceEl) sourceEl.textContent = `出題元：${targetSet.name}`;
+                const mobileSourceEl = document.getElementById('quiz-mobile-source-set');
+                if (mobileSourceEl) mobileSourceEl.textContent = `出題元：${targetSet.name}`;
                 this.nextQuestion();
             },
 
@@ -1983,15 +1992,21 @@ ${contextStr.join('\n')}
                 this.saveStudySets();
                 const currentNo = this.quizSessionSeenQuestionIds.size;
                 const totalQuestions = questions.length;
+                const progressText = `${currentNo}問目／全${totalQuestions}問（${Math.round((currentNo / totalQuestions) * 100)}％完了）`;
                 const progressEl = document.getElementById('quiz-progress');
-                if (progressEl) progressEl.textContent = `${currentNo}問目／全${totalQuestions}問（${Math.round((currentNo / totalQuestions) * 100)}％完了）`;
+                if (progressEl) progressEl.textContent = progressText;
+                const mobileProgressEl = document.getElementById('quiz-mobile-progress');
+                if (mobileProgressEl) mobileProgressEl.textContent = `${currentNo}/${totalQuestions}問・${Math.round((currentNo / totalQuestions) * 100)}％`;
 
                 document.getElementById('quiz-state-playing').classList.remove('hidden');
                 document.getElementById('quiz-state-thinking').classList.add('hidden');
                 document.getElementById('answer-container').classList.add('hidden');
                 document.getElementById('btn-show-answer').classList.remove('hidden');
 
-                document.getElementById('quiz-current-accuracy').textContent = q.total > 0 ? Math.round((q.correct / q.total) * 100) : '--';
+                const accuracyText = q.total > 0 ? Math.round((q.correct / q.total) * 100) : '--';
+                document.getElementById('quiz-current-accuracy').textContent = accuracyText;
+                const mobileAccuracyEl = document.getElementById('quiz-mobile-accuracy');
+                if (mobileAccuracyEl) mobileAccuracyEl.textContent = accuracyText;
                 document.getElementById('quiz-question-text').textContent = q.q;
                 document.getElementById('quiz-answer-text').textContent = q.a;
                 document.getElementById('quiz-explanation-text').textContent = q.explanation || '解説はありません。';

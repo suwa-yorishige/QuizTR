@@ -366,7 +366,7 @@
                             <div id="audio-export-progress-bar" class="bg-soft-green-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                         <p id="audio-export-status" class="text-sm font-semibold text-soft-green-800">準備中...</p>
-                        <p class="text-xs text-soft-green-600">※APIを利用して音声を生成するため、数十秒かかる場合があります。</p>
+                        <p class="text-xs text-soft-green-600">※音声は最大3件ずつ並列生成します。問題数や文章量により時間がかかる場合があります。</p>
                     </div>
 
                     <div id="audio-export-result" class="hidden flex flex-col gap-3 mt-4 border-t border-soft-green-200 pt-4">
@@ -1985,118 +1985,88 @@ ${contextStr.join('\n')}
                 return new Blob(mp3Data, { type: 'audio/mp3' });
             },
 
+            escapeXML(text) {
+                return String(text ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+            },
+            buildQuestionSSML(q, isLast, includeExp) {
+                const prefix = isLast ? '最終問題です' : '問題';
+                const question = this.escapeXML(this.applyDictionary(q.q));
+                const answer = this.escapeXML(this.applyDictionary(q.a));
+                const explanation = this.escapeXML(this.applyDictionary(q.explanation || ''));
+                return `<speak>${prefix}<break time="1s"/>${question}<break time="1s"/>${answer}${includeExp && explanation ? `<break time="1s"/>${explanation}` : ''}<break time="2s"/></speak>`;
+            },
+            async mapWithConcurrency(items, limit, worker) {
+                const results = new Array(items.length);
+                let nextIndex = 0;
+                const run = async () => {
+                    while (true) {
+                        const index = nextIndex++;
+                        if (index >= items.length) return;
+                        results[index] = await worker(items[index], index);
+                    }
+                };
+                await Promise.all(Array.from({length: Math.min(limit, items.length)}, run));
+                return results;
+            },
             async startAudioExport() {
                 if (!this.ttsApiKey) return this.showToast('設定画面でGoogle Cloud Text-to-Speech APIキーを登録してください', 'error');
-                
                 const targetSetId = document.getElementById('audio-export-target-set').value;
                 const targetSet = this.studySets.find(s => s.id === targetSetId);
                 const questions = targetSet ? targetSet.questions : [];
-                
-                if (questions.length === 0) return this.showToast('対象のセットに問題が登録されていません', 'error');
-
+                if (!questions.length) return this.showToast('対象のセットに問題が登録されていません', 'error');
                 const count = parseInt(document.getElementById('audio-export-count').value, 10);
                 const includeExp = document.getElementById('audio-export-explanation').checked;
-                
-                const shuffled = [...questions].sort(() => 0.5 - Math.random());
+                const shuffled = [...questions];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
                 const selected = shuffled.slice(0, Math.min(count, shuffled.length));
-
-                document.getElementById('btn-start-export').classList.add('hidden');
-                document.getElementById('audio-export-result').classList.add('hidden');
+                const startBtn = document.getElementById('btn-start-export');
                 const progContainer = document.getElementById('audio-export-progress-container');
                 const progBar = document.getElementById('audio-export-progress-bar');
                 const progStatus = document.getElementById('audio-export-status');
-                
-                progContainer.classList.remove('hidden');
-                progContainer.classList.add('flex');
-                progBar.style.width = '0%';
-
-                const updateProg = (msg, pct) => {
-                    progStatus.textContent = msg;
-                    progBar.style.width = `${pct}%`;
-                };
-
-                let audioCtx = null;
-                
+                startBtn.classList.add('hidden');
+                document.getElementById('audio-export-result').classList.add('hidden');
+                progContainer.classList.remove('hidden'); progContainer.classList.add('flex');
+                const updateProg = (msg, pct) => { progStatus.textContent = msg; progBar.style.width = `${pct}%`; };
+                updateProg('準備中...', 0);
+                let decodeCtx = null;
                 try {
-                    const dummyCtx = new (window.AudioContext || window.webkitAudioContext)();
                     const targetSampleRate = 24000;
-                    dummyCtx.close();
-                    
-                    audioCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 1, targetSampleRate);
-
-                    const sequenceBuffers = [];
-                    let totalLength = 0;
-                    const oneSecSilence = this.createSilentBuffer(audioCtx, 1.0);
-                    const twoSecSilence = this.createSilentBuffer(audioCtx, 2.0);
-
-                    for (let i = 0; i < selected.length; i++) {
-                        const q = selected[i];
-                        updateProg(`音声生成中 (${i + 1}/${selected.length})...`, (i / selected.length) * 90);
-
-                        const prefixText = (i === selected.length - 1) ? "最終問題です" : "問題";
-                        const prefixB64 = await this.fetchCloudTextToSpeechAPI(`<speak>${prefixText}</speak>`);
-                        const prefixBuf = this.base64ToAudioBuffer(prefixB64, audioCtx);
-                        sequenceBuffers.push(prefixBuf, oneSecSilence);
-                        totalLength += prefixBuf.length + oneSecSilence.length;
-
-                        const qSSML = await this.fetchGeminiSSML(q.q);
-                        const qB64 = await this.fetchCloudTextToSpeechAPI(qSSML);
-                        const qBuf = this.base64ToAudioBuffer(qB64, audioCtx);
-                        sequenceBuffers.push(qBuf, oneSecSilence);
-                        totalLength += qBuf.length + oneSecSilence.length;
-
-                        const aSSML = await this.fetchGeminiSSML(q.a);
-                        const aB64 = await this.fetchCloudTextToSpeechAPI(aSSML);
-                        const aBuf = this.base64ToAudioBuffer(aB64, audioCtx);
-                        
-                        if (includeExp && q.explanation) {
-                            sequenceBuffers.push(aBuf, oneSecSilence);
-                            totalLength += aBuf.length + oneSecSilence.length;
-                            
-                            const eSSML = await this.fetchGeminiSSML(q.explanation);
-                            const eB64 = await this.fetchCloudTextToSpeechAPI(eSSML);
-                            const eBuf = this.base64ToAudioBuffer(eB64, audioCtx);
-                            
-                            sequenceBuffers.push(eBuf, twoSecSilence);
-                            totalLength += eBuf.length + twoSecSilence.length;
-                        } else {
-                            sequenceBuffers.push(aBuf, twoSecSilence);
-                            totalLength += aBuf.length + twoSecSilence.length;
-                        }
-                    }
-
-                    updateProg("音声を結合・MP3変換中...", 95);
-                    
+                    decodeCtx = new (window.AudioContext || window.webkitAudioContext)({sampleRate: targetSampleRate});
+                    let completed = 0;
+                    const buffers = await this.mapWithConcurrency(selected, 3, async (q, i) => {
+                        const ssml = this.buildQuestionSSML(q, i === selected.length - 1, includeExp);
+                        const b64 = await this.fetchCloudTextToSpeechAPI(ssml);
+                        const buffer = this.base64ToAudioBuffer(b64, decodeCtx);
+                        completed++;
+                        updateProg(`音声生成中 (${completed}/${selected.length})...`, completed / selected.length * 90);
+                        return buffer;
+                    });
+                    await decodeCtx.close(); decodeCtx = null;
+                    updateProg('音声を結合・MP3変換中...', 95);
+                    const totalLength = buffers.reduce((sum, b) => sum + b.length, 0);
                     const renderCtx = new OfflineAudioContext(1, totalLength, targetSampleRate);
                     let offset = 0;
-                    for (const buf of sequenceBuffers) {
-                        const source = renderCtx.createBufferSource();
-                        source.buffer = buf;
-                        source.connect(renderCtx.destination);
-                        source.start(offset / targetSampleRate);
-                        offset += buf.length;
+                    for (const buf of buffers) {
+                        const source = renderCtx.createBufferSource(); source.buffer = buf;
+                        source.connect(renderCtx.destination); source.start(offset / targetSampleRate); offset += buf.length;
                     }
-
                     const finalBuffer = await renderCtx.startRendering();
                     this.exportedAudioBlob = this.encodeMonoAudioBufferToMP3(finalBuffer);
-                    
                     if (this.exportedAudioUrl) URL.revokeObjectURL(this.exportedAudioUrl);
                     this.exportedAudioUrl = URL.createObjectURL(this.exportedAudioBlob);
-
-                    updateProg("完了！", 100);
+                    updateProg('完了！', 100);
                     setTimeout(() => {
-                        progContainer.classList.add('hidden');
-                        progContainer.classList.remove('flex');
+                        progContainer.classList.add('hidden'); progContainer.classList.remove('flex');
                         document.getElementById('audio-export-result').classList.remove('hidden');
-                        document.getElementById('btn-start-export').classList.remove('hidden');
-                        document.getElementById('btn-start-export').textContent = "もう一度作成する";
+                        startBtn.classList.remove('hidden'); startBtn.textContent = 'もう一度作成する';
                     }, 500);
-
                 } catch (e) {
+                    if (decodeCtx) decodeCtx.close().catch(() => {});
                     this.showToast(e.message, 'error');
-                    progContainer.classList.add('hidden');
-                    progContainer.classList.remove('flex');
-                    document.getElementById('btn-start-export').classList.remove('hidden');
+                    progContainer.classList.add('hidden'); progContainer.classList.remove('flex'); startBtn.classList.remove('hidden');
                 }
             },
 

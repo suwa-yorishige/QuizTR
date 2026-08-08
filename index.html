@@ -84,12 +84,16 @@
             padding-right: env(safe-area-inset-right, 0px);
         }
         body > header {
+            position: relative;
+            z-index: 200;
+            flex: 0 0 auto;
+            width: 100%;
             padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
             padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
             padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
             min-height: 3.5rem;
         }
-        body > main { min-height: 0; }
+        body > main { min-height: 0; flex: 1 1 0%; }
         main > [id^="view-"] {
             padding-bottom: max(6rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
             scroll-padding-bottom: max(6rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
@@ -130,9 +134,9 @@
     </style>
 </head>
 
-<body class="h-screen w-full overflow-hidden flex flex-col font-sans">
+<body class="w-full overflow-hidden flex flex-col font-sans">
 
-    <header class="bg-soft-green-600 text-white p-3 md:p-4 shadow-md flex justify-between items-center shrink-0 z-20">
+    <header class="bg-soft-green-600 text-white p-3 md:p-4 shadow-md flex justify-between items-center shrink-0 z-[200]">
         <h1 class="text-lg md:text-xl font-bold tracking-wider flex items-center gap-2 cursor-pointer truncate" onclick="app.switchView('dashboard')">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="8" />
@@ -143,6 +147,10 @@
         </h1>
         
         <div class="flex gap-1 md:gap-2 overflow-x-auto no-scrollbar shrink-0">
+            <button onclick="app.switchView('csv-import')" class="px-2 py-2 hover:bg-soft-green-700 rounded-full transition-colors flex items-center gap-1" title="CSV取込" aria-label="CSV取込">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                <span class="hidden md:inline text-sm font-semibold whitespace-nowrap">CSV取込</span>
+            </button>
             <button onclick="app.switchView('manager')" class="px-2 py-2 hover:bg-soft-green-700 rounded-full transition-colors flex items-center gap-1" title="問題管理" aria-label="問題管理">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h6m-7 4h8m-8 4h5m-7 7h12a2 2 0 002-2V7a2 2 0 00-2-2h-2.5a2 2 0 00-2-2h-3a2 2 0 00-2 2H6a2 2 0 00-2 2v11a2 2 0 002 2z" /></svg>
                 <span class="hidden md:inline text-sm font-semibold whitespace-nowrap">問題管理</span>
@@ -197,16 +205,15 @@
                 </div>
 
                 <div class="grid md:grid-cols-2 gap-4">
-                    <button onclick="app.startQuiz()" class="bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-2xl p-6 shadow-md shadow-soft-green-200 transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        <span class="text-xl font-bold">トレーニング開始</span>
-                        <span class="text-sm text-soft-green-100">ブラウザでクイズに挑戦</span>
+                    <button onclick="app.startQuiz('voice')" class="bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-2xl p-6 shadow-md shadow-soft-green-200 transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                        <span class="text-xl font-bold">音声モード</span>
+                        <span class="text-sm text-soft-green-100">問題文を音声で聞いて早押し</span>
                     </button>
-
-                    <button onclick="app.switchView('csv-import')" class="bg-white border border-soft-green-100 hover:border-soft-green-300 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-soft-green-400 group-hover:text-soft-green-500 group-hover:scale-110 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                        <span class="text-xl font-bold text-soft-green-800">CSV取込</span>
-                        <span class="text-sm text-soft-green-500 text-center">CSVファイルから問題を追加</span>
+                    <button onclick="app.startQuiz('text')" class="bg-white border border-soft-green-200 hover:border-soft-green-400 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-soft-green-500 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h8" /></svg>
+                        <span class="text-xl font-bold text-soft-green-800">文章モード</span>
+                        <span class="text-sm text-soft-green-600">問題文を先頭から表示して早押し</span>
                     </button>
                 </div>
             </div>
@@ -403,8 +410,21 @@
                             <option value="30">30問</option>
                             <option value="40">40問</option>
                             <option value="50">50問</option>
+                            <option value="60">60問</option>
+                            <option value="70">70問</option>
+                            <option value="80">80問</option>
+                            <option value="90">90問</option>
+                            <option value="100">100問</option>
                         </select>
-                        <p class="text-xs text-soft-green-600 mt-2">※対象セットからランダムに選択されます。</p>
+                        <p class="text-xs text-soft-green-600 mt-2">※選択した優先順で抽出し、同順位内はランダムに並べます。</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">読み上げ対象の優先順</label>
+                        <select id="audio-export-priority" class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                            <option value="unanswered">未回答の問題を優先して出力する</option>
+                            <option value="low-accuracy">正解率の低い問題を優先して出力する</option>
+                        </select>
+                        <p class="text-xs text-soft-green-600 mt-2">※正解率の低い問題は、回答済みかつ正解率50%未満です。消化後は未回答の問題を第2優先にします。</p>
                     </div>
                     
                     <div class="flex items-center mt-2 bg-white p-3 rounded-lg border border-soft-green-200">
@@ -634,9 +654,12 @@
             
             <div class="flex-1 flex flex-col items-center justify-start md:justify-center p-4 md:p-6 w-full max-w-3xl mx-auto pb-24">
                 <div id="quiz-state-playing" class="w-full flex flex-col items-center justify-center space-y-8 md:space-y-12 my-auto h-full">
-                    <div class="text-center text-soft-green-200">
+                    <div id="quiz-voice-indicator" class="text-center text-soft-green-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
                         <p class="text-lg md:text-xl font-bold tracking-widest">ブラウザの合成音声で出題中</p>
+                    </div>
+                    <div id="quiz-text-reveal-container" class="hidden w-full max-w-2xl bg-soft-green-800 border border-soft-green-700 rounded-2xl p-5 md:p-8 shadow-xl">
+                        <p id="quiz-text-reveal" class="text-lg md:text-2xl font-medium leading-relaxed text-soft-green-50 min-h-[7rem] whitespace-pre-wrap"></p>
                     </div>
                     <button onclick="app.buzz()" class="buzzer-btn w-40 h-40 md:w-48 md:h-48 rounded-full flex items-center justify-center text-white font-bold text-2xl md:text-3xl outline-none focus:ring-4 focus:ring-red-400">
                         早押し！
@@ -661,7 +684,7 @@
                                 <button id="quiz-image-search-btn" onclick="app.searchCurrentQuizImage()" class="px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">画像検索 <span class="text-xs opacity-80">Google画像</span></button>
                                 <button id="quiz-derivative-btn" onclick="app.startDerivativeCreation()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">デリバティブを作成する</button>
                             </div>
-                            <button id="quiz-ai-explanation-btn" onclick="app.generateExplanationForCurrentQuizQuestion()" class="hidden mb-6 px-4 py-2 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-lg font-bold text-sm">AI解説を追加 <span class="ml-1 text-xs opacity-80">[G]</span></button>
+                            <button id="quiz-edit-question-btn" onclick="app.openCurrentQuizQuestionDetail()" class="mb-6 px-4 py-2 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-lg font-bold text-sm">問題編集</button>
                             
                             <p class="text-sm text-soft-green-300 mb-3">この問題は正解できましたか？</p>
                             <div class="flex flex-col sm:flex-row gap-3 md:gap-4 w-full">
@@ -686,7 +709,7 @@
     </main>
 
     <!-- Custom Modal -->
-    <div id="custom-modal" class="hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div id="custom-modal" class="hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[130] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300" id="custom-modal-panel">
             <div class="p-6">
                 <h3 class="text-xl font-bold text-soft-green-900 mb-2" id="modal-title">確認</h3>
@@ -705,7 +728,7 @@
     </div>
 
     <!-- Question Detail Modal -->
-    <div id="question-detail-modal" class="hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300" id="question-detail-panel"><div class="p-5 md:p-6 space-y-4"><div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3"><div><h3 class="text-xl font-bold text-soft-green-900">問題の詳細・編集</h3><p class="text-xs text-soft-green-600 mt-1" id="question-detail-meta">--</p></div><button onclick="app.closeQuestionDetail()" class="text-soft-green-500 hover:text-soft-green-800 font-bold text-xl leading-none">×</button></div><input type="hidden" id="detail-question-id"><div><label class="block text-sm font-bold text-soft-green-800 mb-1">問題文</label><textarea id="detail-question-q" rows="4" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea></div><div><label class="block text-sm font-bold text-soft-green-800 mb-1">解答</label><input type="text" id="detail-question-a" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></div><div><div class="flex items-center justify-between gap-2 mb-2"><label class="block text-sm font-bold text-soft-green-800">ジャンル設定</label><button id="detail-ai-genre-btn" onclick="app.classifyQuestionGenreForDetail()" class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">ジャンルの自動判定</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-xs font-semibold text-soft-green-700 mb-1">ジャンル</label><select id="detail-question-genre" onchange="app.handleQuestionDetailGenreChange()" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select></div><div><label class="block text-xs font-semibold text-soft-green-700 mb-1">サブジャンル</label><select id="detail-question-subgenre" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select></div></div></div><div><div class="flex items-center justify-between gap-2 mb-1"><label class="block text-sm font-bold text-soft-green-800">解説</label><button id="detail-ai-explanation-btn" onclick="app.generateExplanationForQuestion()" class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">AI解説を再セット</button></div><textarea id="detail-question-explanation" rows="4" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea></div><div class="flex flex-col sm:flex-row gap-3 justify-between pt-2"><button onclick="app.deleteQuestionFromDetail()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors text-sm">この問題を削除</button><div class="flex flex-col sm:flex-row gap-3"><button onclick="app.closeQuestionDetail()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors text-sm">キャンセル</button><button onclick="app.saveQuestionDetail()" class="px-5 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold transition-colors shadow-md text-sm">保存する</button></div></div></div></div></div>
+    <div id="question-detail-modal" class="hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300" id="question-detail-panel"><div class="p-5 md:p-6 space-y-4"><div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3"><div><h3 class="text-xl font-bold text-soft-green-900">問題の詳細・編集</h3><p class="text-xs text-soft-green-600 mt-1" id="question-detail-meta">--</p></div><button onclick="app.closeQuestionDetail()" class="text-soft-green-500 hover:text-soft-green-800 font-bold text-xl leading-none">×</button></div><input type="hidden" id="detail-question-id"><div><div class="flex items-center justify-between gap-2 mb-1"><label class="block text-sm font-bold text-soft-green-800">問題文</label><button id="detail-ai-regenerate-btn" onclick="app.regenerateQuestionForDetail()" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-bold transition-colors text-xs">問題再作成</button></div><textarea id="detail-question-q" rows="4" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea></div><div><label class="block text-sm font-bold text-soft-green-800 mb-1">解答</label><input type="text" id="detail-question-a" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></div><div><div class="flex items-center justify-between gap-2 mb-2"><label class="block text-sm font-bold text-soft-green-800">ジャンル設定</label><button id="detail-ai-genre-btn" onclick="app.classifyQuestionGenreForDetail()" class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">ジャンルの自動判定</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-xs font-semibold text-soft-green-700 mb-1">ジャンル</label><select id="detail-question-genre" onchange="app.handleQuestionDetailGenreChange()" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select></div><div><label class="block text-xs font-semibold text-soft-green-700 mb-1">サブジャンル</label><select id="detail-question-subgenre" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select></div></div></div><div><div class="flex items-center justify-between gap-2 mb-1"><label class="block text-sm font-bold text-soft-green-800">解説</label><button id="detail-ai-explanation-btn" onclick="app.generateExplanationForQuestion()" class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">AI解説を再セット</button></div><textarea id="detail-question-explanation" rows="4" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea></div><div class="flex flex-col sm:flex-row gap-3 justify-between pt-2"><button onclick="app.deleteQuestionFromDetail()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors text-sm">この問題を削除</button><div class="flex flex-col sm:flex-row gap-3"><button onclick="app.closeQuestionDetail()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors text-sm">キャンセル</button><button onclick="app.saveQuestionDetail()" class="px-5 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold transition-colors shadow-md text-sm">保存する</button></div></div></div></div></div>
     <!-- Derivative Question Modal -->
     <div id="derivative-modal" class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[120] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div id="derivative-panel" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
@@ -770,6 +793,8 @@
             dictionary: [],
             dailyStats: {},
             currentQuestionIndex: -1,
+            quizMode: 'voice',
+            textRevealTimer: null,
             quizSessionSeenQuestionIds: new Set(),
             
             synth: window.speechSynthesis,
@@ -806,7 +831,6 @@
                     const stateThinking = document.getElementById('quiz-state-thinking');
                     const btnShowAnswer = document.getElementById('btn-show-answer');
                     const answerContainer = document.getElementById('answer-container');
-                    const aiExplanationBtn = document.getElementById('quiz-ai-explanation-btn');
                     const isPlaying = !statePlaying.classList.contains('hidden');
                     const isThinking = !stateThinking.classList.contains('hidden');
                     const isAnswerVisible = !answerContainer.classList.contains('hidden');
@@ -819,12 +843,7 @@
                     if (isThinking && isAnswerVisible && key === 't') { e.preventDefault(); this.recordResult(true); }
                     else if (isThinking && isAnswerVisible && key === 'f') { e.preventDefault(); this.recordResult(false); }
                     else if (isThinking && isAnswerVisible && key === 's') { e.preventDefault(); this.skipQuestion(); }
-                    else if (isThinking && isAnswerVisible && key === 'g') {
-                        if (aiExplanationBtn && !aiExplanationBtn.classList.contains('hidden') && !aiExplanationBtn.disabled) {
-                            e.preventDefault();
-                            this.generateExplanationForCurrentQuizQuestion();
-                        }
-                    }
+                    else if (isThinking && isAnswerVisible && key === 'e') { e.preventDefault(); this.openCurrentQuizQuestionDetail(); }
                     else if (e.key === 'Escape') { e.preventDefault(); this.switchView('dashboard'); }
                 });
             },
@@ -913,6 +932,7 @@
 
             switchView(viewId) {
                 this.synth.cancel();
+                this.stopTextReveal();
                 if (this.audioElement) {
                     this.audioElement.pause();
                 }
@@ -940,7 +960,7 @@
                     'T：正解として記録\n' +
                     'F：不正解として記録\n' +
                     'S：スキップ\n' +
-                    'G：AI解説を追加（解答表示後、解説がない場合）\n' +
+                    'E：問題編集\n' +
                     'Esc：クイズを終了してホームに戻る',
                     '閉じる',
                     'bg-soft-green-600 hover:bg-soft-green-700',
@@ -1643,16 +1663,22 @@ ${text}
                 }
             },
 
+            getAIExplanationInstruction() {
+                return 'クイズの解説は1〜2文で簡潔にまとめ、問題文の言い換えや重複を避けて、別の観点・関連知識・背景知識を含めてください。最後に必ず「暗記のコツ:」から始まる、短く実用的な暗記ポイントを付けてください。';
+            },
+            buildAIExplanationPrompt(q, a) {
+                return `${this.getAIExplanationInstruction()}\n出力は解説文のみ。\nQ:${q}\nA:${a}`;
+            },
+            buildBatchAIExplanationPrompt(items) {
+                return `${this.getAIExplanationInstruction()}\n各問題について同じ品質・構成で作成してください。\n必ず以下のJSON配列形式（文字列の配列）のみを出力してください。Markdownの装飾は不要です。\n["問題0の解説", "問題1の解説", ...]\n` + items.map((item, idx) => `[${idx}] Q:${item.q} A:${item.a}`).join("\n");
+            },
             async fillExplanationsWithAI(items, loadingText = null, batchSize = CSV_EXPLANATION_BATCH_SIZE, maxPrompts = Infinity) {
                 let promptsUsed = 0;
                 for (let i = 0; i < items.length && promptsUsed < maxPrompts; i += batchSize) {
                     const batch = items.slice(i, i + batchSize);
                     promptsUsed++;
                     if (loadingText) loadingText.textContent = `解説生成中... (${Math.min(i + batch.length, items.length)}/${items.length})`;
-                    const prompt = `以下の各クイズ問題に対して、簡潔な解説（1〜2文）を作成してください。
-必ず以下のJSON配列形式（文字列の配列）のみを出力してください。Markdownの装飾は不要です。
-["問題0の解説", "問題1の解説", ...]
-` + batch.map((item, idx) => `[${idx}] Q:${item.q} A:${item.a}`).join("\n");
+                    const prompt = this.buildBatchAIExplanationPrompt(batch);
 
                     try {
                         const jsonStr = await this.fetchGemini(prompt, true);
@@ -1676,7 +1702,7 @@ ${text}
             getSubgenreOptionsHTML(genre = '', selectedSubgenre = '', includeAll = false) { const prefix = includeAll ? '<option value="">サブジャンル: すべて</option>' : '<option value="">未設定</option>'; if (genre === '__UNSET__') return prefix; const options = genre ? (this.getAISubgenres()[genre] || []) : []; return prefix + options.map(x=>`<option value="${this.escapeHTML(x)}" ${x===selectedSubgenre?'selected':''}>${this.escapeHTML(x)}</option>`).join(''); },
             updateQuestionFilterOptions() { const gs=document.getElementById('manager-filter-genre'); if(!gs)return; const cur=gs.value||''; gs.innerHTML=this.getGenreOptionsHTML(cur,true); gs.value=cur; this.updateQuestionFilterSubgenreOptions(); },
             updateQuestionFilterSubgenreOptions() { const g=document.getElementById('manager-filter-genre')?.value||''; const ss=document.getElementById('manager-filter-subgenre'); if(!ss)return; const cur=ss.value||''; ss.innerHTML=this.getSubgenreOptionsHTML(g,cur,true); if([...ss.options].some(o=>o.value===cur)) ss.value=cur; },
-            renderQuestionList() { const list=document.getElementById('manager-question-list'), empty=document.getElementById('manager-question-empty'), pager=document.getElementById('manager-question-pager'); if(!list||!empty)return; const set=this.studySets.find(s=>s.id===this.managerSetId); const all=set?set.questions.map(q=>this.normalizeQuestionData(q)):[]; const search=(document.getElementById('manager-question-search')?.value||'').toLowerCase(); const g=document.getElementById('manager-filter-genre')?.value||''; const sg=document.getElementById('manager-filter-subgenre')?.value||''; const filtered=all.filter(q=>((!g)||(g==='__UNSET__'?!q.genre:q.genre===g))&&(!sg||q.subgenre===sg)&&(!search||[q.q,q.a,q.explanation,q.genre,q.subgenre].some(v=>String(v||'').toLowerCase().includes(search)))); const totalEl=document.getElementById('manager-question-total-count'), visibleEl=document.getElementById('manager-question-visible-count'); if(totalEl)totalEl.textContent=all.length; if(visibleEl)visibleEl.textContent=filtered.length; const unsetGenreCount=all.filter(q=>!(q.genre||'').trim()).length; const bulkStatus=document.getElementById('manager-bulk-genre-status'); if(bulkStatus)bulkStatus.textContent=`未設定: ${unsetGenreCount}問 / 1回あたり最大${BULK_GENRE_CLASSIFY_LIMIT}問`; const noExplanationCount=all.filter(q=>!(q.explanation||'').trim()).length; const bulkExpStatus=document.getElementById('manager-bulk-explanation-status'); if(bulkExpStatus)bulkExpStatus.textContent=`解説未設定: ${noExplanationCount}問 / 最大${CSV_EXPLANATION_LIMIT}問`; const bulkExpBtn=document.getElementById('manager-bulk-explanation-btn'); if(bulkExpBtn)bulkExpBtn.disabled=noExplanationCount===0; if(filtered.length===0){list.innerHTML='';empty.classList.remove('hidden');if(pager)pager.classList.add('hidden');return;} empty.classList.add('hidden'); const size=10,totalPages=Math.max(1,Math.ceil(filtered.length/size)); this.questionListPage=Math.max(1,Math.min(this.questionListPage||1,totalPages)); const start=(this.questionListPage-1)*size; list.innerHTML=filtered.slice(start,start+size).map((q,i)=>`<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span> / 正解率: ${q.total>0?Math.round((q.correct/q.total)*100)+'%':'--%'}</p></div><button onclick="app.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`).join(''); if(pager){pager.classList.remove('hidden'); const info=document.getElementById('manager-question-page-info'); if(info)info.textContent=`${this.questionListPage} / ${totalPages}`;} },
+            renderQuestionList() { const list=document.getElementById('manager-question-list'), empty=document.getElementById('manager-question-empty'), pager=document.getElementById('manager-question-pager'); if(!list||!empty)return; const set=this.studySets.find(s=>s.id===this.managerSetId); const all=set?set.questions.map(q=>this.normalizeQuestionData(q)):[]; const search=(document.getElementById('manager-question-search')?.value||'').toLowerCase(); const g=document.getElementById('manager-filter-genre')?.value||''; const sg=document.getElementById('manager-filter-subgenre')?.value||''; const filtered=all.filter(q=>((!g)||(g==='__UNSET__'?!q.genre:q.genre===g))&&(!sg||q.subgenre===sg)&&(!search||[q.q,q.a,q.explanation,q.genre,q.subgenre].some(v=>String(v||'').toLowerCase().includes(search)))); const totalEl=document.getElementById('manager-question-total-count'), visibleEl=document.getElementById('manager-question-visible-count'); if(totalEl)totalEl.textContent=all.length; if(visibleEl)visibleEl.textContent=filtered.length; const unsetGenreCount=all.filter(q=>!(q.genre||'').trim()).length; const bulkStatus=document.getElementById('manager-bulk-genre-status'); if(bulkStatus)bulkStatus.textContent=`未設定: ${unsetGenreCount}問 / 1回あたり最大${BULK_GENRE_CLASSIFY_LIMIT}問`; const noExplanationCount=all.filter(q=>!(q.explanation||'').trim()).length; const bulkExpStatus=document.getElementById('manager-bulk-explanation-status'); if(bulkExpStatus)bulkExpStatus.textContent=`解説未設定: ${noExplanationCount}問 / 最大${CSV_EXPLANATION_LIMIT}問`; const bulkExpBtn=document.getElementById('manager-bulk-explanation-btn'); if(bulkExpBtn)bulkExpBtn.disabled=noExplanationCount===0; if(filtered.length===0){list.innerHTML='';empty.classList.remove('hidden');if(pager)pager.classList.add('hidden');return;} empty.classList.add('hidden'); const size=50,totalPages=Math.max(1,Math.ceil(filtered.length/size)); this.questionListPage=Math.max(1,Math.min(this.questionListPage||1,totalPages)); const start=(this.questionListPage-1)*size; list.innerHTML=filtered.slice(start,start+size).map((q,i)=>`<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1 min-w-0"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900 truncate whitespace-nowrap overflow-hidden" title="${this.escapeHTML(q.q)}">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span> / 正解率: ${q.total>0?Math.round((q.correct/q.total)*100)+'%':'--%'}</p></div><button onclick="app.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`).join(''); if(pager){pager.classList.remove('hidden'); const info=document.getElementById('manager-question-page-info'); if(info)info.textContent=`${this.questionListPage} / ${totalPages}`;} },
             async createBulkExplanationsForManagerSet(){
                 if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error');
                 const set=this.studySets.find(s=>s.id===this.managerSetId);
@@ -1758,11 +1784,27 @@ ${text}
             findManagerQuestionById(id){const set=this.studySets.find(s=>s.id===this.managerSetId); if(!set)return{set:null,q:null,index:-1}; const index=set.questions.findIndex(q=>(q.id||q.questionId)===id); return{set,q:index>=0?this.normalizeQuestionData(set.questions[index]):null,index};},
             openQuestionDetail(id){const r=this.findManagerQuestionById(id); if(!r.q)return this.showToast('問題が見つかりません','error'); document.getElementById('detail-question-id').value=r.q.id; document.getElementById('detail-question-q').value=r.q.q; document.getElementById('detail-question-a').value=r.q.a; document.getElementById('detail-question-explanation').value=r.q.explanation||''; const gs=document.getElementById('detail-question-genre'), ss=document.getElementById('detail-question-subgenre'); gs.innerHTML=this.getGenreOptionsHTML(r.q.genre||'',false); gs.value=r.q.genre||''; ss.innerHTML=this.getSubgenreOptionsHTML(r.q.genre||'',r.q.subgenre||'',false); ss.value=r.q.subgenre||''; const modal=document.getElementById('question-detail-modal'), panel=document.getElementById('question-detail-panel'); modal.classList.remove('hidden'); void modal.offsetWidth; modal.classList.remove('opacity-0'); panel.classList.remove('scale-95');},
             closeQuestionDetail(){const modal=document.getElementById('question-detail-modal'), panel=document.getElementById('question-detail-panel'); modal.classList.add('opacity-0'); panel.classList.add('scale-95'); setTimeout(()=>modal.classList.add('hidden'),300);},
+            openCurrentQuizQuestionDetail(){const set=this.studySets.find(s=>s.id===this.activeSetId); const q=set?.questions[this.currentQuestionIndex]; if(!q)return this.showToast('現在の問題が見つかりません','error'); this.managerSetId=this.activeSetId; this.updateSetSelectors(); this.openQuestionDetail(this.getQuestionId(q));},
             handleQuestionDetailGenreChange(){const g=document.getElementById('detail-question-genre')?.value||''; const ss=document.getElementById('detail-question-subgenre'); if(ss)ss.innerHTML=this.getSubgenreOptionsHTML(g,'',false);},
-            saveQuestionDetail(){const id=document.getElementById('detail-question-id').value; const r=this.findManagerQuestionById(id); if(!r.q)return; const qText=document.getElementById('detail-question-q').value.trim(), aText=document.getElementById('detail-question-a').value.trim(); if(!qText||!aText)return this.showToast('問題文と解答を入力してください','error'); r.q.q=qText; r.q.a=aText; r.q.explanation=document.getElementById('detail-question-explanation').value.trim(); r.q.genre=document.getElementById('detail-question-genre').value||''; r.q.subgenre=r.q.genre?(document.getElementById('detail-question-subgenre').value||''):''; r.set.questions[r.index]=r.q; this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList(); this.closeQuestionDetail(); this.showToast('問題を保存しました','success');},
+            saveQuestionDetail(){const id=document.getElementById('detail-question-id').value; const r=this.findManagerQuestionById(id); if(!r.q)return; const qText=document.getElementById('detail-question-q').value.trim(), aText=document.getElementById('detail-question-a').value.trim(); if(!qText||!aText)return this.showToast('問題文と解答を入力してください','error'); r.q.q=qText; r.q.a=aText; r.q.explanation=document.getElementById('detail-question-explanation').value.trim(); r.q.genre=document.getElementById('detail-question-genre').value||''; r.q.subgenre=r.q.genre?(document.getElementById('detail-question-subgenre').value||''):''; r.set.questions[r.index]=r.q; this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList(); const quizSet=this.studySets.find(s=>s.id===this.activeSetId); const current=quizSet?.questions[this.currentQuestionIndex]; if(current&&this.getQuestionId(current)===id){document.getElementById('quiz-question-text').textContent=r.q.q; document.getElementById('quiz-answer-text').textContent=r.q.a; document.getElementById('quiz-explanation-text').textContent=r.q.explanation||'解説はありません。';} this.closeQuestionDetail(); this.showToast('問題を保存しました','success');},
             async deleteQuestionFromDetail(){const id=document.getElementById('detail-question-id').value; const r=this.findManagerQuestionById(id); if(!r.q)return; if(!(await this.showModal('問題の削除',`この問題を削除しますか？\n\n${r.q.q}`,'削除する','bg-red-600 hover:bg-red-700')))return; r.set.questions.splice(r.index,1); this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList(); this.closeQuestionDetail(); this.showToast('問題を削除しました','success');},
-            async generateExplanationForQuestion(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const q=document.getElementById('detail-question-q').value.trim(), a=document.getElementById('detail-question-a').value.trim(); if(!q||!a)return this.showToast('問題文と解答を入力してください','error'); const btn=document.getElementById('detail-ai-explanation-btn'), old=btn.textContent; btn.disabled=true; btn.textContent='生成中...'; try{ const prompt=`以下のクイズ問題に対して、解説を1〜2文で作成してください。問題文の言い換えや重複は避け、別の観点・関連知識・背景知識に着目してください。最後に「暗記のコツ:」から始まる暗記のポイントも追加してください。\n出力は解説文のみ。\nQ:${q}\nA:${a}`; const exp=(await this.fetchGemini(prompt,false)).trim().replace(/^```[a-z]*|```$/gi,'').trim(); document.getElementById('detail-question-explanation').value=exp; this.showToast('AI解説を再セットしました','success'); }catch(e){this.showToast('AI解説生成に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
-            async generateExplanationForCurrentQuizQuestion(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const targetSet=this.studySets.find(s=>s.id===this.activeSetId); const q=targetSet?.questions[this.currentQuestionIndex]; if(!q)return; const btn=document.getElementById('quiz-ai-explanation-btn'); const old=btn.textContent; btn.disabled=true; btn.textContent='生成中...'; try{ const prompt=`以下のクイズ問題に対して、解説を1〜2文で作成してください。問題文の言い換えや重複は避け、別の観点・関連知識・背景知識に着目してください。最後に「暗記のコツ:」から始まる暗記のポイントも追加してください。\n出力は解説文のみ。\nQ:${q.q}\nA:${q.a}`; const exp=(await this.fetchGemini(prompt,false)).trim().replace(/^```[a-z]*|```$/gi,'').trim(); q.explanation=exp; targetSet.questions[this.currentQuestionIndex]=q; this.saveStudySets(); document.getElementById('quiz-explanation-text').textContent=exp; btn.classList.add('hidden'); this.showToast('AI解説を追加して保存しました','success'); }catch(e){this.showToast('AI解説生成に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
+            async regenerateQuestionForDetail(){
+                if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error');
+                const q=document.getElementById('detail-question-q').value.trim();
+                const a=document.getElementById('detail-question-a').value.trim();
+                if(!q||!a)return this.showToast('問題文と解答を入力してください','error');
+                const btn=document.getElementById('detail-ai-regenerate-btn'), old=btn.textContent;
+                btn.disabled=true; btn.textContent='再作成中...'; btn.classList.add('opacity-70','cursor-not-allowed');
+                try{
+                    const prompt=`次の早押しクイズ問題を、解答を変更せずに現在でも通用する問題文へ再構成してください。\n目的は、時事表現や相対的な日時表現による陳腐化を解消することです。\n- 「今年」「昨年」「現在」「近年」など、基準時点が曖昧な表現は、元来指していた具体的な西暦年や時点に置き換えてください。元の年を確定できない場合は、その手掛かりを削除してください。\n- 解答に関する最新または近年の、確実に確認できる要素を問題の手掛かりとして自然に追加できる場合は追加してください。\n- 問題文の全手掛かりを個別にファクトチェックし、年代、人物、作品、受賞、所在地、所属、初出、記録、因果関係が解答と正しく対応することを確認してください。\n- 確証が弱い情報、諸説ある情報、変動しやすい数値、推測は使用しないでください。確認できない内容は削除してください。\n- 早押しクイズらしく、前半は広い手掛かり、後半ほど解答を特定しやすい構成にしてください。\n- 解答そのものを問題文に書かず、唯一の解答が「${a}」になるようにしてください。\n出力は再作成後の問題文のみとし、説明、注釈、Markdownは不要です。\n元の問題文:${q}\n解答:${a}`;
+                    const regenerated=(await this.fetchGemini(prompt,false)).trim().replace(/^```[a-z]*|```$/gi,'').trim();
+                    if(!regenerated)throw new Error('問題文を再作成できませんでした');
+                    document.getElementById('detail-question-q').value=regenerated;
+                    this.showToast('問題文を再作成しました。内容を確認して保存してください','success');
+                }catch(e){this.showToast('問題再作成に失敗しました: '+e.message,'error');}
+                finally{btn.disabled=false; btn.textContent=old; btn.classList.remove('opacity-70','cursor-not-allowed');}
+            },
+            async generateExplanationForQuestion(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const q=document.getElementById('detail-question-q').value.trim(), a=document.getElementById('detail-question-a').value.trim(); if(!q||!a)return this.showToast('問題文と解答を入力してください','error'); const btn=document.getElementById('detail-ai-explanation-btn'), old=btn.textContent; btn.disabled=true; btn.textContent='生成中...'; try{ const prompt=this.buildAIExplanationPrompt(q,a); const exp=(await this.fetchGemini(prompt,false)).trim().replace(/^```[a-z]*|```$/gi,'').trim(); document.getElementById('detail-question-explanation').value=exp; this.showToast('AI解説を再セットしました','success'); }catch(e){this.showToast('AI解説生成に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
             async classifyQuestionGenreForDetail(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const q=document.getElementById('detail-question-q').value.trim(), a=document.getElementById('detail-question-a').value.trim(); if(!q||!a)return this.showToast('問題文と解答を入力してください','error'); const btn=document.getElementById('detail-ai-genre-btn'), old=btn.textContent; btn.disabled=true; btn.textContent='判定中...'; try{ const candidates=Object.entries(this.getAISubgenres()).map(([g,subs])=>`${g}: ${subs.join('、')}`).join('\n'); const prompt=`以下のクイズ問題を候補のジャンルとサブジャンルから分類してください。JSONのみ返してください。\n形式:{"genre":"ジャンル","subgenre":"サブジャンル"}\n候補:\n${candidates}\nQ:${q}\nA:${a}`; const parsed=this.parseAIJSON(await this.fetchGemini(prompt,true)); const genre=String(parsed.genre||''), sub=String(parsed.subgenre||''); const defs=this.getAISubgenres(); if(!defs[genre]) throw new Error('候補内のジャンルを判定できませんでした'); document.getElementById('detail-question-genre').value=genre; const ss=document.getElementById('detail-question-subgenre'); ss.innerHTML=this.getSubgenreOptionsHTML(genre,sub,false); if([...ss.options].some(o=>o.value===sub)) ss.value=sub; this.showToast(`ジャンルを自動判定しました: ${genre}${sub?' / '+sub:''}`,'success'); }catch(e){this.showToast('ジャンル自動判定に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
             getQuestionId(q){return q.questionId||q.id;}, getCycleSeenSet(set){if(!set)return new Set(); if(!Array.isArray(set.cycleSeenQuestionIds))set.cycleSeenQuestionIds=[]; return new Set(set.cycleSeenQuestionIds);}, resetQuestionCycle(set){if(set){set.cycleSeenQuestionIds=[]; set.cycleStartedAt=Date.now();}}, isCycleCompleted(set,questions){const seen=this.getCycleSeenSet(set); return questions.length>0&&questions.map(q=>this.getQuestionId(q)).every(id=>seen.has(id));}, markQuestionSeenInCycle(set,q){if(!set||!q)return; const id=this.getQuestionId(q); const seen=this.getCycleSeenSet(set); seen.add(id); set.cycleSeenQuestionIds=Array.from(seen); if(!set.cycleStartedAt)set.cycleStartedAt=Date.now();}, getAccuracyRatio(q){return q&&q.total?(Number.isFinite(Number(q.accuracy))?Number(q.accuracy):(q.correct||0)/q.total):0;}, isHighAccuracyQuestion(q){return (q.total||0)>=HIGH_ACCURACY_MIN_ATTEMPTS&&this.getAccuracyRatio(q)>=HIGH_ACCURACY_THRESHOLD;}, isHighAccuracyCooldown(q,now=Date.now()){return !!(q.lastAnsweredAt&&(now-Number(q.lastAnsweredAt))<HIGH_ACCURACY_COOLDOWN_MS);}, isLowAccuracyQuestion(q){return (q.total||0)>0&&this.getAccuracyRatio(q)<LOW_ACCURACY_THRESHOLD;}, isStaleQuestion(q,now=Date.now()){return !!(q.lastAnsweredAt&&(now-Number(q.lastAnsweredAt))>=STALE_REVIEW_MS);},
             updateStats() {
@@ -2009,7 +2051,10 @@ ${text}
                 const prompt = `
 以下の条件で、早押しクイズの問題を作成し、JSONの配列形式で出力してください。
 早押しクイズらしく、最初は漠然として徐々に特定できるような文章にしてください。
-豆知識などの簡単な解説(1〜2文)も含めてください。
+各問題を出力する前に、問題文のすべての事実関係を内部で個別にファクトチェックしてください。特に冒頭・前半の手掛かりについて、年代、人物、作品、受賞、所在地、所属、初出、発明者、因果関係などが解答と正しく対応していることを再確認してください。
+確証が弱い情報、諸説ある情報、時点により変化する情報、誤解を招く断定は使用しないでください。確認できない手掛かりは削除し、確実な事実だけで問題文を再構成してください。
+問題文の各手掛かりが同じ唯一の解答を指し、前半の情報にも虚偽・混同・取り違えがないことを最終確認してから出力してください。
+各問題のexplanationは、${this.getAIExplanationInstruction()}
 
 ${contextStr.join('\n')}
 問題数: ${count}
@@ -2132,12 +2177,22 @@ ${contextStr.join('\n')}
                 if (!questions.length) return this.showToast('対象のセットに問題が登録されていません', 'error');
                 const count = parseInt(document.getElementById('audio-export-count').value, 10);
                 const includeExp = document.getElementById('audio-export-explanation').checked;
+                const priorityMode = document.getElementById('audio-export-priority')?.value || 'unanswered';
                 const shuffled = [...questions];
                 for (let i = shuffled.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
-                const selected = shuffled.slice(0, Math.min(count, shuffled.length));
+                const unanswered = shuffled.filter(q => (Number(q.total) || 0) === 0);
+                const lowAccuracy = shuffled.filter(q => (Number(q.total) || 0) > 0 && ((Number(q.correct) || 0) / Number(q.total)) < 0.5);
+                const remaining = shuffled.filter(q => !unanswered.includes(q) && !lowAccuracy.includes(q));
+                if (priorityMode === 'low-accuracy') {
+                    remaining.sort((a, b) => this.getAccuracyRatio(a) - this.getAccuracyRatio(b));
+                }
+                const prioritized = priorityMode === 'low-accuracy'
+                    ? [...lowAccuracy.sort((a, b) => this.getAccuracyRatio(a) - this.getAccuracyRatio(b)), ...unanswered, ...remaining]
+                    : [...unanswered, ...lowAccuracy.sort((a, b) => this.getAccuracyRatio(a) - this.getAccuracyRatio(b)), ...remaining];
+                const selected = prioritized.slice(0, Math.min(count, prioritized.length));
                 const startBtn = document.getElementById('btn-start-export');
                 const progContainer = document.getElementById('audio-export-progress-container');
                 const progBar = document.getElementById('audio-export-progress-bar');
@@ -2228,7 +2283,8 @@ ${contextStr.join('\n')}
             choosePriorityPool(candidates, now) { if(!candidates||candidates.length===0)return[]; const unlearned=candidates.filter(c=>(c.q.total||0)===0); if(unlearned.length>0)return unlearned; const priority=[...candidates.filter(c=>this.isLowAccuracyQuestion(c.q)),...candidates.filter(c=>this.isStaleQuestion(c.q,now)),...candidates.filter(c=>c.q.total>0&&this.isReviewDue(c.q,now))]; if(priority.length>0){const uniq=new Map(); priority.forEach(c=>uniq.set(this.getQuestionId(c.q),c)); return Array.from(uniq.values());} return candidates; },
             selectNextQuestionIndex(questions, excludedQuestionIds = new Set(), targetSet = null) { const now=Date.now(); if(!questions||questions.length===0)return-1; let cycleCompleted=targetSet?this.isCycleCompleted(targetSet,questions):false; if(cycleCompleted)this.resetQuestionCycle(targetSet); const seen=targetSet?this.getCycleSeenSet(targetSet):new Set(); const all=questions.map((q,index)=>{this.normalizeQuestionData(q); return {q,index,stage:this.getQuestionStage(q),score:this.scoreQuestion(q,now)};}).filter(c=>!excludedQuestionIds.has(this.getQuestionId(c.q))); if(all.length===0)return-1; let candidates=all.filter(c=>!seen.has(this.getQuestionId(c.q))); if(candidates.length===0)candidates=all; if(!cycleCompleted){const nonCooldown=candidates.filter(c=>!(this.isHighAccuracyQuestion(c.q)&&this.isHighAccuracyCooldown(c.q,now))); if(nonCooldown.length>0)candidates=nonCooldown;} const pool=this.choosePriorityPool(candidates,now); return this.pickWeightedQuestion(pool.length>0?pool:candidates); },
 
-            startQuiz() {
+            startQuiz(mode = 'voice') {
+                this.quizMode = mode === 'text' ? 'text' : 'voice';
                 const targetSet = this.studySets.find(s => s.id === this.activeSetId);
                 if (!targetSet || targetSet.questions.length === 0) return this.showToast('現在のセットに問題がありません', 'error');
                 this.quizSessionSeenQuestionIds = new Set();
@@ -2242,6 +2298,7 @@ ${contextStr.join('\n')}
 
             nextQuestion() {
                 this.synth.cancel();
+                this.stopTextReveal();
                 const targetSet = this.studySets.find(s => s.id === this.activeSetId);
                 const questions = targetSet.questions;
                 const selectedIndex = this.selectNextQuestionIndex(questions, this.quizSessionSeenQuestionIds, targetSet);
@@ -2277,19 +2334,44 @@ ${contextStr.join('\n')}
                 document.getElementById('quiz-question-text').textContent = q.q;
                 document.getElementById('quiz-answer-text').textContent = q.a;
                 document.getElementById('quiz-explanation-text').textContent = q.explanation || '解説はありません。';
-                const aiBtn=document.getElementById('quiz-ai-explanation-btn');
-                if(aiBtn){aiBtn.classList.toggle('hidden', !!(q.explanation&&q.explanation.trim()));}
 
-                const utterance = new SpeechSynthesisUtterance(this.applyDictionary(q.q));
-                utterance.lang = 'ja-JP';
-                utterance.rate = 0.9;
-                const jpVoices = this.voices.filter(v => v.lang.includes('ja'));
-                if (jpVoices.length > 0) utterance.voice = jpVoices[0];
-                this.synth.speak(utterance);
+                const voiceIndicator=document.getElementById('quiz-voice-indicator');
+                const textContainer=document.getElementById('quiz-text-reveal-container');
+                if(this.quizMode==='text'){
+                    voiceIndicator?.classList.add('hidden');
+                    textContainer?.classList.remove('hidden');
+                    this.startTextReveal(q.q);
+                }else{
+                    voiceIndicator?.classList.remove('hidden');
+                    textContainer?.classList.add('hidden');
+                    const utterance = new SpeechSynthesisUtterance(this.applyDictionary(q.q));
+                    utterance.lang = 'ja-JP';
+                    utterance.rate = 0.9;
+                    const jpVoices = this.voices.filter(v => v.lang.includes('ja'));
+                    if (jpVoices.length > 0) utterance.voice = jpVoices[0];
+                    this.synth.speak(utterance);
+                }
             },
 
-            buzz() {
+            stopTextReveal() {
+                if(this.textRevealTimer){clearInterval(this.textRevealTimer);this.textRevealTimer=null;}
+            },
+            startTextReveal(text) {
+                this.stopTextReveal();
+                const el=document.getElementById('quiz-text-reveal');
+                if(!el)return;
+                const chars=Array.from(String(text||''));
+                let index=0;
+                el.textContent='';
+                this.textRevealTimer=setInterval(()=>{
+                    index++;
+                    el.textContent=chars.slice(0,index).join('');
+                    if(index>=chars.length)this.stopTextReveal();
+                },120);
+            },
+            buzz() {  
                 this.synth.cancel();
+                this.stopTextReveal();
                 document.getElementById('quiz-state-playing').classList.add('hidden');
                 document.getElementById('quiz-state-thinking').classList.remove('hidden');
             },
@@ -2300,9 +2382,11 @@ ${contextStr.join('\n')}
                 
                 const targetSet = this.studySets.find(s => s.id === this.activeSetId);
                 const q = targetSet.questions[this.currentQuestionIndex];
-                const utterance = new SpeechSynthesisUtterance(this.applyDictionary(q.a));
-                utterance.lang = 'ja-JP';
-                this.synth.speak(utterance);
+                if(this.quizMode==='voice'){
+                    const utterance = new SpeechSynthesisUtterance(this.applyDictionary(q.a));
+                    utterance.lang = 'ja-JP';
+                    this.synth.speak(utterance);
+                }
             },
 
             openDerivativeModal() {
@@ -2340,10 +2424,15 @@ ${contextStr.join('\n')}
                 const sourceSet=this.studySets.find(s=>s.id===this.activeSetId), current=sourceSet?.questions[this.currentQuestionIndex];
                 this.setDerivativeView('derivative-loading',`「${candidate.word}」の問題を作成中...`); document.getElementById('derivative-step-text').textContent='デリバティブ問題を生成しています';
                 try{
-                    const prompt=`「${candidate.word}」が唯一の解答となる早押しクイズ問題を1問作成してください。最初は漠然とした手掛かりから始め、徐々に解答を特定できる文章にしてください。元問題の単純な言い換えは避けてください。出力はJSONのみです。形式:{"q":"問題文","a":"${candidate.word}","explanation":"簡潔な解説"}\n参考となる元問題:${current.q}`;
+                    const genreCandidates=Object.entries(this.getAISubgenres()).map(([g,subs])=>`${g}: ${subs.join('、')}`).join('\n');
+                    const prompt=`「${candidate.word}」が唯一の解答となる早押しクイズ問題を1問作成してください。最初は漠然とした手掛かりから始め、徐々に解答を特定できる文章にしてください。元問題の単純な言い換えは避けてください。出力前に問題文のすべての手掛かりを個別にファクトチェックし、特に冒頭・前半の年代、人物、作品、受賞、所在地、所属、初出、因果関係が解答と正しく対応することを再確認してください。確証が弱い情報、諸説ある情報、時点で変化する情報は使用せず、確認できない手掛かりは削除して確実な事実だけで再構成してください。各手掛かりが同じ唯一の解答を指すことを最終確認してください。explanationは、${this.getAIExplanationInstruction()}\n問題内容に最も適切なgenreとsubgenreを次の候補から必ず1つずつ選んでください。subgenreは選択したgenre配下の候補に限ります。\n候補:\n${genreCandidates}\n出力はJSONのみです。形式:{"q":"問題文","a":"${candidate.word}","explanation":"解説文と暗記のコツ","genre":"ジャンル","subgenre":"サブジャンル"}\n参考となる元問題:${current.q}`;
                     const data=this.parseAIJSON(await this.fetchGemini(prompt,true));
                     if(!data.q)throw new Error('問題文を生成できませんでした');
-                    this.pendingDerivativeQuestion={q:String(data.q).trim(),a:candidate.word,explanation:String(data.explanation||'').trim()};
+                    const defs=this.getAISubgenres();
+                    const genre=String(data.genre||'').trim();
+                    const subgenre=String(data.subgenre||'').trim();
+                    if(!defs[genre]||!defs[genre].includes(subgenre))throw new Error('ジャンルまたはサブジャンルを候補内から判定できませんでした');
+                    this.pendingDerivativeQuestion={q:String(data.q).trim(),a:candidate.word,explanation:String(data.explanation||'').trim(),genre,subgenre};
                     document.getElementById('derivative-question').textContent=this.pendingDerivativeQuestion.q; document.getElementById('derivative-answer').textContent=candidate.word;
                     const select=document.getElementById('derivative-target-set'); select.innerHTML=this.studySets.map(x=>`<option value="${x.id}">${this.escapeHTML(x.name)}</option>`).join(''); select.value=this.activeSetId;
                     document.getElementById('derivative-step-text').textContent='内容と追加先を確認してください'; this.setDerivativeView('derivative-preview');
@@ -2355,7 +2444,7 @@ ${contextStr.join('\n')}
                 if(!data||!target)return this.showToast('追加する問題または学習セットが見つかりません','error');
                 if(target.questions.length>=MAX_QUESTIONS_PER_SET)return this.showToast(`対象セットの登録上限(${MAX_QUESTIONS_PER_SET}問)に達しています。`,'error');
                 if(this.getTotalQuestionCount()>=MAX_TOTAL_QUESTIONS)return this.showToast(`アプリ全体の登録上限(${MAX_TOTAL_QUESTIONS}問)に達しています。`,'error');
-                target.questions.push(this.createQuestionData(data.q,data.a,data.explanation)); this.saveStudySets(); this.updateSetSelectors(); this.closeDerivativeModal(); this.pendingDerivativeQuestion=null; this.showToast(`「${data.a}」の問題を追加しました`,'success');
+                target.questions.push(this.createQuestionData(data.q,data.a,data.explanation,{genre:data.genre||'',subgenre:data.subgenre||''})); this.saveStudySets(); this.updateSetSelectors(); this.closeDerivativeModal(); this.pendingDerivativeQuestion=null; this.showToast(`「${data.a}」の問題を追加しました`,'success');
             },
             searchCurrentQuizImage() {
                 const targetSet=this.studySets.find(s=>s.id===this.activeSetId);

@@ -2015,97 +2015,170 @@ ${text}
                 return res;
             },
 
+            normalizeAnswerForDuplicateCheck(text) {
+                return String(text || '').normalize('NFKC').toLowerCase()
+                    .replace(/[\s　・･「」『』【】()（）\[\]［］]/g, '')
+                    .replace(/[.,，。・:：;；!?！？'"“”‘’]/g, '');
+            },
+            makeTextBigrams(text) {
+                const normalized = String(text || '').normalize('NFKC').toLowerCase()
+                    .replace(/[\s　、。,.，・:：;；!?！？「」『』【】()（）\[\]［］]/g, '');
+                const grams = new Set();
+                if (normalized.length < 2) { if (normalized) grams.add(normalized); return grams; }
+                for (let i = 0; i < normalized.length - 1; i++) grams.add(normalized.slice(i, i + 2));
+                return grams;
+            },
+            textSimilarity(a, b) {
+                const ga = this.makeTextBigrams(a), gb = this.makeTextBigrams(b);
+                if (!ga.size || !gb.size) return 0;
+                let common = 0;
+                ga.forEach(x => { if (gb.has(x)) common++; });
+                return common / Math.max(ga.size, gb.size);
+            },
+            isSimilarQuestionCandidate(item, accepted, existingQuestions) {
+                const angleText = [item.angle, ...(Array.isArray(item.keywords) ? item.keywords : [])].join(' ');
+                if (accepted.some(x => this.textSimilarity(angleText, [x.angle, ...(x.keywords || [])].join(' ')) >= 0.68)) return true;
+                if (accepted.some(x => this.textSimilarity(item.q, x.q) >= 0.72)) return true;
+                if (existingQuestions.some(x => this.textSimilarity(item.q, x.q) >= 0.78)) return true;
+                return false;
+            },
+            async generateQuestionPlansWithAI({ count, genre, subgenre, topic, difficulty, excludedAnswers, excludedAngles }) {
+                const defs = this.getAISubgenres();
+                const genreCandidates = Object.entries(defs).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
+                const requested = Math.max(count, Math.ceil(count * 1.3));
+                const prompt = `早押しクイズの問題設計案を${requested}件作成してください。この段階では問題文や解説は作成しません。\n` +
+                    `各案は解答、別名、出題観点、識別用キーワード、ジャンル、サブジャンルを含めてください。\n` +
+                    `同じ解答・同義の解答・表記違いの解答を重複させないでください。出題観点やキーワードが似た案も避けてください。重複を避けられない場合は件数が少なくても構いません。\n` +
+                    `既存または除外する解答(JSON): ${JSON.stringify(excludedAnswers)}\n` +
+                    `すでに使用した出題観点(JSON): ${JSON.stringify(excludedAngles)}\n` +
+                    `条件: ジャンル=${genre || '候補から最適なものを選択'}、サブジャンル=${subgenre || '選択したジャンル配下から選択'}、テーマ=${topic || '指定なし'}、難易度=${difficulty}\n` +
+                    `ジャンル候補:\n${genreCandidates}\n` +
+                    `出力はJSON配列のみ。形式:[{"answer":"解答","aliases":["別名"],"angle":"他案と重ならない出題観点","keywords":["識別語"],"genre":"ジャンル","subgenre":"サブジャンル"}]`;
+                const parsed = this.parseAIJSON(await this.fetchGemini(prompt, true));
+                return Array.isArray(parsed) ? parsed : [];
+            },
+            async generateQuestionBatchFromPlans(plans, difficulty, priorSummaries) {
+                const prompt = `次の設計案ごとに早押しクイズ問題を1問ずつ作成してください。解答は設計案のanswerから変更しないでください。\n` +
+                    `早押しクイズらしく前半は広い手掛かり、後半ほど特定しやすくしてください。各手掛かりを内部でファクトチェックし、確実な事実だけを使ってください。\n` +
+                    `他の設計案や既に作成済みの問題と同じ趣旨・構成・手掛かりの並びを避けてください。\n` +
+                    `難易度:${difficulty}\n既に作成済みの概要(JSON):${JSON.stringify(priorSummaries)}\n` +
+                    `設計案(JSON):${JSON.stringify(plans)}\n` +
+                    `explanationは、${this.getAIExplanationInstruction()}\n` +
+                    `出力はJSON配列のみ。形式:[{"q":"問題文","a":"解答","explanation":"解説","genre":"ジャンル","subgenre":"サブジャンル","angle":"出題観点","keywords":["識別語"]}]`;
+                const parsed = this.parseAIJSON(await this.fetchGemini(prompt, true));
+                return Array.isArray(parsed) ? parsed : [];
+            },
             async generateQuestionsWithAI() {
                 if (!this.geminiApiKey) return this.showToast('Gemini APIキーを設定画面で登録してください', 'error');
-                
                 const targetSetId = await this.getTargetSetId('ai-target-set');
                 if (!targetSetId) return;
                 const targetSet = this.studySets.find(s => s.id === targetSetId);
-
                 const genre = document.getElementById('ai-genre').value;
                 const subgenre = document.getElementById('ai-subgenre')?.value || '';
                 const topic = genre ? '' : document.getElementById('ai-topic').value.trim();
-                const count = parseInt(document.getElementById('ai-count').value, 10);
+                const requestedCount = parseInt(document.getElementById('ai-count').value, 10);
                 const difficulty = document.getElementById('ai-difficulty')?.value || '中級';
-                
                 if (!genre && !topic) return this.showToast('ジャンルまたはテーマを入力してください', 'error');
-                if (targetSet.questions.length + count > MAX_QUESTIONS_PER_SET) return this.showToast(`セットの登録上限(${MAX_QUESTIONS_PER_SET}問)を超過します。`, 'error');
-                if (this.getTotalQuestionCount() + count > MAX_TOTAL_QUESTIONS) return this.showToast(`アプリ全体の登録上限(${MAX_TOTAL_QUESTIONS}問)を超過します。`, 'error');
+                if (targetSet.questions.length + requestedCount > MAX_QUESTIONS_PER_SET) return this.showToast(`セットの登録上限(${MAX_QUESTIONS_PER_SET}問)を超過します。`, 'error');
+                if (this.getTotalQuestionCount() + requestedCount > MAX_TOTAL_QUESTIONS) return this.showToast(`アプリ全体の登録上限(${MAX_TOTAL_QUESTIONS}問)を超過します。`, 'error');
 
                 const btn = document.getElementById('btn-generate-ai');
                 const loader = document.getElementById('ai-loading');
-                btn.classList.add('hidden');
-                loader.classList.remove('hidden');
-                loader.classList.add('flex');
+                const loadingTitle = loader.querySelector('p.text-sm');
+                const originalLoadingText = loadingTitle?.textContent || '';
+                btn.classList.add('hidden'); loader.classList.remove('hidden'); loader.classList.add('flex');
 
-                let contextStr = [];
-                const genreDefs = this.getAISubgenres();
-                const genreCandidates = Object.entries(genreDefs).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
-                if (genre) contextStr.push(`ジャンル: ${genre}`);
-                else contextStr.push(`ジャンル: 問題ごとに以下の候補から最も適切なものを必ず1つ選び、JSONのgenreに出力すること\n${genreCandidates}`);
-                contextStr.push(`難易度: ${difficulty}（この難易度に合う語彙・知識レベルで作成すること）`);
-                contextStr.push('各問題には必ずジャンルとサブジャンルを設定し、JSONのgenreとsubgenreに出力すること');
-                if (subgenre) contextStr.push(`サブジャンル: ${subgenre}（このサブジャンルを全般的に満たす問題を作成すること）`);
-                if (topic) contextStr.push(`テーマ・キーワード: ${topic}`);
-
-                const prompt = `
-以下の条件で、早押しクイズの問題を作成し、JSONの配列形式で出力してください。
-早押しクイズらしく、最初は漠然として徐々に特定できるような文章にしてください。
-各問題を出力する前に、問題文のすべての事実関係を内部で個別にファクトチェックしてください。特に冒頭・前半の手掛かりについて、年代、人物、作品、受賞、所在地、所属、初出、発明者、因果関係などが解答と正しく対応していることを再確認してください。
-確証が弱い情報、諸説ある情報、時点により変化する情報、誤解を招く断定は使用しないでください。確認できない手掛かりは削除し、確実な事実だけで問題文を再構成してください。
-問題文の各手掛かりが同じ唯一の解答を指し、前半の情報にも虚偽・混同・取り違えがないことを最終確認してから出力してください。
-各問題のexplanationは、${this.getAIExplanationInstruction()}
-
-${contextStr.join('\n')}
-問題数: ${count}
-
-出力JSONスキーマ:
-[
-  {
-    "q": "問題文",
-    "a": "解答（短い単語）",
-    "explanation": "解説文",
-    "genre": "ジャンル",
-    "subgenre": "サブジャンル"
-  }
-]
-`;
+                const existingQuestions = [...targetSet.questions];
+                const usedAnswers = new Set(existingQuestions.map(q => this.normalizeAnswerForDuplicateCheck(q.a)).filter(Boolean));
+                const accepted = [];
+                const acceptedAngles = [];
+                const defs = this.getAISubgenres();
+                let retries = 0;
                 try {
-                    const jsonStr = await this.fetchGemini(prompt, true);
-                    let parsed = [];
-                    try { parsed = JSON.parse(jsonStr); } 
-                    catch(e) {
-                        const m = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-                        if (m) parsed = JSON.parse(m[1]);
-                        else throw new Error("JSON parse failed");
+                    while (accepted.length < requestedCount && retries < 3) {
+                        const shortage = requestedCount - accepted.length;
+                        if (loadingTitle) loadingTitle.textContent = `解答と出題観点を設計中... (${accepted.length}/${requestedCount})`;
+                        const plansRaw = await this.generateQuestionPlansWithAI({
+                            count: shortage, genre, subgenre, topic, difficulty,
+                            excludedAnswers: [...usedAnswers], excludedAngles: acceptedAngles
+                        });
+                        const planKeys = new Set();
+                        const plans = [];
+                        for (const raw of plansRaw) {
+                            const answer = String(raw.answer || raw.a || '').trim();
+                            const key = this.normalizeAnswerForDuplicateCheck(answer);
+                            const aliases = Array.isArray(raw.aliases) ? raw.aliases.map(x => String(x).trim()).filter(Boolean) : [];
+                            const aliasKeys = aliases.map(x => this.normalizeAnswerForDuplicateCheck(x));
+                            if (!answer || !key || usedAnswers.has(key) || aliasKeys.some(k => usedAnswers.has(k)) || planKeys.has(key)) continue;
+                            const angle = String(raw.angle || '').trim();
+                            const keywords = Array.isArray(raw.keywords) ? raw.keywords.map(String) : [];
+                            if (plans.some(p => this.textSimilarity([angle, ...keywords].join(' '), [p.angle, ...(p.keywords || [])].join(' ')) >= 0.68)) continue;
+                            const assignedGenre = defs[raw.genre] ? raw.genre : (genre || 'ノンセク');
+                            let assignedSubgenre = String(raw.subgenre || subgenre || '').trim();
+                            if (!(defs[assignedGenre] || []).includes(assignedSubgenre)) assignedSubgenre = (defs[assignedGenre] || [])[0] || '';
+                            plans.push({ answer, aliases, angle, keywords, genre: assignedGenre, subgenre: assignedSubgenre });
+                            planKeys.add(key);
+                            if (plans.length >= shortage) break;
+                        }
+                        if (!plans.length) { retries++; continue; }
+
+                        const batches = [];
+                        for (let i = 0; i < plans.length; i += 5) batches.push(plans.slice(i, i + 5));
+                        const priorSummaries = accepted.map(x => ({ answer: x.a, angle: x.angle, keywords: x.keywords }));
+                        let completedBatches = 0;
+                        const batchResults = await this.mapWithConcurrency(batches, 2, async batch => {
+                            const result = await this.generateQuestionBatchFromPlans(batch, difficulty, priorSummaries);
+                            completedBatches++;
+                            if (loadingTitle) loadingTitle.textContent = `問題文を生成中... (${completedBatches}/${batches.length}バッチ)`;
+                            return { batch, result };
+                        });
+
+                        for (const { batch, result } of batchResults) {
+                            for (const item of result) {
+                                const plan = batch.find(p => this.normalizeAnswerForDuplicateCheck(p.answer) === this.normalizeAnswerForDuplicateCheck(item.a));
+                                if (!plan || !item.q || !item.a) continue;
+                                const key = this.normalizeAnswerForDuplicateCheck(item.a);
+                                if (usedAnswers.has(key)) continue;
+                                const candidate = {
+                                    q: String(item.q).trim(), a: plan.answer,
+                                    explanation: String(item.explanation || '').trim(),
+                                    genre: plan.genre, subgenre: plan.subgenre,
+                                    angle: plan.angle, keywords: plan.keywords
+                                };
+                                if (this.isSimilarQuestionCandidate(candidate, accepted, existingQuestions)) continue;
+                                usedAnswers.add(key);
+                                plan.aliases.forEach(a => usedAnswers.add(this.normalizeAnswerForDuplicateCheck(a)));
+                                accepted.push(candidate);
+                                acceptedAngles.push(candidate.angle);
+                                if (accepted.length >= requestedCount) break;
+                            }
+                            if (accepted.length >= requestedCount) break;
+                        }
+                        retries++;
                     }
 
-                    if (Array.isArray(parsed)) {
-                        parsed.forEach(item => {
-                            if (item.q && item.a) {
-                                const defs = this.getAISubgenres();
-                                let assignedGenre = item.genre || genre;
-                                if (!defs[assignedGenre]) assignedGenre = genre || 'ノンセク';
-                                let assignedSubgenre = item.subgenre || subgenre || ((defs[assignedGenre] || [])[0] || '');
-                                if (assignedSubgenre && !(defs[assignedGenre] || []).includes(assignedSubgenre)) assignedSubgenre = (defs[assignedGenre] || [])[0] || '';
-                                targetSet.questions.push(this.createQuestionData(item.q, item.a, item.explanation || "", { genre: assignedGenre, subgenre: assignedSubgenre, difficulty }));
-                            }
-                        });
-                        this.saveStudySets();
-                        this.showToast(`${parsed.length}問生成しました！`, 'success');
-                        document.getElementById('ai-topic').value = '';
-                    } else {
-                        throw new Error("Not an array");
+                    // 保存直前の最終重複検査
+                    const finalExisting = new Set(targetSet.questions.map(q => this.normalizeAnswerForDuplicateCheck(q.a)));
+                    const finalItems = [];
+                    for (const item of accepted) {
+                        const key = this.normalizeAnswerForDuplicateCheck(item.a);
+                        if (!key || finalExisting.has(key)) continue;
+                        finalExisting.add(key);
+                        finalItems.push(item);
                     }
+                    finalItems.forEach(item => targetSet.questions.push(this.createQuestionData(item.q, item.a, item.explanation, { genre: item.genre, subgenre: item.subgenre, difficulty })));
+                    this.saveStudySets();
+                    if (finalItems.length) this.showToast(`${finalItems.length}問生成しました${finalItems.length < requestedCount ? `（重複・類似を除外したため指定数未満）` : '！'}`, 'success');
+                    else this.showToast('重複しない問題を生成できませんでした。条件を変更して再試行してください。', 'error');
+                    if (finalItems.length && document.getElementById('ai-topic')) document.getElementById('ai-topic').value = '';
                 } catch (e) {
+                    console.error('AI question generation error', e);
                     this.showToast('生成失敗: ' + e.message, 'error');
                 } finally {
-                    btn.classList.remove('hidden');
-                    loader.classList.add('hidden');
-                    loader.classList.remove('flex');
+                    if (loadingTitle) loadingTitle.textContent = originalLoadingText;
+                    btn.classList.remove('hidden'); loader.classList.add('hidden'); loader.classList.remove('flex');
                 }
             },
-
             base64ToAudioBuffer(base64, ctx) {
                 const bin = atob(base64);
                 const bytes = new Uint8Array(bin.length);

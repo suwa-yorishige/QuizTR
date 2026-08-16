@@ -647,15 +647,10 @@
                             <hr class="border-soft-green-600 mb-4 md:mb-6">
                             <p class="text-sm text-soft-green-400 mb-1 md:mb-2 font-semibold tracking-widest">解答</p>
                             <p id="quiz-answer-text" class="text-2xl md:text-4xl font-bold text-red-300 mb-6 md:mb-8"></p>
-                            <p id="quiz-explanation-text" class="text-sm md:text-base text-soft-green-200 mb-3 text-left bg-soft-green-900 p-4 rounded-xl border border-soft-green-700"></p>
-                            <div class="mb-6 md:mb-8 flex flex-col sm:flex-row gap-2 justify-center">
-                                <button id="quiz-image-search-btn" onclick="app.searchCurrentQuizImage()" class="px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">画像検索 <span class="text-xs opacity-80">Google画像</span></button>
-                                <button id="quiz-derivative-btn" onclick="app.startDerivativeCreation()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">デリバティブを作成する</button>
-                            </div>
-                            <div class="mb-6 flex flex-col sm:flex-row gap-2 justify-center"><button id="quiz-pronunciation-btn" onclick="app.openPronunciationModalFromQuiz()" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg font-bold text-sm">AIで読み方を設定</button><button id="quiz-edit-question-btn" onclick="app.openCurrentQuizQuestionDetail()" class="px-4 py-2 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-lg font-bold text-sm">問題編集</button></div>
-                            
+                            <p id="quiz-explanation-text" class="text-sm md:text-base text-soft-green-200 mb-4 text-left bg-soft-green-900 p-4 rounded-xl border border-soft-green-700"></p>
+
                             <p class="text-sm text-soft-green-300 mb-3">この問題は正解できましたか？</p>
-                            <div class="flex flex-col sm:flex-row gap-3 md:gap-4 w-full">
+                            <div class="flex flex-col sm:flex-row gap-3 md:gap-4 w-full mb-6">
                                 <button onclick="app.recordResult(false)" class="flex-1 py-3 md:py-4 bg-soft-green-700 hover:bg-soft-green-600 border border-soft-green-600 text-white rounded-xl font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                     不正解
@@ -668,6 +663,12 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                                     正解！
                                 </button>
+                            </div>
+
+                            <div class="mb-2 flex flex-col sm:flex-row gap-2 justify-center">
+                                <button id="quiz-edit-question-btn" onclick="app.openCurrentQuizQuestionDetail()" class="px-4 py-2 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-lg font-bold text-sm">問題編集</button>
+                                <button id="quiz-derivative-btn" onclick="app.startDerivativeCreation()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">デリバティブ作成</button>
+                                <button id="quiz-image-search-btn" onclick="app.searchCurrentQuizImage()" class="px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">画像検索</button>
                             </div>
                         </div>
                     </div>
@@ -696,7 +697,16 @@
     </div>
 
     <!-- Question Detail Modal -->
-    <div id="question-detail-modal" class="hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300" id="question-detail-panel"><div class="p-5 md:p-6 space-y-4"><div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3"><div><h3 class="text-xl font-bold text-soft-green-900">問題の詳細・編集</h3><p class="text-xs text-soft-green-600 mt-1" id="question-detail-meta">--</p></div><button onclick="app.closeQuestionDetail()" class="text-soft-green-500 hover:text-soft-green-800 font-bold text-xl leading-none">×</button></div><input type="hidden" id="detail-question-id"><div><div class="flex items-center justify-between gap-2 mb-1"><label class="block text-sm font-bold text-soft-green-800">問題文</label><button id="detail-ai-regenerate-btn" onclick="app.openRegeneratePolicyModal()" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-bold transition-colors text-xs">問題再作成</button></div><textarea id="detail-question-q" rows="4" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea></div><div><label class="block text-sm font-bold text-soft-green-800 mb-1">解答</label><input type="text" id="detail-question-a" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></div><div><label class="block text-sm font-bold text-soft-green-800 mb-1">移動先の学習セット</label><select id="detail-question-move-set" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm font-semibold text-soft-green-900"></select><p class="text-xs text-soft-green-600 mt-1">別の学習セットを選択し、「保存する」を押すと移動が確定します。</p></div><div class="bg-soft-green-50 border border-soft-green-200 rounded-xl p-4 space-y-3"><div class="flex items-center justify-between gap-2"><div><label class="block text-sm font-bold text-soft-green-800">この問題の読み上げ設定</label><p class="text-xs text-soft-green-600 mt-1">問題固有の読み方を設定できます。</p></div><button type="button" onclick="app.openPronunciationModalFromDetail()" class="px-3 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold text-xs whitespace-nowrap">読み方を一括設定</button></div><div id="detail-pronunciation-list" class="space-y-2"></div></div><div><div class="flex items-center justify-between gap-2 mb-2"><label class="block text-sm font-bold text-soft-green-800">ジャンル設定</label><button id="detail-ai-genre-btn" onclick="app.classifyQuestionGenreForDetail()" class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">ジャンルの自動判定</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-xs font-semibold text-soft-green-700 mb-1">ジャンル</label><select id="detail-question-genre" onchange="app.handleQuestionDetailGenreChange()" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select></div><div><label class="block text-xs font-semibold text-soft-green-700 mb-1">サブジャンル</label><select id="detail-question-subgenre" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select></div></div></div><div><div class="flex items-center justify-between gap-2 mb-1"><label class="block text-sm font-bold text-soft-green-800">解説</label><button id="detail-ai-explanation-btn" onclick="app.generateExplanationForQuestion()" class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">AI解説を再セット</button></div><textarea id="detail-question-explanation" rows="4" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea></div><div class="flex flex-col sm:flex-row gap-3 justify-between pt-2"><button onclick="app.deleteQuestionFromDetail()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors text-sm">この問題を削除</button><div class="flex flex-col sm:flex-row gap-3"><button onclick="app.closeQuestionDetail()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors text-sm">キャンセル</button><button onclick="app.saveQuestionDetail()" class="px-5 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold transition-colors shadow-md text-sm">保存する</button></div></div></div></div></div>
+    <div id="question-detail-modal" class="hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300" id="question-detail-panel"><div class="p-5 md:p-6 space-y-4"><div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3"><div><h3 class="text-xl font-bold text-soft-green-900">問題の詳細・編集</h3><p class="text-xs text-soft-green-600 mt-1" id="question-detail-meta">--</p></div><button onclick="app.closeQuestionDetail()" class="text-soft-green-500 hover:text-soft-green-800 font-bold text-xl leading-none">×</button></div><input type="hidden" id="detail-question-id"><div><div class="flex items-center justify-between gap-2 mb-1"><label class="block text-sm font-bold text-soft-green-800">問題文</label><button id="detail-ai-regenerate-btn" onclick="app.openRegeneratePolicyModal()" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-bold transition-colors text-xs">問題再作成</button></div><textarea id="detail-question-q" rows="4" oninput="app.syncConfirmPointLimit()" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea>
+<div class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
+  <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+    <label class="text-sm font-bold text-amber-900 whitespace-nowrap">確定ポイント</label>
+    <input id="detail-confirm-point" type="number" min="1" inputmode="numeric" oninput="app.renderConfirmPointPreview()" class="w-28 px-3 py-2 rounded-lg border border-amber-300 text-sm">
+    <span id="detail-confirm-point-limit" class="text-xs text-amber-700"></span>
+  </div>
+  <p class="text-xs text-amber-700 mt-2">この文字まで読めば解答を一意に判断できる目安です。未設定時は問題文末を使用します。</p>
+  <p id="detail-confirm-point-preview" class="text-sm text-amber-950 mt-2 bg-white rounded-lg p-2 border border-amber-100 whitespace-pre-wrap"></p>
+</div></div><div><div class="flex items-center justify-between gap-2 mb-1"><label class="block text-sm font-bold text-soft-green-800">解答</label><button id="detail-ai-answer-btn" onclick="app.regenerateAnswerForQuestion()" class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg font-bold transition-colors text-xs">解答再作成</button></div><input type="text" id="detail-question-a" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"><p class="text-xs text-soft-green-600 mt-1">現在の事実に基づく解答候補をAIで作成します。反映後に内容を確認して保存してください。</p></div><div><label class="block text-sm font-bold text-soft-green-800 mb-1">移動先の学習セット</label><select id="detail-question-move-set" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm font-semibold text-soft-green-900"></select><p class="text-xs text-soft-green-600 mt-1">別の学習セットを選択し、「保存する」を押すと移動が確定します。</p></div><div class="bg-soft-green-50 border border-soft-green-200 rounded-xl p-4 space-y-3"><div class="flex items-center justify-between gap-2"><div><label class="block text-sm font-bold text-soft-green-800">この問題の読み上げ設定</label><p class="text-xs text-soft-green-600 mt-1">問題固有の読み方を設定できます。</p></div><button type="button" onclick="app.openPronunciationModalFromDetail()" class="px-3 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold text-xs whitespace-nowrap">読み方を一括設定</button></div><div id="detail-pronunciation-list" class="space-y-2"></div></div><div><div class="flex items-center justify-between gap-2 mb-2"><label class="block text-sm font-bold text-soft-green-800">ジャンル設定</label><button id="detail-ai-genre-btn" onclick="app.classifyQuestionGenreForDetail()" class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">ジャンルの自動判定</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-xs font-semibold text-soft-green-700 mb-1">ジャンル</label><select id="detail-question-genre" onchange="app.handleQuestionDetailGenreChange()" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select></div><div><label class="block text-xs font-semibold text-soft-green-700 mb-1">サブジャンル</label><select id="detail-question-subgenre" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select></div></div></div><div><div class="flex items-center justify-between gap-2 mb-1"><label class="block text-sm font-bold text-soft-green-800">解説</label><button id="detail-ai-explanation-btn" onclick="app.generateExplanationForQuestion()" class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">AI解説を再セット</button></div><textarea id="detail-question-explanation" rows="4" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea></div><div class="flex flex-col sm:flex-row gap-3 justify-between pt-2"><button onclick="app.deleteQuestionFromDetail()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors text-sm">この問題を削除</button><div class="flex flex-col sm:flex-row gap-3"><button onclick="app.closeQuestionDetail()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors text-sm">キャンセル</button><button onclick="app.saveQuestionDetail()" class="px-5 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold transition-colors shadow-md text-sm">保存する</button></div></div></div></div></div>
     <!-- Derivative Question Modal -->
     <div id="derivative-modal" class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[120] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div id="derivative-panel" class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
@@ -766,6 +776,11 @@
             quizMode: 'voice',
             textRevealTimer: null,
             quizSessionSeenQuestionIds: new Set(),
+            currentTextRevealIndex: 0,
+            currentVoiceCharIndex: 0,
+            currentVoiceStartedAt: 0,
+            currentVoiceEstimatedMs: 0,
+            pendingBuzzRecord: null,
             
             synth: window.speechSynthesis,
             voices: [],
@@ -1034,7 +1049,7 @@
 
             createQuestionData(q, a, explanation = '', meta = {}) {
                 const id = 'q-' + Date.now() + Math.random().toString(36).substring(2);
-                return { id, questionId: id, q, a, explanation: explanation || '', genre: meta.genre || '', subgenre: meta.subgenre || '', difficulty: meta.difficulty || '', correct: 0, total: 0, accuracy: 0, lastAnsweredAt: null, lastResult: null, streak: 0, level: 0 };
+                return { id, questionId: id, q, a, explanation: explanation || '', genre: meta.genre || '', subgenre: meta.subgenre || '', difficulty: meta.difficulty || '', correct: 0, total: 0, accuracy: 0, lastAnsweredAt: null, lastResult: null, streak: 0, level: 0, confirmPoint: 0, buzzRecords: [] };
             },
 
             normalizeLearningData() {
@@ -1054,6 +1069,8 @@
                 q.accuracy = q.total > 0 ? q.correct / q.total : 0;
                 q.lastAnsweredAt = q.lastAnsweredAt ? Number(q.lastAnsweredAt) : null;
                 q.lastResult = (q.lastResult === true || q.lastResult === false) ? q.lastResult : null;
+                q.confirmPoint = Math.max(0, Math.min(String(q.q || '').length, Number(q.confirmPoint) || 0));
+                q.buzzRecords = Array.isArray(q.buzzRecords) ? q.buzzRecords.slice(-100) : [];
                 q.streak = Number.isFinite(Number(q.streak)) ? Number(q.streak) : 0;
                 if (!Number.isFinite(Number(q.level))) {
                     const acc = q.total > 0 ? q.correct / q.total : 0;
@@ -1691,7 +1708,7 @@ ${text}
                 document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
                 this.showToast(`「${target.name}」の${rows.length}問をCSV保存しました`,'success');
             },
-            renderQuestionList() { const list=document.getElementById('manager-question-list'), empty=document.getElementById('manager-question-empty'), pager=document.getElementById('manager-question-pager'); if(!list||!empty)return; const set=this.studySets.find(s=>s.id===this.managerSetId); const all=set?set.questions.map(q=>this.normalizeQuestionData(q)):[]; const search=(document.getElementById('manager-question-search')?.value||'').toLowerCase(); const g=document.getElementById('manager-filter-genre')?.value||''; const sg=document.getElementById('manager-filter-subgenre')?.value||''; const filtered=all.filter(q=>((!g)||(g==='__UNSET__'?!q.genre:q.genre===g))&&(!sg||q.subgenre===sg)&&(!search||[q.q,q.a,q.explanation,q.genre,q.subgenre].some(v=>String(v||'').toLowerCase().includes(search)))); const totalEl=document.getElementById('manager-question-total-count'), visibleEl=document.getElementById('manager-question-visible-count'); if(totalEl)totalEl.textContent=all.length; if(visibleEl)visibleEl.textContent=filtered.length; const unsetGenreCount=all.filter(q=>!(q.genre||'').trim()).length; const bulkStatus=document.getElementById('manager-bulk-genre-status'); if(bulkStatus)bulkStatus.textContent=`未設定: ${unsetGenreCount}問 / 1回あたり最大${BULK_GENRE_CLASSIFY_LIMIT}問`; const noExplanationCount=all.filter(q=>!(q.explanation||'').trim()).length; const bulkExpStatus=document.getElementById('manager-bulk-explanation-status'); if(bulkExpStatus)bulkExpStatus.textContent=`解説未設定: ${noExplanationCount}問 / 最大${CSV_EXPLANATION_LIMIT}問`; const bulkExpBtn=document.getElementById('manager-bulk-explanation-btn'); if(bulkExpBtn)bulkExpBtn.disabled=noExplanationCount===0; if(filtered.length===0){list.innerHTML='';empty.classList.remove('hidden');if(pager)pager.classList.add('hidden');return;} empty.classList.add('hidden'); const size=50,totalPages=Math.max(1,Math.ceil(filtered.length/size)); this.questionListTotalPages=totalPages; this.questionListPage=Math.max(1,Math.min(this.questionListPage||1,totalPages)); const start=(this.questionListPage-1)*size; list.innerHTML=filtered.slice(start,start+size).map((q,i)=>`<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1 min-w-0"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900 truncate whitespace-nowrap overflow-hidden" title="${this.escapeHTML(q.q)}">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span> / 正解率: ${q.total>0?Math.round((q.correct/q.total)*100)+'%':'--%'}</p></div><button onclick="app.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`).join(''); if(pager){pager.classList.remove('hidden'); const info=document.getElementById('manager-question-page-info'); if(info)info.textContent=`${this.questionListPage} / ${totalPages}`; const first=document.getElementById('manager-question-first'),prev=document.getElementById('manager-question-prev'),next=document.getElementById('manager-question-next'),last=document.getElementById('manager-question-last'); [first,prev].forEach(b=>{if(b)b.disabled=this.questionListPage<=1;}); [next,last].forEach(b=>{if(b)b.disabled=this.questionListPage>=totalPages;});} },
+            renderQuestionList() { const list=document.getElementById('manager-question-list'), empty=document.getElementById('manager-question-empty'), pager=document.getElementById('manager-question-pager'); if(!list||!empty)return; const set=this.studySets.find(s=>s.id===this.managerSetId); const all=set?set.questions.map(q=>this.normalizeQuestionData(q)):[]; const search=(document.getElementById('manager-question-search')?.value||'').toLowerCase(); const g=document.getElementById('manager-filter-genre')?.value||''; const sg=document.getElementById('manager-filter-subgenre')?.value||''; const filtered=all.filter(q=>((!g)||(g==='__UNSET__'?!q.genre:q.genre===g))&&(!sg||q.subgenre===sg)&&(!search||[q.q,q.a,q.explanation,q.genre,q.subgenre].some(v=>String(v||'').toLowerCase().includes(search)))); const totalEl=document.getElementById('manager-question-total-count'), visibleEl=document.getElementById('manager-question-visible-count'); if(totalEl)totalEl.textContent=all.length; if(visibleEl)visibleEl.textContent=filtered.length; const unsetGenreCount=all.filter(q=>!(q.genre||'').trim()).length; const bulkStatus=document.getElementById('manager-bulk-genre-status'); if(bulkStatus)bulkStatus.textContent=`未設定: ${unsetGenreCount}問 / 1回あたり最大${BULK_GENRE_CLASSIFY_LIMIT}問`; const noExplanationCount=all.filter(q=>!(q.explanation||'').trim()).length; const bulkExpStatus=document.getElementById('manager-bulk-explanation-status'); if(bulkExpStatus)bulkExpStatus.textContent=`解説未設定: ${noExplanationCount}問 / 最大${CSV_EXPLANATION_LIMIT}問`; const bulkExpBtn=document.getElementById('manager-bulk-explanation-btn'); if(bulkExpBtn)bulkExpBtn.disabled=noExplanationCount===0; if(filtered.length===0){list.innerHTML='';empty.classList.remove('hidden');if(pager)pager.classList.add('hidden');return;} empty.classList.add('hidden'); const size=50,totalPages=Math.max(1,Math.ceil(filtered.length/size)); this.questionListTotalPages=totalPages; this.questionListPage=Math.max(1,Math.min(this.questionListPage||1,totalPages)); const start=(this.questionListPage-1)*size; list.innerHTML=filtered.slice(start,start+size).map((q,i)=>`<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1 min-w-0"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900 truncate whitespace-nowrap overflow-hidden" title="${this.escapeHTML(q.q)}">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span> / 正解率: ${q.total>0?Math.round((q.correct/q.total)*100)+'%':'--%'} / 習熟度: ${this.getMasteryMetrics(q).score}点 / 確定比: ${this.getMasteryMetrics(q).avgRatioText}</p></div><button onclick="app.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`).join(''); if(pager){pager.classList.remove('hidden'); const info=document.getElementById('manager-question-page-info'); if(info)info.textContent=`${this.questionListPage} / ${totalPages}`; const first=document.getElementById('manager-question-first'),prev=document.getElementById('manager-question-prev'),next=document.getElementById('manager-question-next'),last=document.getElementById('manager-question-last'); [first,prev].forEach(b=>{if(b)b.disabled=this.questionListPage<=1;}); [next,last].forEach(b=>{if(b)b.disabled=this.questionListPage>=totalPages;});} },
             async createBulkExplanationsForManagerSet(){
                 if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error');
                 const set=this.studySets.find(s=>s.id===this.managerSetId);
@@ -1776,7 +1793,11 @@ ${text}
                 if(!r.q)return this.showToast('問題が見つかりません','error');
                 document.getElementById('detail-question-id').value=r.q.id;
                 document.getElementById('detail-question-q').value=r.q.q;
+                document.getElementById('detail-confirm-point').value=r.q.confirmPoint || r.q.q.length;
+                this.syncConfirmPointLimit();
                 document.getElementById('detail-question-a').value=r.q.a;
+                const mastery=this.getMasteryMetrics(r.q);
+                document.getElementById('question-detail-meta').textContent=`回答 ${r.q.total}回 / 正解 ${r.q.correct}回 / 習熟度 ${mastery.score}点 / 平均確定ポイント比 ${mastery.avgRatioText}`;
                 document.getElementById('detail-question-explanation').value=r.q.explanation||'';
                 const moveSelect=document.getElementById('detail-question-move-set');
                 if(moveSelect){
@@ -1792,6 +1813,37 @@ ${text}
             },
             closeQuestionDetail(){const modal=document.getElementById('question-detail-modal'), panel=document.getElementById('question-detail-panel'); modal.classList.add('opacity-0'); panel.classList.add('scale-95'); setTimeout(()=>modal.classList.add('hidden'),300);},
             openCurrentQuizQuestionDetail(){const set=this.studySets.find(s=>s.id===this.activeSetId); const q=set?.questions[this.currentQuestionIndex]; if(!q)return this.showToast('現在の問題が見つかりません','error'); this.managerSetId=this.activeSetId; this.updateSetSelectors(); this.openQuestionDetail(this.getQuestionId(q));},
+            syncConfirmPointLimit(){
+                const text=document.getElementById('detail-question-q')?.value||'';
+                const input=document.getElementById('detail-confirm-point');
+                const limit=document.getElementById('detail-confirm-point-limit');
+                if(input){input.max=Math.max(1,text.length);if(Number(input.value)>text.length)input.value=text.length||1;}
+                if(limit)limit.textContent=`/ 全${text.length}文字`;
+                this.renderConfirmPointPreview();
+            },
+            renderConfirmPointPreview(){
+                const text=document.getElementById('detail-question-q')?.value||'';
+                const point=Math.max(0,Math.min(text.length,Number(document.getElementById('detail-confirm-point')?.value)||text.length));
+                const el=document.getElementById('detail-confirm-point-preview');
+                if(el)el.textContent=text?`${text.slice(0,point)}｜${text.slice(point)}`:'問題文を入力してください';
+            },
+            getEffectiveConfirmPoint(q){const len=Math.max(1,String(q?.q||'').length);return Math.max(1,Math.min(len,Number(q?.confirmPoint)||len));},
+            getBuzzPositionScore(q,record){
+                const len=Math.max(1,String(q?.q||'').length),cp=this.getEffectiveConfirmPoint(q);
+                const pos=Math.max(0,Math.min(len,Number(record?.charIndex)||len));
+                if(pos<=cp)return 1;
+                return Math.max(0,1-((pos-cp)/Math.max(1,len-cp)));
+            },
+            getMasteryMetrics(q){
+                q=this.normalizeQuestionData(q);const total=q.total||0,correct=q.correct||0;
+                const accuracy=total?correct/total:0;
+                const accuracyConfidence=(accuracy*0.7)+(Math.min(1,correct/5)*0.3);
+                const valid=q.buzzRecords.filter(r=>r&&r.correct===true&&Number.isFinite(Number(r.charIndex)));
+                const timing=valid.length?valid.reduce((sum,r)=>sum+this.getBuzzPositionScore(q,r),0)/valid.length:0;
+                const ratios=valid.map(r=>Number(r.charIndex)/this.getEffectiveConfirmPoint(q));
+                const avgRatio=ratios.length?ratios.reduce((a,b)=>a+b,0)/ratios.length:null;
+                return {score:Math.round((accuracyConfidence*75)+(timing*25)),accuracy,timing,avgRatio,avgRatioText:avgRatio===null?'--':`${Math.round(avgRatio*100)}%`};
+            },
             handleQuestionDetailGenreChange(){const g=document.getElementById('detail-question-genre')?.value||''; const ss=document.getElementById('detail-question-subgenre'); if(ss)ss.innerHTML=this.getSubgenreOptionsHTML(g,'',false);},
             saveQuestionDetail(){
                 const id=document.getElementById('detail-question-id').value;
@@ -1806,6 +1858,8 @@ ${text}
                 const isMoving=destination.id!==r.set.id;
                 if(isMoving&&destination.questions.length>=MAX_QUESTIONS_PER_SET)return this.showToast(`移動先の登録上限(${MAX_QUESTIONS_PER_SET}問)に達しています。`,'error');
                 r.q.q=qText;
+                const cpInput=Number(document.getElementById('detail-confirm-point')?.value);
+                r.q.confirmPoint=Number.isFinite(cpInput)&&cpInput>0?Math.min(qText.length,Math.round(cpInput)):0;
                 r.q.a=aText;
                 r.q.explanation=document.getElementById('detail-question-explanation').value.trim();
                 r.q.genre=document.getElementById('detail-question-genre').value||'';
@@ -1843,6 +1897,30 @@ ${text}
                 try{const prompt=`次の早押しクイズ問題を、解答を変更せずに再作成してください。\n方針:${instruction}\n全手掛かりを内部でファクトチェックし、確実な事実だけを使用してください。早押しクイズらしく前半は広い手掛かり、後半ほど特定しやすい構成にしてください。解答そのものは問題文に書かないでください。出力は問題文のみです。\n元の問題文:${q}\n解答:${a}`; const result=(await this.fetchGemini(prompt,false)).trim().replace(/^```[a-z]*|```$/gi,'').trim(); if(!result)throw new Error('問題文を再作成できませんでした'); this.pendingRegeneratedQuestion={before:q,after:result,policy}; document.getElementById('regenerate-before-text').textContent=q;document.getElementById('regenerate-after-text').textContent=result;document.getElementById('regenerate-compare-policy').textContent=policy==='current'?'方針: 現在・直近の情報を組み入れる':'方針: 誤り・時制を修正'; const m=document.getElementById('regenerate-compare-modal'),p=document.getElementById('regenerate-compare-panel');m.classList.remove('hidden');void m.offsetWidth;m.classList.remove('opacity-0');p.classList.remove('scale-95');}catch(e){this.showToast('問題再作成に失敗しました: '+e.message,'error');}
             },
             applyRegeneratedQuestion(){if(!this.pendingRegeneratedQuestion)return;document.getElementById('detail-question-q').value=this.pendingRegeneratedQuestion.after;this.pendingRegeneratedQuestion=null;this.closeRegenerateCompareModal();this.showToast('再作成後の問題文を編集欄へ反映しました。保存してください','success');},
+            async regenerateAnswerForQuestion(){
+                if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error');
+                const question=document.getElementById('detail-question-q').value.trim();
+                const currentAnswer=document.getElementById('detail-question-a').value.trim();
+                if(!question)return this.showToast('問題文を入力してください','error');
+                const btn=document.getElementById('detail-ai-answer-btn');
+                const oldText=btn.textContent;
+                btn.disabled=true;
+                btn.textContent='確認中...';
+                btn.classList.add('opacity-70','cursor-not-allowed');
+                try{
+                    const prompt=`次のクイズ問題について、現在または直近の確実な事実に基づく正しい解答を1つ作成してください。時点によって変わる役職者、記録、制度、名称などは最新の状態を優先してください。問題文が過去の時点を明示している場合は、その時点に対応する解答にしてください。固有名詞は正式名称を使用してください。説明、理由、引用符、Markdownは付けず、解答だけを出力してください。\n問題文:${question}\n現在登録されている解答:${currentAnswer || '未設定'}`;
+                    const answer=(await this.fetchGemini(prompt,false)).trim().replace(/^```[a-z]*|```$/gi,'').trim();
+                    if(!answer)throw new Error('解答候補を作成できませんでした');
+                    document.getElementById('detail-question-a').value=answer.replace(/^[「『"']|[」』"']$/g,'').trim();
+                    this.showToast('解答候補を編集欄へ反映しました。内容を確認して保存してください','success');
+                }catch(e){
+                    this.showToast('解答再作成に失敗しました: '+e.message,'error');
+                }finally{
+                    btn.disabled=false;
+                    btn.textContent=oldText;
+                    btn.classList.remove('opacity-70','cursor-not-allowed');
+                }
+            },
             async generateExplanationForQuestion(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const q=document.getElementById('detail-question-q').value.trim(), a=document.getElementById('detail-question-a').value.trim(); if(!q||!a)return this.showToast('問題文と解答を入力してください','error'); const btn=document.getElementById('detail-ai-explanation-btn'), old=btn.textContent; btn.disabled=true; btn.textContent='生成中...'; try{ const prompt=this.buildAIExplanationPrompt(q,a); const exp=(await this.fetchGemini(prompt,false)).trim().replace(/^```[a-z]*|```$/gi,'').trim(); document.getElementById('detail-question-explanation').value=exp; this.showToast('AI解説を再セットしました','success'); }catch(e){this.showToast('AI解説生成に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
             async classifyQuestionGenreForDetail(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const q=document.getElementById('detail-question-q').value.trim(), a=document.getElementById('detail-question-a').value.trim(); if(!q||!a)return this.showToast('問題文と解答を入力してください','error'); const btn=document.getElementById('detail-ai-genre-btn'), old=btn.textContent; btn.disabled=true; btn.textContent='判定中...'; try{ const candidates=Object.entries(this.getAISubgenres()).map(([g,subs])=>`${g}: ${subs.join('、')}`).join('\n'); const prompt=`以下のクイズ問題を候補のジャンルとサブジャンルから分類してください。JSONのみ返してください。\n形式:{"genre":"ジャンル","subgenre":"サブジャンル"}\n候補:\n${candidates}\nQ:${q}\nA:${a}`; const parsed=this.parseAIJSON(await this.fetchGemini(prompt,true)); const genre=String(parsed.genre||''), sub=String(parsed.subgenre||''); const defs=this.getAISubgenres(); if(!defs[genre]) throw new Error('候補内のジャンルを判定できませんでした'); document.getElementById('detail-question-genre').value=genre; const ss=document.getElementById('detail-question-subgenre'); ss.innerHTML=this.getSubgenreOptionsHTML(genre,sub,false); if([...ss.options].some(o=>o.value===sub)) ss.value=sub; this.showToast(`ジャンルを自動判定しました: ${genre}${sub?' / '+sub:''}`,'success'); }catch(e){this.showToast('ジャンル自動判定に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
             getQuestionId(q){return q.questionId||q.id;}, getCycleSeenSet(set){if(!set)return new Set(); if(!Array.isArray(set.cycleSeenQuestionIds))set.cycleSeenQuestionIds=[]; return new Set(set.cycleSeenQuestionIds);}, resetQuestionCycle(set){if(set){set.cycleSeenQuestionIds=[]; set.cycleStartedAt=Date.now();}}, isCycleCompleted(set,questions){const seen=this.getCycleSeenSet(set); return questions.length>0&&questions.map(q=>this.getQuestionId(q)).every(id=>seen.has(id));}, markQuestionSeenInCycle(set,q){if(!set||!q)return; const id=this.getQuestionId(q); const seen=this.getCycleSeenSet(set); seen.add(id); set.cycleSeenQuestionIds=Array.from(seen); if(!set.cycleStartedAt)set.cycleStartedAt=Date.now();}, getAccuracyRatio(q){return q&&q.total?(Number.isFinite(Number(q.accuracy))?Number(q.accuracy):(q.correct||0)/q.total):0;}, isHighAccuracyQuestion(q){return (q.total||0)>=HIGH_ACCURACY_MIN_ATTEMPTS&&this.getAccuracyRatio(q)>=HIGH_ACCURACY_THRESHOLD;}, isHighAccuracyCooldown(q,now=Date.now()){return !!(q.lastAnsweredAt&&(now-Number(q.lastAnsweredAt))<HIGH_ACCURACY_COOLDOWN_MS);}, isLowAccuracyQuestion(q){return (q.total||0)>0&&this.getAccuracyRatio(q)<LOW_ACCURACY_THRESHOLD;}, isStaleQuestion(q,now=Date.now()){return !!(q.lastAnsweredAt&&(now-Number(q.lastAnsweredAt))>=STALE_REVIEW_MS);},
@@ -2487,7 +2565,7 @@ ${text}
             getQuestionStage(q) { if (q.total === 0) return '未学習'; const accuracy = q.accuracy ?? (q.total > 0 ? q.correct / q.total : 0); if (q.level >= 4 && q.streak >= 3 && accuracy >= 0.85) return '定着済み'; if (q.level >= 2 && q.streak >= 1) return '定着途中'; return '学習中'; },
             getReviewIntervalMs(q) { const minute = 60 * 1000, hour = 60 * minute, day = 24 * hour; if (q.total === 0 || !q.lastAnsweredAt) return 0; if (q.lastResult === false) return 2 * minute; const intervals = [10 * minute, 4 * hour, 1 * day, 3 * day, 7 * day, 14 * day]; const level = Math.max(0, Math.min(5, Number(q.level) || 0)); return intervals[level]; },
             isReviewDue(q, now) { if (q.total === 0 || !q.lastAnsweredAt) return true; return (now - q.lastAnsweredAt) >= this.getReviewIntervalMs(q); },
-            scoreQuestion(q, now) { if (q.total === 0) return 1.0 + Math.random() * 0.5; const accuracy = q.accuracy ?? (q.correct / q.total); const wrongCount = Math.max(0, q.total - q.correct); const elapsed = q.lastAnsweredAt ? (now - q.lastAnsweredAt) : Number.MAX_SAFE_INTEGER; const targetInterval = this.getReviewIntervalMs(q) || 1; const elapsedFactor = Math.min(3, elapsed / targetInterval); const difficultyFactor = 1 - accuracy; const streakFactor = 1 / (1 + Math.max(0, q.streak || 0)); const levelFactor = (5 - Math.max(0, Math.min(5, q.level || 0))) / 5; const wrongFactor = Math.min(2, Math.log1p(wrongCount)); const recentWrongBonus = q.lastResult === false ? 1.4 : 0; const stage = this.getQuestionStage(q); const stageBonus = stage === '学習中' ? 0.9 : stage === '定着途中' ? 0.35 : stage === '定着済み' ? -0.6 : 0; const baseScore = (2.2 * elapsedFactor) + (2.0 * difficultyFactor) + (1.2 * streakFactor) + (1.0 * levelFactor) + (0.7 * wrongFactor) + recentWrongBonus + stageBonus; return Math.max(0.05, baseScore * (0.8 + Math.random() * 0.4)); },
+            scoreQuestion(q, now) { if (q.total === 0) return 1.0 + Math.random() * 0.5; const accuracy = q.accuracy ?? (q.correct / q.total); const wrongCount = Math.max(0, q.total - q.correct); const elapsed = q.lastAnsweredAt ? (now - q.lastAnsweredAt) : Number.MAX_SAFE_INTEGER; const targetInterval = this.getReviewIntervalMs(q) || 1; const elapsedFactor = Math.min(3, elapsed / targetInterval); const difficultyFactor = 1 - accuracy; const streakFactor = 1 / (1 + Math.max(0, q.streak || 0)); const levelFactor = (5 - Math.max(0, Math.min(5, q.level || 0))) / 5; const wrongFactor = Math.min(2, Math.log1p(wrongCount)); const recentWrongBonus = q.lastResult === false ? 1.4 : 0; const stage = this.getQuestionStage(q); const stageBonus = stage === '学習中' ? 0.9 : stage === '定着途中' ? 0.35 : stage === '定着済み' ? -0.6 : 0; const masteryFactor=1-(this.getMasteryMetrics(q).score/100); const baseScore = (2.2 * elapsedFactor) + (2.0 * difficultyFactor) + (1.0 * masteryFactor) + (1.2 * streakFactor) + (1.0 * levelFactor) + (0.7 * wrongFactor) + recentWrongBonus + stageBonus; return Math.max(0.05, baseScore * (0.8 + Math.random() * 0.4)); },
             pickWeightedQuestion(candidates) { const totalWeight = candidates.reduce((sum, c) => sum + Math.max(0.05, c.score), 0); let r = Math.random() * totalWeight; for (const c of candidates) { r -= Math.max(0.05, c.score); if (r <= 0) return c.index; } return candidates[candidates.length - 1].index; },
             choosePriorityPool(candidates, now) { if(!candidates||candidates.length===0)return[]; const unlearned=candidates.filter(c=>(c.q.total||0)===0); if(unlearned.length>0)return unlearned; const priority=[...candidates.filter(c=>this.isLowAccuracyQuestion(c.q)),...candidates.filter(c=>this.isStaleQuestion(c.q,now)),...candidates.filter(c=>c.q.total>0&&this.isReviewDue(c.q,now))]; if(priority.length>0){const uniq=new Map(); priority.forEach(c=>uniq.set(this.getQuestionId(c.q),c)); return Array.from(uniq.values());} return candidates; },
             selectNextQuestionIndex(questions, excludedQuestionIds = new Set(), targetSet = null) { const now=Date.now(); if(!questions||questions.length===0)return-1; let cycleCompleted=targetSet?this.isCycleCompleted(targetSet,questions):false; if(cycleCompleted)this.resetQuestionCycle(targetSet); const seen=targetSet?this.getCycleSeenSet(targetSet):new Set(); const all=questions.map((q,index)=>{this.normalizeQuestionData(q); return {q,index,stage:this.getQuestionStage(q),score:this.scoreQuestion(q,now)};}).filter(c=>!excludedQuestionIds.has(this.getQuestionId(c.q))); if(all.length===0)return-1; let candidates=all.filter(c=>!seen.has(this.getQuestionId(c.q))); if(candidates.length===0)candidates=all; if(!cycleCompleted){const nonCooldown=candidates.filter(c=>!(this.isHighAccuracyQuestion(c.q)&&this.isHighAccuracyCooldown(c.q,now))); if(nonCooldown.length>0)candidates=nonCooldown;} const pool=this.choosePriorityPool(candidates,now); return this.pickWeightedQuestion(pool.length>0?pool:candidates); },
@@ -2540,7 +2618,9 @@ ${text}
                 document.getElementById('quiz-current-accuracy').textContent = accuracyText;
                 const mobileAccuracyEl = document.getElementById('quiz-mobile-accuracy');
                 if (mobileAccuracyEl) mobileAccuracyEl.textContent = accuracyText;
-                document.getElementById('quiz-question-text').textContent = q.q;
+                const quizQuestionText = document.getElementById('quiz-question-text');
+                quizQuestionText.textContent = q.q;
+                quizQuestionText.classList.remove('hidden');
                 document.getElementById('quiz-answer-text').textContent = q.a;
                 document.getElementById('quiz-explanation-text').textContent = q.explanation || '解説はありません。';
 
@@ -2554,6 +2634,11 @@ ${text}
                     voiceIndicator?.classList.remove('hidden');
                     textContainer?.classList.add('hidden');
                     const utterance = new SpeechSynthesisUtterance(this.applyPronunciations(q.q, q));
+                    this.currentVoiceCharIndex=0;
+                    this.currentVoiceStartedAt=performance.now();
+                    this.currentVoiceEstimatedMs=Math.max(1000,Array.from(String(q.q||'')).length*120/0.9);
+                    utterance.onboundary=(event)=>{if(Number.isFinite(event.charIndex))this.currentVoiceCharIndex=Math.max(this.currentVoiceCharIndex,event.charIndex);};  
+
                     utterance.lang = 'ja-JP';
                     utterance.rate = 0.9;
                     const jpVoices = this.voices.filter(v => v.lang.includes('ja'));
@@ -2570,17 +2655,33 @@ ${text}
                 const el=document.getElementById('quiz-text-reveal');
                 if(!el)return;
                 const chars=Array.from(String(text||''));
-                let index=0;
+                let index=0; this.currentTextRevealIndex=0;
                 el.textContent='';
                 this.textRevealTimer=setInterval(()=>{
-                    index++;
+                    index++; this.currentTextRevealIndex=index;
                     el.textContent=chars.slice(0,index).join('');
                     if(index>=chars.length)this.stopTextReveal();
                 },120);
             },
-            buzz() {  
+            buzz() {
+                const targetSet=this.studySets.find(s=>s.id===this.activeSetId);
+                const q=targetSet?.questions[this.currentQuestionIndex];
+                if(q){
+                    const len=Math.max(1,String(q.q||'').length);
+                    let charIndex=0,elapsedMs=0,source='exact';
+                    if(this.quizMode==='text'){charIndex=Math.max(1,Math.min(len,this.currentTextRevealIndex||1));}
+                    else{
+                        elapsedMs=Math.max(0,performance.now()-(this.currentVoiceStartedAt||performance.now()));
+                        charIndex=this.currentVoiceCharIndex;
+                        if(!charIndex){charIndex=Math.max(1,Math.min(len,Math.round(len*Math.min(1,elapsedMs/Math.max(1,this.currentVoiceEstimatedMs)))));source='estimated';}
+                    }
+                    this.pendingBuzzRecord={mode:this.quizMode,charIndex,totalChars:len,confirmPoint:this.getEffectiveConfirmPoint(q),elapsedMs:Math.round(elapsedMs),positionSource:source,answeredAt:Date.now()};
+                }
+  
                 this.synth.cancel();
                 this.stopTextReveal();
+                const quizQuestionText = document.getElementById('quiz-question-text');
+                quizQuestionText.classList.toggle('hidden', this.quizMode === 'voice');
                 document.getElementById('quiz-state-playing').classList.add('hidden');
                 document.getElementById('quiz-state-thinking').classList.remove('hidden');
             },
@@ -2588,6 +2689,8 @@ ${text}
             showAnswer() {
                 document.getElementById('btn-show-answer').classList.add('hidden');
                 document.getElementById('answer-container').classList.remove('hidden');
+                // 音声モードでも解答表示後は問題文を再表示する
+                document.getElementById('quiz-question-text').classList.remove('hidden');
                 
                 const targetSet = this.studySets.find(s => s.id === this.activeSetId);
                 const q = targetSet.questions[this.currentQuestionIndex];
@@ -2649,7 +2752,7 @@ ${text}
                 const opened=window.open(url,'_blank','noopener,noreferrer');
                 if(!opened)this.showToast('画像検索を開けませんでした。ポップアップ設定をご確認ください。','error');
             },
-            skipQuestion() { setTimeout(() => this.nextQuestion(), 200); },
+            skipQuestion() { this.pendingBuzzRecord=null; setTimeout(() => this.nextQuestion(), 200); },
 
             recordResult(isCorrect) {
                 const targetSet = this.studySets.find(s => s.id === this.activeSetId);
@@ -2660,6 +2763,9 @@ ${text}
                 q.accuracy = q.total > 0 ? q.correct / q.total : 0;
                 q.lastAnsweredAt = Date.now();
                 q.lastResult = wasCorrect;
+                if(this.pendingBuzzRecord){q.buzzRecords.push({...this.pendingBuzzRecord,correct:wasCorrect});q.buzzRecords=q.buzzRecords.slice(-100);}
+                this.pendingBuzzRecord=null;  
+
                 this.incrementTodayAnsweredCount();
                 if (wasCorrect) { q.streak = (q.streak || 0) + 1; if (q.level === 0 || q.streak >= 2) q.level = Math.min(5, (q.level || 0) + 1); }
                 else { q.streak = 0; q.level = Math.max(0, (q.level || 0) - 1); }

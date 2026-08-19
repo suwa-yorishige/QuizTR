@@ -278,6 +278,7 @@
                 <div class="bg-soft-green-50 border border-soft-green-100 rounded-2xl p-2 flex gap-2 shadow-sm">
                     <button id="manager-tab-btn-overview" onclick="app.switchManagerTab('overview')" class="flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors bg-soft-green-600 text-white shadow-sm">管理・分析</button>
                     <button id="manager-tab-btn-questions" onclick="app.switchManagerTab('questions')" class="flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors text-soft-green-800 hover:bg-soft-green-100">問題一覧・個別編集</button>
+                    <button id="manager-tab-btn-bulk" onclick="app.switchManagerTab('bulk')" class="flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors text-soft-green-800 hover:bg-soft-green-100">問題一括編集</button>
                 </div>
                 
                 <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-100 shadow-sm space-y-6">
@@ -310,7 +311,13 @@
                     </div>
 
                     <div class="manager-overview-section border-t border-soft-green-200 pt-4">
-                        <h3 class="text-lg font-bold text-soft-green-800 mb-4">正解率分布</h3>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                            <h3 class="text-lg font-bold text-soft-green-800">正解率／習熟度分布</h3>
+                            <div class="bg-white border border-soft-green-200 rounded-xl p-1 flex gap-1">
+                                <button id="distribution-tab-accuracy" onclick="app.switchDistributionTab('accuracy')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-soft-green-600 text-white">正解率</button>
+                                <button id="distribution-tab-mastery" onclick="app.switchDistributionTab('mastery')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-soft-green-800 hover:bg-soft-green-100">習熟度</button>
+                            </div>
+                        </div>
                         <div id="manager-stats-chart" class="space-y-2"><!-- JS will populate this --></div>
                     </div>
                     <div class="manager-overview-section border-t border-soft-green-200 pt-4">
@@ -332,7 +339,10 @@
                             </div>
                             <div class="flex flex-col items-start sm:items-end gap-2">
                                 <div class="text-xs font-semibold text-soft-green-700 bg-white border border-soft-green-200 rounded-lg px-3 py-2 self-start sm:self-auto">表示: <span id="manager-question-visible-count">0</span> / <span id="manager-question-total-count">0</span> 問</div>
-                                <button id="manager-export-csv-btn" onclick="app.exportManagerQuestionsCSV()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors text-xs shadow-sm whitespace-nowrap">CSV保存（UTF-8）</button>
+                                <div class="flex flex-wrap gap-2 justify-start sm:justify-end">
+                                    <button id="manager-duplicate-check-btn" onclick="app.checkAndMergeDuplicateQuestions()" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold transition-colors text-xs shadow-sm whitespace-nowrap">重複問題を一括チェック</button>
+                                    <button id="manager-export-csv-btn" onclick="app.exportManagerQuestionsCSV()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors text-xs shadow-sm whitespace-nowrap">CSV保存（UTF-8）</button>
+                                </div>
                                 <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                                     <div id="manager-bulk-genre-status" class="text-xs font-semibold text-soft-green-700 bg-soft-green-50 border border-soft-green-200 rounded-lg px-3 py-2">未設定: 0問 / 1回あたり最大30問</div>
                                     <button id="manager-bulk-genre-btn" onclick="app.classifyUnsetGenresForManagerSet()" class="px-3 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold transition-colors text-xs shadow-sm whitespace-nowrap">ジャンル一括自動判定</button>
@@ -348,12 +358,38 @@
                             <div id="manager-question-list" class="border border-soft-green-100 rounded-xl overflow-hidden divide-y divide-soft-green-100 max-h-[520px] overflow-y-auto bg-white"></div><div id="manager-question-empty" class="hidden p-8 text-center text-soft-green-400 bg-white border border-soft-green-100 rounded-xl">表示できる問題がありません。</div><div id="manager-question-pager" class="hidden flex flex-wrap items-center justify-between gap-2 pt-2"><div class="flex gap-2"><button id="manager-question-first" onclick="app.goToQuestionListPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">最初</button><button id="manager-question-prev" onclick="app.changeQuestionListPage(-1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">前へ</button></div><span id="manager-question-page-info" class="text-xs font-bold text-soft-green-700">1 / 1</span><div class="flex gap-2"><button id="manager-question-next" onclick="app.changeQuestionListPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">次へ</button><button id="manager-question-last" onclick="app.goToQuestionListPage(app.questionListTotalPages || 1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">最後</button></div></div>
                         </div>
                     </div>
+                    <div id="manager-tab-bulk" class="manager-bulk-section hidden border-t border-soft-green-200 pt-4">
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-soft-green-800 mb-1">問題一括編集</h3>
+                                <p class="text-sm text-soft-green-600">チェックした問題をまとめて削除、または別の学習セットへ移動できます。</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-soft-green-200 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div><label class="block text-xs font-semibold text-soft-green-700 mb-1">編集する学習セット</label><select id="manager-bulk-set-select" onchange="app.changeBulkEditSet(this.value)" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 bg-white text-sm font-semibold text-soft-green-900"></select></div>
+                                    <div><label class="block text-xs font-semibold text-soft-green-700 mb-1">移動先の学習セット</label><select id="manager-bulk-move-target" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 bg-white text-sm font-semibold text-soft-green-900"></select></div>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-soft-green-50 border border-soft-green-100 px-3 py-2">
+                                    <label class="flex items-center gap-2 text-xs font-bold text-soft-green-800 cursor-pointer"><input id="manager-bulk-select-page" type="checkbox" onchange="app.toggleBulkPageSelection(this.checked)" class="w-4 h-4 rounded text-soft-green-600">このページをすべて選択</label>
+                                    <span class="text-xs font-bold text-soft-green-700">選択: <span id="manager-bulk-selected-count">0</span>問</span>
+                                </div>
+                                <div id="manager-bulk-question-list" class="border border-soft-green-100 rounded-xl overflow-hidden divide-y divide-soft-green-100 max-h-[520px] overflow-y-auto bg-white"></div>
+                                <div id="manager-bulk-question-empty" class="hidden p-8 text-center text-soft-green-400 bg-white border border-soft-green-100 rounded-xl">表示できる問題がありません。</div>
+                                <div id="manager-bulk-question-pager" class="hidden flex flex-wrap items-center justify-between gap-2 pt-2"><div class="flex gap-2"><button id="manager-bulk-first" onclick="app.goToBulkEditPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold text-xs">最初</button><button id="manager-bulk-prev" onclick="app.changeBulkEditPage(-1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold text-xs">前へ</button></div><span id="manager-bulk-page-info" class="text-xs font-bold text-soft-green-700">1 / 1</span><div class="flex gap-2"><button id="manager-bulk-next" onclick="app.changeBulkEditPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold text-xs">次へ</button><button id="manager-bulk-last" onclick="app.goToBulkEditPage(app.bulkEditTotalPages || 1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold text-xs">最後</button></div></div>
+                                <div class="flex flex-col sm:flex-row gap-2 pt-2 border-t border-soft-green-100"><button onclick="app.deleteSelectedBulkQuestions()" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm">選択した問題を削除</button><button onclick="app.moveSelectedBulkQuestions()" class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm">選択した問題を移動</button></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="manager-overview-section border-t border-soft-green-200 pt-4">
                         <h3 class="text-lg font-bold text-soft-green-800 mb-2">問題の整理</h3>
-                        <p class="text-sm text-soft-green-600 mb-4">正解率が高く、すでに定着している問題を一括で削除します。</p>
+                        <p class="text-sm text-soft-green-600 mb-4">習熟度または正解率が高い問題を、上位割合または上位問題数で一括削除します。</p>
                         
                         <div class="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-4 rounded-xl border border-soft-green-200">
                             <label class="text-sm font-semibold text-soft-green-800">削除対象</label>
+                            <select id="manager-delete-metric" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                                <option value="mastery">習熟度</option>
+                                <option value="accuracy">正解率</option>
+                            </select>
                             <select id="manager-delete-mode" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
                                 <option value="percent">上位割合</option>
                                 <option value="count">上位問題数</option>
@@ -492,7 +528,7 @@
 峰竜太　タレント
 峰竜太　競艇選手" class="w-full px-4 py-3 rounded-xl border border-soft-green-200 focus:ring-2 focus:ring-soft-green-400"></textarea><p id="ai-memo-count" class="text-xs font-bold text-soft-green-700 mt-2">有効候補数: 0 / 10</p></div>
                         <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">難易度</label><select id="ai-memo-difficulty" class="w-full px-4 py-3 rounded-xl border border-soft-green-200 bg-white"><option value="初級">初級</option><option value="中級" selected>中級</option><option value="上級">上級</option><option value="超級">超級</option></select></div>
-                        <button id="btn-normalize-memo" onclick="app.normalizeMemoAnswersWithAI()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold">名称を補正して確認</button>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><button id="btn-normalize-memo" onclick="app.normalizeMemoAnswersWithAI()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold">名称を補正して確認</button><button onclick="app.resetMemoImport()" class="w-full py-3 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 border border-soft-green-300 rounded-xl font-bold">リセット</button></div>
                         <div id="ai-memo-normalized" class="hidden space-y-3"><div class="flex items-center justify-between"><h3 class="font-bold text-soft-green-900">補正結果</h3><span class="text-xs text-soft-green-600">必要に応じて編集できます</span></div><div id="ai-memo-normalized-list" class="space-y-2"></div><button id="btn-generate-memo" onclick="app.generateMemoQuestions()" class="w-full py-3 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold">問題を一括作成</button></div>
                         <div id="ai-memo-preview" class="hidden space-y-3"><h3 class="font-bold text-soft-green-900">生成結果</h3><div id="ai-memo-preview-list" class="space-y-3"></div><button onclick="app.saveMemoQuestions()" class="w-full py-3 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold">選択した問題を保存</button></div>
                     </div>
@@ -724,6 +760,27 @@
     <div id="regenerate-policy-modal" class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[145] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"><div id="regenerate-policy-panel" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300"><div class="p-6 space-y-4"><div class="flex justify-between border-b pb-3"><div><h3 class="text-xl font-bold text-soft-green-900">問題再作成の方針</h3><p class="text-xs text-soft-green-600 mt-1">再作成する方針を選択してください。</p></div><button onclick="app.closeRegeneratePolicyModal()" class="font-bold text-xl">×</button></div><label class="flex gap-3 p-4 border rounded-xl cursor-pointer"><input type="radio" name="regenerate-policy" value="correct" checked><span><strong class="block text-soft-green-900">誤り・時制を修正</strong><span class="text-xs text-soft-green-600">事実誤認や時制が一致しない事項を修正します。</span></span></label><label class="flex gap-3 p-4 border rounded-xl cursor-pointer"><input type="radio" name="regenerate-policy" value="current"><span><strong class="block text-soft-green-900">現在・直近の情報を組み入れる</strong><span class="text-xs text-soft-green-600">確認可能な現在または直近の情報を問題文へ追加します。</span></span></label><div class="flex gap-3 justify-end"><button onclick="app.closeRegeneratePolicyModal()" class="px-4 py-2 bg-soft-green-100 rounded-xl font-bold">キャンセル</button><button onclick="app.regenerateQuestionForDetail()" class="px-5 py-2 bg-amber-500 text-white rounded-xl font-bold">再作成する</button></div></div></div></div>
     <!-- Comparison Modal -->
     <div id="regenerate-compare-modal" class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"><div id="regenerate-compare-panel" class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300"><div class="p-6 space-y-4"><div><h3 class="text-xl font-bold text-soft-green-900">再作成結果の比較</h3><p id="regenerate-compare-policy" class="text-xs text-soft-green-600 mt-1"></p></div><div class="grid md:grid-cols-2 gap-4"><div class="bg-gray-50 border rounded-xl p-4"><p class="text-xs font-bold text-gray-600 mb-2">作成前</p><p id="regenerate-before-text" class="text-sm whitespace-pre-wrap"></p></div><div class="bg-amber-50 border border-amber-200 rounded-xl p-4"><p class="text-xs font-bold text-amber-700 mb-2">作成後</p><p id="regenerate-after-text" class="text-sm whitespace-pre-wrap"></p></div></div><div class="flex gap-3 justify-end"><button onclick="app.closeRegenerateCompareModal()" class="px-4 py-2 bg-soft-green-100 rounded-xl font-bold">元のまま</button><button onclick="app.applyRegeneratedQuestion()" class="px-5 py-2 bg-soft-green-600 text-white rounded-xl font-bold">作成後を反映</button></div></div></div></div>
+
+    <!-- Duplicate Question Merge Modal -->
+    <div id="duplicate-merge-modal" class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[155] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div id="duplicate-merge-panel" class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+            <div class="p-5 md:p-6 space-y-4">
+                <div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3">
+                    <div>
+                        <h3 class="text-xl font-bold text-soft-green-900">同一解答の問題を統合</h3>
+                        <p id="duplicate-merge-summary" class="text-xs text-soft-green-600 mt-1"></p>
+                    </div>
+                    <button onclick="app.closeDuplicateMergeModal()" class="text-soft-green-500 hover:text-soft-green-800 font-bold text-xl leading-none">×</button>
+                </div>
+                <p class="text-sm text-soft-green-700 bg-soft-green-50 border border-soft-green-200 rounded-xl p-3">解答は同じですが問題文が異なります。各グループで残す問題を1つ選択するか、「統合しない」を選択してください。残した問題の成績だけを保持します。</p>
+                <div id="duplicate-merge-groups" class="space-y-4"></div>
+                <div class="flex flex-col sm:flex-row gap-3 justify-end pt-2">
+                    <button onclick="app.closeDuplicateMergeModal()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold text-sm">キャンセル</button>
+                    <button onclick="app.applySelectedDuplicateMerges()" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm shadow-md">選択内容で統合する</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Toast -->
     <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-soft-green-800 text-white px-6 py-3 rounded-full shadow-lg transition-all duration-300 translate-y-24 opacity-0 z-50 flex items-center gap-2 whitespace-nowrap">
         <span id="toast-icon">ℹ️</span>
@@ -769,7 +826,12 @@
             managerSetId: null,
             managerTab: 'overview',
             managerGenreStandard: 'aql',
+            managerDistributionMetric: 'accuracy',
             questionListPage: 1,
+            bulkEditPage: 1,
+            bulkEditTotalPages: 1,
+            bulkEditSetId: null,
+            bulkEditSelectedIds: new Set(),
             dictionary: [],
             dailyStats: {},
             currentQuestionIndex: -1,
@@ -927,7 +989,7 @@
                 });
                 document.getElementById(`view-${viewId}`).classList.remove('hidden');
                 
-                if (viewId === 'manager') { this.renderManagerStats(); this.renderQuestionList(); this.switchManagerTab(this.managerTab || 'overview'); }
+                if (viewId === 'manager') { this.renderManagerStats(); this.renderQuestionList(); this.renderBulkEditList(); this.switchManagerTab(this.managerTab || 'overview'); }
             },
 
             showToast(message, type = 'info') {
@@ -1332,9 +1394,66 @@
             changeManagerSet(id) { this.managerSetId = id; this.questionListPage = 1; const set = this.studySets.find(s => s.id === id); if (set) document.getElementById('manager-set-name').value = set.name; const qSel = document.getElementById('manager-question-set-select'); if (qSel) qSel.value = id; this.renderManagerStats(); this.renderQuestionList(); },
             changeQuestionListSet(id) { this.changeManagerSet(id); },
             getTotalQuestionCount() { return this.studySets.reduce((sum, set) => sum + (set.questions ? set.questions.length : 0), 0); },
-            switchManagerTab(tab) { this.managerTab = tab === 'questions' ? 'questions' : 'overview'; document.querySelectorAll('.manager-overview-section').forEach(el => el.classList.toggle('hidden', this.managerTab !== 'overview')); document.querySelectorAll('.manager-questions-section').forEach(el => el.classList.toggle('hidden', this.managerTab !== 'questions')); const ov=document.getElementById('manager-tab-btn-overview'), qu=document.getElementById('manager-tab-btn-questions'); if(ov&&qu){ov.className=`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${this.managerTab==='overview'?'bg-soft-green-600 text-white shadow-sm':'text-soft-green-800 hover:bg-soft-green-100'}`; qu.className=`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${this.managerTab==='questions'?'bg-soft-green-600 text-white shadow-sm':'text-soft-green-800 hover:bg-soft-green-100'}`;} if(this.managerTab==='questions') this.renderQuestionList(); },
-            changeQuestionListPage(delta) { this.goToQuestionListPage((this.questionListPage || 1) + delta); },
-            goToQuestionListPage(page) { this.questionListPage = Math.max(1, Math.min(Number(page) || 1, this.questionListTotalPages || 1)); this.renderQuestionList(); },
+            switchManagerTab(tab) {
+                this.managerTab = ['overview','questions','bulk'].includes(tab) ? tab : 'overview';
+                document.querySelectorAll('.manager-overview-section').forEach(el => el.classList.toggle('hidden', this.managerTab !== 'overview'));
+                document.querySelectorAll('.manager-questions-section').forEach(el => el.classList.toggle('hidden', this.managerTab !== 'questions'));
+                document.querySelectorAll('.manager-bulk-section').forEach(el => el.classList.toggle('hidden', this.managerTab !== 'bulk'));
+                const buttons={overview:document.getElementById('manager-tab-btn-overview'),questions:document.getElementById('manager-tab-btn-questions'),bulk:document.getElementById('manager-tab-btn-bulk')};
+                Object.entries(buttons).forEach(([key,button])=>{if(button)button.className=`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${this.managerTab===key?'bg-soft-green-600 text-white shadow-sm':'text-soft-green-800 hover:bg-soft-green-100'}`;});
+                if(this.managerTab==='questions') this.renderQuestionList();
+                if(this.managerTab==='bulk') this.renderBulkEditList();
+            },
+            getBulkEditSet(){
+                const id=this.bulkEditSetId||this.managerSetId||this.studySets[0]?.id;
+                return this.studySets.find(set=>set.id===id)||this.studySets[0]||null;
+            },
+            changeBulkEditSet(id){this.bulkEditSetId=id;this.bulkEditPage=1;this.bulkEditSelectedIds.clear();this.renderBulkEditList();},
+            getBulkQuestionKey(q){return String(q?.id||q?.questionId||'');},
+            renderBulkEditList(){
+                const sourceSelect=document.getElementById('manager-bulk-set-select');
+                if(!sourceSelect)return;
+                if(!this.bulkEditSetId||!this.studySets.some(set=>set.id===this.bulkEditSetId))this.bulkEditSetId=this.managerSetId||this.studySets[0]?.id||null;
+                sourceSelect.innerHTML=this.studySets.map(set=>`<option value="${set.id}">${this.escapeHTML(set.name)}</option>`).join('');
+                sourceSelect.value=this.bulkEditSetId||'';
+                const targetSelect=document.getElementById('manager-bulk-move-target');
+                if(targetSelect){
+                    const current=targetSelect.value;
+                    const targets=this.studySets.filter(set=>set.id!==this.bulkEditSetId);
+                    targetSelect.innerHTML=targets.length?targets.map(set=>`<option value="${set.id}">${this.escapeHTML(set.name)}</option>`).join(''):'<option value="">移動先がありません</option>';
+                    if(targets.some(set=>set.id===current))targetSelect.value=current;
+                }
+                const set=this.getBulkEditSet(), questions=set?.questions||[], size=20;
+                const validIds=new Set(questions.map(q=>this.getBulkQuestionKey(q)));
+                this.bulkEditSelectedIds=new Set([...this.bulkEditSelectedIds].filter(id=>validIds.has(id)));
+                this.bulkEditTotalPages=Math.max(1,Math.ceil(questions.length/size));
+                this.bulkEditPage=Math.max(1,Math.min(this.bulkEditPage||1,this.bulkEditTotalPages));
+                const start=(this.bulkEditPage-1)*size, pageItems=questions.slice(start,start+size);
+                const list=document.getElementById('manager-bulk-question-list'),empty=document.getElementById('manager-bulk-question-empty'),pager=document.getElementById('manager-bulk-question-pager');
+                if(list)list.innerHTML=pageItems.map((q,i)=>{const key=this.getBulkQuestionKey(q),checked=this.bulkEditSelectedIds.has(key);return `<label class="p-3 hover:bg-soft-green-50 flex items-start gap-3 cursor-pointer"><input type="checkbox" data-bulk-question-id="${this.escapeHTML(key)}" ${checked?'checked':''} onchange="app.toggleBulkQuestionSelection('${this.escapeHTML(key)}',this.checked)" class="mt-1 w-4 h-4 rounded text-soft-green-600"><div class="min-w-0 flex-1"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900 break-words">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span></p></div></label>`;}).join('');
+                if(list)list.classList.toggle('hidden',!questions.length); if(empty)empty.classList.toggle('hidden',!!questions.length); if(pager)pager.classList.toggle('hidden',!questions.length);
+                const info=document.getElementById('manager-bulk-page-info');if(info)info.textContent=`${this.bulkEditPage} / ${this.bulkEditTotalPages}`;
+                [['manager-bulk-first',this.bulkEditPage<=1],['manager-bulk-prev',this.bulkEditPage<=1],['manager-bulk-next',this.bulkEditPage>=this.bulkEditTotalPages],['manager-bulk-last',this.bulkEditPage>=this.bulkEditTotalPages]].forEach(([id,disabled])=>{const b=document.getElementById(id);if(b)b.disabled=disabled;});
+                const pageSelect=document.getElementById('manager-bulk-select-page');if(pageSelect){pageSelect.checked=pageItems.length>0&&pageItems.every(q=>this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));pageSelect.indeterminate=pageItems.some(q=>this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)))&&!pageSelect.checked;}
+                const count=document.getElementById('manager-bulk-selected-count');if(count)count.textContent=this.bulkEditSelectedIds.size;
+            },
+            toggleBulkQuestionSelection(id,checked){if(checked)this.bulkEditSelectedIds.add(String(id));else this.bulkEditSelectedIds.delete(String(id));this.renderBulkEditList();},
+            toggleBulkPageSelection(checked){const set=this.getBulkEditSet(),size=20,start=(this.bulkEditPage-1)*size;(set?.questions||[]).slice(start,start+size).forEach(q=>{const id=this.getBulkQuestionKey(q);if(checked)this.bulkEditSelectedIds.add(id);else this.bulkEditSelectedIds.delete(id);});this.renderBulkEditList();},
+            changeBulkEditPage(delta){this.goToBulkEditPage((this.bulkEditPage||1)+delta);},
+            goToBulkEditPage(page){this.bulkEditPage=Math.max(1,Math.min(Number(page)||1,this.bulkEditTotalPages||1));this.renderBulkEditList();},
+            async deleteSelectedBulkQuestions(){
+                const set=this.getBulkEditSet(),count=this.bulkEditSelectedIds.size;if(!set||!count)return this.showToast('削除する問題を選択してください','info');
+                if(!(await this.showModal('問題の一括削除',`選択した${count}問を削除しますか？`,'削除する','bg-red-600 hover:bg-red-700')))return;
+                set.questions=set.questions.filter(q=>!this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));this.bulkEditSelectedIds.clear();this.saveStudySets();this.renderManagerStats();this.renderQuestionList();this.renderBulkEditList();this.showToast(`${count}問を削除しました`,'success');
+            },
+            async moveSelectedBulkQuestions(){
+                const source=this.getBulkEditSet(),targetId=document.getElementById('manager-bulk-move-target')?.value,target=this.studySets.find(set=>set.id===targetId),count=this.bulkEditSelectedIds.size;
+                if(!source||!count)return this.showToast('移動する問題を選択してください','info');if(!target)return this.showToast('移動先の学習セットを選択してください','error');
+                if(target.questions.length+count>MAX_QUESTIONS_PER_SET)return this.showToast(`移動先の登録上限(${MAX_QUESTIONS_PER_SET}問)を超えます`,'error');
+                if(!(await this.showModal('問題の一括移動',`選択した${count}問を「${target.name}」へ移動しますか？`,'移動する','bg-indigo-600 hover:bg-indigo-700')))return;
+                const moving=source.questions.filter(q=>this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));source.questions=source.questions.filter(q=>!this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));target.questions.push(...moving);this.bulkEditSelectedIds.clear();this.saveStudySets();this.renderManagerStats();this.renderQuestionList();this.renderBulkEditList();this.showToast(`${moving.length}問を移動しました`,'success');
+            },
+            switchDistributionTab(metric) { this.managerDistributionMetric = metric === 'mastery' ? 'mastery' : 'accuracy'; this.renderManagerStats(); },
             switchGenreAnalysisTab(standard) { this.managerGenreStandard = standard === 'qma' ? 'qma' : 'aql'; this.renderManagerStats(); },
             toQMAGenre(aqlGenre) { return QMA_GENRE_MAP[aqlGenre || ''] || 'ノンジャンル'; },
 
@@ -1692,6 +1811,139 @@ ${text}
             getSubgenreOptionsHTML(genre = '', selectedSubgenre = '', includeAll = false) { const prefix = includeAll ? '<option value="">サブジャンル: すべて</option>' : '<option value="">未設定</option>'; if (genre === '__UNSET__') return prefix; const options = genre ? (this.getAISubgenres()[genre] || []) : []; return prefix + options.map(x=>`<option value="${this.escapeHTML(x)}" ${x===selectedSubgenre?'selected':''}>${this.escapeHTML(x)}</option>`).join(''); },
             updateQuestionFilterOptions() { const gs=document.getElementById('manager-filter-genre'); if(!gs)return; const cur=gs.value||''; gs.innerHTML=this.getGenreOptionsHTML(cur,true); gs.value=cur; this.updateQuestionFilterSubgenreOptions(); },
             updateQuestionFilterSubgenreOptions() { const g=document.getElementById('manager-filter-genre')?.value||''; const ss=document.getElementById('manager-filter-subgenre'); if(!ss)return; const cur=ss.value||''; ss.innerHTML=this.getSubgenreOptionsHTML(g,cur,true); if([...ss.options].some(o=>o.value===cur)) ss.value=cur; },
+
+            normalizeQuestionForDuplicateMerge(text) {
+                return String(text || '').normalize('NFKC').toLowerCase()
+                    .replace(/[\s　、。,.，・:：;；!?！？'"“”‘’「」『』【】()（）\[\]［］]/g, '');
+            },
+            getQuestionIdOrderValue(q, fallbackIndex = 0) {
+                const id = String(q?.questionId || q?.id || '');
+                const matches = id.match(/\d+/g);
+                if (matches && matches.length) {
+                    const value = Number(matches.join(''));
+                    if (Number.isFinite(value)) return value;
+                }
+                return Number.MAX_SAFE_INTEGER - 100000 + fallbackIndex;
+            },
+            mergeExactDuplicateGroup(set, entries) {
+                const ordered = [...entries].sort((a, b) =>
+                    this.getQuestionIdOrderValue(a.q, a.index) - this.getQuestionIdOrderValue(b.q, b.index) || a.index - b.index
+                );
+                const keeper = ordered[0].q;
+                keeper.correct = ordered.reduce((sum, x) => sum + (Number(x.q.correct) || 0), 0);
+                keeper.total = ordered.reduce((sum, x) => sum + (Number(x.q.total) || 0), 0);
+                keeper.accuracy = keeper.total > 0 ? keeper.correct / keeper.total : 0;
+                const latest = [...ordered].sort((a, b) => (Number(b.q.lastAnsweredAt) || 0) - (Number(a.q.lastAnsweredAt) || 0))[0]?.q;
+                keeper.lastAnsweredAt = latest?.lastAnsweredAt || null;
+                keeper.lastResult = latest?.lastResult === true || latest?.lastResult === false ? latest.lastResult : null;
+                keeper.streak = Number(latest?.streak) || 0;
+                keeper.level = Math.max(...ordered.map(x => Number(x.q.level) || 0));
+                const fields = ['explanation', 'genre', 'subgenre', 'difficulty'];
+                fields.forEach(field => {
+                    if (!String(keeper[field] || '').trim()) {
+                        const source = ordered.find(x => String(x.q[field] || '').trim());
+                        if (source) keeper[field] = source.q[field];
+                    }
+                });
+                const pronunciationMap = new Map();
+                ordered.forEach(x => (Array.isArray(x.q.pronunciations) ? x.q.pronunciations : []).forEach(item => {
+                    if (item?.word && item?.pronunciation && !pronunciationMap.has(item.word)) pronunciationMap.set(item.word, item);
+                }));
+                if (pronunciationMap.size) keeper.pronunciations = [...pronunciationMap.values()];
+                const remove = new Set(ordered.slice(1).map(x => x.q));
+                set.questions = set.questions.filter(q => !remove.has(q));
+                return ordered.length - 1;
+            },
+            async checkAndMergeDuplicateQuestions() {
+                const setId = document.getElementById('manager-question-set-select')?.value || this.managerSetId;
+                const set = this.studySets.find(s => s.id === setId);
+                if (!set) return this.showToast('選択中の学習セットが見つかりません', 'error');
+                if (set.questions.length < 2) return this.showToast('重複チェック対象の問題がありません', 'info');
+
+                const exactMap = new Map();
+                set.questions.forEach((q, index) => {
+                    const key = `${this.normalizeQuestionForDuplicateMerge(q.q)}|${this.normalizeQuestionForDuplicateMerge(q.a)}`;
+                    if (!exactMap.has(key)) exactMap.set(key, []);
+                    exactMap.get(key).push({ q, index });
+                });
+                let exactMerged = 0;
+                [...exactMap.values()].filter(group => group.length > 1).forEach(group => {
+                    exactMerged += this.mergeExactDuplicateGroup(set, group);
+                });
+
+                const answerMap = new Map();
+                set.questions.forEach((q, index) => {
+                    const key = this.normalizeQuestionForDuplicateMerge(q.a);
+                    if (!key) return;
+                    if (!answerMap.has(key)) answerMap.set(key, []);
+                    answerMap.get(key).push({ q, index });
+                });
+                const ambiguous = [...answerMap.values()].filter(group => {
+                    if (group.length < 2) return false;
+                    return new Set(group.map(x => this.normalizeQuestionForDuplicateMerge(x.q.q))).size > 1;
+                });
+
+                if (!ambiguous.length) {
+                    if (exactMerged > 0) {
+                        this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList();
+                        return this.showToast(`問題文・解答が同一の重複を${exactMerged}問統合しました`, 'success');
+                    }
+                    return this.showToast('統合対象の重複問題はありませんでした', 'info');
+                }
+
+                this.pendingDuplicateMerge = { setId, groups: ambiguous, exactMerged };
+                document.getElementById('duplicate-merge-summary').textContent =
+                    `完全一致の自動統合: ${exactMerged}問 / 選択が必要な同一解答グループ: ${ambiguous.length}件`;
+                document.getElementById('duplicate-merge-groups').innerHTML = ambiguous.map((group, groupIndex) => {
+                    const answer = this.escapeHTML(group[0].q.a || '');
+                    const options = group.map((entry, optionIndex) => {
+                        const q = entry.q;
+                        const accuracy = Number(q.total) > 0 ? Math.round((Number(q.correct) || 0) / Number(q.total) * 100) + '%' : '--%';
+                        return `<label class="block border border-soft-green-200 rounded-xl p-3 hover:bg-purple-50 cursor-pointer">
+                            <div class="flex gap-3 items-start">
+                                <input type="radio" name="duplicate-group-${groupIndex}" value="${optionIndex}" ${optionIndex === 0 ? 'checked' : ''} class="mt-1">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-soft-green-900 whitespace-pre-wrap">${this.escapeHTML(q.q || '')}</p>
+                                    <p class="text-xs text-soft-green-600 mt-1">ID: ${this.escapeHTML(q.questionId || q.id || '')} / 成績: ${Number(q.correct) || 0}正解・${Number(q.total) || 0}回答 / 正解率: ${accuracy}</p>
+                                </div>
+                            </div>
+                        </label>`;
+                    }).join('');
+                    const noMerge = `<label class="block border border-gray-300 rounded-xl p-3 hover:bg-gray-50 cursor-pointer"><div class="flex gap-3 items-start"><input type="radio" name="duplicate-group-${groupIndex}" value="none" class="mt-1"><div><p class="text-sm font-bold text-gray-800">統合しない</p><p class="text-xs text-gray-600 mt-1">このグループの問題をすべて残します。</p></div></div></label>`;
+                    return `<section class="border border-purple-200 rounded-2xl p-4 bg-purple-50/30">
+                        <h4 class="font-bold text-purple-900 mb-3">解答: ${answer}</h4>
+                        <div class="space-y-2">${options}${noMerge}</div>
+                    </section>`;
+                }).join('');
+                const modal = document.getElementById('duplicate-merge-modal');
+                const panel = document.getElementById('duplicate-merge-panel');
+                modal.classList.remove('hidden'); void modal.offsetWidth;
+                modal.classList.remove('opacity-0'); panel.classList.remove('scale-95');
+            },
+            closeDuplicateMergeModal() {
+                const modal = document.getElementById('duplicate-merge-modal');
+                const panel = document.getElementById('duplicate-merge-panel');
+                modal.classList.add('opacity-0'); panel.classList.add('scale-95');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            },
+            applySelectedDuplicateMerges() {
+                const pending = this.pendingDuplicateMerge;
+                const set = this.studySets.find(s => s.id === pending?.setId);
+                if (!pending || !set) return this.showToast('統合対象が見つかりません', 'error');
+                const remove = new Set();
+                pending.groups.forEach((group, groupIndex) => {
+                    const selectedValue = document.querySelector(`input[name="duplicate-group-${groupIndex}"]:checked`)?.value ?? '0';
+                    if (selectedValue === 'none') return;
+                    const selected = Number(selectedValue);
+                    group.forEach((entry, optionIndex) => { if (optionIndex !== selected) remove.add(entry.q); });
+                });
+                set.questions = set.questions.filter(q => !remove.has(q));
+                const selectedMerged = remove.size;
+                this.pendingDuplicateMerge = null;
+                this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList();
+                this.closeDuplicateMergeModal();
+                this.showToast(`重複問題を統合しました（完全一致: ${pending.exactMerged}問、選択統合: ${selectedMerged}問）`, 'success');
+            },
             exportManagerQuestionsCSV(){
                 const setId=document.getElementById('manager-question-set-select')?.value||this.managerSetId;
                 const target=this.studySets.find(set=>set.id===setId);
@@ -1954,31 +2206,33 @@ ${text}
                 if (g) g.textContent = noGenre;
 
                 const chart = document.getElementById('manager-stats-chart');
+                const distAccuracyTab = document.getElementById('distribution-tab-accuracy');
+                const distMasteryTab = document.getElementById('distribution-tab-mastery');
+                if (distAccuracyTab && distMasteryTab) {
+                    distAccuracyTab.className = `px-3 py-1.5 rounded-lg text-xs font-bold ${this.managerDistributionMetric === 'accuracy' ? 'bg-soft-green-600 text-white' : 'text-soft-green-800 hover:bg-soft-green-100'}`;
+                    distMasteryTab.className = `px-3 py-1.5 rounded-lg text-xs font-bold ${this.managerDistributionMetric === 'mastery' ? 'bg-soft-green-600 text-white' : 'text-soft-green-800 hover:bg-soft-green-100'}`;
+                }
                 if (chart) {
-                    const answered = set.questions.filter(q => (q.total || 0) > 0);
-                    const pctLabel = (count) => total ? `${count}問（${Math.round((count / total) * 100)}%）` : `${count}問（0%）`;
-                    if (!total) {
-                        chart.innerHTML = '<p class="text-sm text-soft-green-500 py-2">データがありません</p>';
-                    } else {
+                    const pctLabel = count => total ? `${count}問（${Math.round((count / total) * 100)}%）` : `${count}問（0%）`;
+                    if (!total) chart.innerHTML = '<p class="text-sm text-soft-green-500 py-2">データがありません</p>';
+                    else {
                         const bins = [
-                            { label: '0〜19%', min: 0, max: 0.2, count: 0 },
-                            { label: '20〜39%', min: 0.2, max: 0.4, count: 0 },
-                            { label: '40〜59%', min: 0.4, max: 0.6, count: 0 },
-                            { label: '60〜79%', min: 0.6, max: 0.8, count: 0 },
-                            { label: '80〜100%', min: 0.8, max: 1.01, count: 0 }
+                            {label:'0〜19%',min:0,max:20,count:0}, {label:'20〜39%',min:20,max:40,count:0},
+                            {label:'40〜59%',min:40,max:60,count:0}, {label:'60〜79%',min:60,max:80,count:0},
+                            {label:'80〜100%',min:80,max:101,count:0}
                         ];
-                        answered.forEach(q => {
-                            const ratio = this.getAccuracyRatio(q);
-                            const bin = bins.find(b => ratio >= b.min && ratio < b.max) || bins[bins.length - 1];
+                        set.questions.forEach(q => {
+                            // 未回答問題は正解率・習熟度の各階級から除外し、専用行へ集計する。
+                            if ((q.total || 0) === 0) return;
+                            const value = this.managerDistributionMetric === 'mastery' ? this.getMasteryMetrics(q).score : this.getAccuracyRatio(q) * 100;
+                            const bin = bins.find(b => value >= b.min && value < b.max) || bins[bins.length - 1];
                             bin.count++;
                         });
-                        const maxCount = Math.max(1, unanswered, ...bins.map(b => b.count));
-                        const rows = bins.map(b => {
-                            const width = Math.max(2, Math.round((b.count / maxCount) * 100));
-                            return `<div class="flex items-center gap-2"><div class="w-20 text-xs font-bold text-soft-green-700">${b.label}</div><div class="flex-1 bg-soft-green-100 rounded-full h-5 overflow-hidden"><div class="bg-soft-green-500 h-5 rounded-full transition-all" style="width:${width}%"></div></div><div class="w-24 text-right text-xs font-bold text-soft-green-800">${pctLabel(b.count)}</div></div>`;
-                        }).join('');
-                        const unansweredWidth = Math.max(2, Math.round((unanswered / maxCount) * 100));
-                        chart.innerHTML = `<div class="space-y-2"><p class="text-sm text-soft-green-700 font-semibold">登録済み ${total}問、解答済み ${answered.length}問、未回答 ${unanswered}問</p>${rows}<div class="flex items-center gap-2 pt-1 border-t border-soft-green-100"><div class="w-20 text-xs font-bold text-soft-green-500">未回答</div><div class="flex-1 bg-soft-green-50 rounded-full h-5 overflow-hidden"><div class="bg-soft-green-300 h-5 rounded-full transition-all" style="width:${unansweredWidth}%"></div></div><div class="w-24 text-right text-xs font-bold text-soft-green-700">${pctLabel(unanswered)}</div></div></div>`;
+                        const unansweredCount = unanswered;
+                        const maxCount = Math.max(1, unansweredCount, ...bins.map(b => b.count));
+                        const rows = bins.map(b => `<div class="flex items-center gap-2"><div class="w-20 text-xs font-bold text-soft-green-700">${b.label}</div><div class="flex-1 bg-soft-green-100 rounded-full h-5 overflow-hidden"><div class="${this.managerDistributionMetric === 'mastery' ? 'bg-indigo-500' : 'bg-soft-green-500'} h-5 rounded-full transition-all" style="width:${Math.max(2,Math.round((b.count/maxCount)*100))}%"></div></div><div class="w-24 text-right text-xs font-bold text-soft-green-800">${pctLabel(b.count)}</div></div>`).join('');
+                        const unansweredRow = `<div class="flex items-center gap-2"><div class="w-20 text-xs font-bold text-soft-green-500">未回答</div><div class="flex-1 bg-soft-green-100 rounded-full h-5 overflow-hidden"><div class="bg-gray-400 h-5 rounded-full transition-all" style="width:${Math.max(2,Math.round((unanswered/maxCount)*100))}%"></div></div><div class="w-24 text-right text-xs font-bold text-soft-green-800">${pctLabel(unanswered)}</div></div>`;
+                        chart.innerHTML = rows + unansweredRow;
                     }
                 }
 
@@ -1992,7 +2246,12 @@ ${text}
                 if (genreBox) {
                     const map = new Map();
                     set.questions.forEach(q => {
-                        const aql = q.genre || '未設定';
+                        const rawGenre = String(q.genre || '').trim();
+                        const definitions = this.getAISubgenres();
+                        let aql = definitions[rawGenre] ? rawGenre : '';
+                        if (!aql && rawGenre) aql = Object.entries(definitions).find(([, subgenres]) => subgenres.includes(rawGenre))?.[0] || '';
+                        if (!aql && q.subgenre) aql = Object.entries(definitions).find(([, subgenres]) => subgenres.includes(String(q.subgenre).trim()))?.[0] || '';
+                        aql = aql || '未設定';
                         const name = this.managerGenreStandard === 'qma' ? this.toQMAGenre(aql) : aql;
                         if (!map.has(name)) map.set(name, { total: 0, attempted: 0, correct: 0, unanswered: 0 });
                         const r = map.get(name);
@@ -2021,34 +2280,34 @@ ${text}
 
             async deleteHighAccuracyQuestions() {
                 const targetSet = this.studySets.find(s => s.id === this.managerSetId);
-                if (targetSet.questions.length === 0) return this.showToast('問題がありません', 'error');
+                if (!targetSet || targetSet.questions.length === 0) return this.showToast('問題がありません', 'error');
+                const metric = document.getElementById('manager-delete-metric')?.value || 'mastery';
                 const mode = document.getElementById('manager-delete-mode')?.value || 'percent';
-                const percent = parseInt(document.getElementById('manager-delete-percent').value, 10);
+                const percent = parseInt(document.getElementById('manager-delete-percent')?.value || '10', 10);
                 const inputCount = parseInt(document.getElementById('manager-delete-count')?.value || '', 10);
-                
-                const deletable = targetSet.questions.filter(q => q.total > 0 && (q.correct / q.total) > 0);
-                if (deletable.length === 0) return this.showToast('削除対象の問題がありません（正解率0%の問題は削除されません）', 'error');
-
-                deletable.sort((a, b) => { const accA = a.correct / a.total; const accB = b.correct / b.total; if (accA !== accB) return accB - accA; return b.total - a.total; });
-                let deleteCount = 0;
-                let label = '';
+                const metricLabel = metric === 'mastery' ? '習熟度' : '正解率';
+                const deletable = metric === 'mastery' ? [...targetSet.questions] : targetSet.questions.filter(q => q.total > 0 && this.getAccuracyRatio(q) > 0);
+                if (!deletable.length) return this.showToast(`削除対象の問題がありません`, 'error');
+                deletable.sort((a,b) => {
+                    const valueA = metric === 'mastery' ? this.getMasteryMetrics(a).score : this.getAccuracyRatio(a);
+                    const valueB = metric === 'mastery' ? this.getMasteryMetrics(b).score : this.getAccuracyRatio(b);
+                    if (valueA !== valueB) return valueB - valueA;
+                    return (b.total || 0) - (a.total || 0);
+                });
+                let deleteCount, label;
                 if (mode === 'count') {
                     if (!Number.isInteger(inputCount) || inputCount < 1 || inputCount > 999) return this.showToast('削除する問題数は1〜999の整数で入力してください', 'error');
                     deleteCount = Math.min(inputCount, deletable.length);
-                    label = `上位 ${deleteCount}問`;
+                    label = `${metricLabel}上位 ${deleteCount}問`;
                 } else {
                     deleteCount = Math.ceil(deletable.length * (percent / 100));
-                    label = `正解率上位 ${percent}%（${deleteCount}問）`;
+                    label = `${metricLabel}上位 ${percent}%（${deleteCount}問）`;
                 }
-                
-                const confirmed = await this.showModal('確認', `${label} の問題を削除しますか？`, '削除する', 'bg-red-600 hover:bg-red-700');
-                if (!confirmed) return;
-                const toDeleteIds = new Set(deletable.slice(0, deleteCount).map(q => q.id));
+                if (!(await this.showModal('確認', `${label} の問題を削除しますか？`, '削除する', 'bg-red-600 hover:bg-red-700'))) return;
+                const toDelete = new Set(deletable.slice(0, deleteCount));
                 const initialLen = targetSet.questions.length;
-                targetSet.questions = targetSet.questions.filter(q => !toDeleteIds.has(q.id));
-                
-                this.saveStudySets();
-                this.renderManagerStats();
+                targetSet.questions = targetSet.questions.filter(q => !toDelete.has(q));
+                this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList(); this.renderBulkEditList();
                 this.showToast(`${initialLen - targetSet.questions.length}問を削除しました`, 'success');
             },
             async handleDictionaryFileUpload(event) {
@@ -2201,6 +2460,18 @@ ${text}
                 n.className=`flex-1 px-4 py-2 rounded-xl font-bold text-sm ${!memo?'bg-soft-green-600 text-white shadow-sm':'text-soft-green-800 hover:bg-soft-green-100'}`;
                 m.className=`flex-1 px-4 py-2 rounded-xl font-bold text-sm ${memo?'bg-soft-green-600 text-white shadow-sm':'text-soft-green-800 hover:bg-soft-green-100'}`;
             },
+            resetMemoImport(showMessage = true) {
+                const memo=document.getElementById('ai-memo-list'); if(memo)memo.value='';
+                const difficulty=document.getElementById('ai-memo-difficulty'); if(difficulty)difficulty.value='中級';
+                this.memoNormalizedAnswers=[]; this.pendingMemoQuestions=[];
+                const normalizedList=document.getElementById('ai-memo-normalized-list'); if(normalizedList)normalizedList.innerHTML='';
+                const previewList=document.getElementById('ai-memo-preview-list'); if(previewList)previewList.innerHTML='';
+                document.getElementById('ai-memo-normalized')?.classList.add('hidden');
+                document.getElementById('ai-memo-preview')?.classList.add('hidden');
+                const generate=document.getElementById('btn-generate-memo'); if(generate)generate.textContent='問題を一括作成';
+                this.updateMemoCandidateCount();
+                if(showMessage)this.showToast('メモ取り込み画面をリセットしました','info');
+            },
             parseMemoCandidates() {
                 const raw=document.getElementById('ai-memo-list')?.value||'';
                 const seen=new Set(), items=[];
@@ -2280,7 +2551,7 @@ ${text}
                     const exactQuestionExists=target.questions.some(q=>this.normalizeAnswerForDuplicateCheck(q.a)===this.normalizeAnswerForDuplicateCheck(x.a)&&this.textSimilarity(q.q,x.q)>=0.78);
                     if(!batchKeys.has(k)&&!exactQuestionExists){batchKeys.add(k);target.questions.push(this.createQuestionData(x.q,x.a,x.explanation,{genre:x.genre,subgenre:x.subgenre,difficulty:document.getElementById('ai-memo-difficulty').value}));saved.push(x);}
                 });
-                this.saveStudySets();this.updateSetSelectors();this.showToast(`${saved.length}問を保存しました`,'success');
+                this.saveStudySets();this.updateSetSelectors();this.resetMemoImport(false);this.showToast(`${saved.length}問を保存しました`,'success');
             },
             async generateQuestionsWithAI() {
                 if (!this.geminiApiKey) return this.showToast('Gemini APIキーを設定画面で登録してください', 'error');
@@ -2720,8 +2991,8 @@ ${text}
                 const set=this.studySets.find(s=>s.id===this.activeSetId),current=set?.questions[this.currentQuestionIndex];if(!current)return;
                 this.openDerivativeModal();this.setDerivativeView('derivative-loading','問題文から固有名詞を抽出中...');
                 try{
-                    const parsed=this.parseAIJSON(await this.fetchGemini(`次の早押しクイズ問題文から、別のクイズの解答にできる固有名詞を重複なしで最大4件抽出してください。元の解答「${current.a}」は除外。JSON配列のみ:[{"word":"固有名詞","reason":"短い理由"}]\n問題文:${current.q}`,true));
-                    this.derivativeCandidates=(Array.isArray(parsed)?parsed:[]).map(x=>({word:String(x.word||'').trim(),reason:String(x.reason||'').trim(),selected:false})).filter(x=>x.word&&x.word!==current.a).slice(0,4);
+                    const parsed=this.parseAIJSON(await this.fetchGemini(`次の早押しクイズ問題文から、別のクイズの解答にできる固有名詞を重複なしで最大6件抽出してください。元の解答「${current.a}」は除外。JSON配列のみ:[{"word":"固有名詞","reason":"短い理由"}]\n問題文:${current.q}`,true));
+                    this.derivativeCandidates=(Array.isArray(parsed)?parsed:[]).map(x=>({word:String(x.word||'').trim(),reason:String(x.reason||'').trim(),selected:false})).filter(x=>x.word&&x.word!==current.a).slice(0,6);
                     if(!this.derivativeCandidates.length)throw new Error('候補を抽出できませんでした');
                     document.getElementById('derivative-candidate-list').innerHTML=this.derivativeCandidates.map((x,i)=>`<label class="flex gap-3 p-4 rounded-xl border border-soft-green-200 hover:bg-amber-50 cursor-pointer"><input type="checkbox" onchange="app.derivativeCandidates[${i}].selected=this.checked"><span><span class="block font-bold text-soft-green-900">${this.escapeHTML(x.word)}</span><span class="block text-xs text-soft-green-600 mt-1">${this.escapeHTML(x.reason||'候補')}</span></span></label>`).join('');
                     document.getElementById('derivative-step-text').textContent='解答候補を複数選択してください';this.setDerivativeView('derivative-candidates');

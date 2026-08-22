@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com">
 /* Backup feature Ver03 */
 window.exportQuizBackup=function(){const data={version:"1.0",createdAt:Date.now(),localStorage:{...localStorage}};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`quiz_backup_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.json`;a.click();};
-window.importQuizBackup=function(file,merge=false){const r=new FileReader();r.onload=()=>{const d=JSON.parse(r.result);if(!merge){localStorage.clear();}Object.entries(d.localStorage||{}).forEach(([k,v])=>localStorage.setItem(k,v));alert("バックアップ復元完了。再読み込みしてください。");};r.readAsText(file);};
+window.importQuizBackup=function(file,merge=false){const r=new FileReader();r.onload=()=>{const d=JSON.parse(r.result);if(!merge){localStorage.clear();}Object.entries(d.localStorage||{}).forEach(([k,v])=>{if(merge&&localStorage.getItem(k))return;localStorage.setItem(k,v);});alert("バックアップ復元完了。再読み込みしてください。");};r.readAsText(file);};
 
 </script>
     
@@ -152,9 +152,9 @@ window.importQuizBackup=function(file,merge=false){const r=new FileReader();r.on
         </h1>
         
         <div class="flex gap-1 md:gap-2 overflow-x-auto no-scrollbar shrink-0">
-            <button onclick="app.switchView('csv-import')" class="px-2 py-2 hover:bg-soft-green-700 rounded-full transition-colors flex items-center gap-1" title="CSV取込" aria-label="CSV取込">
+            <button onclick="app.switchView('csv-import')" class="px-2 py-2 hover:bg-soft-green-700 rounded-full transition-colors flex items-center gap-1" title="データ管理" aria-label="データ管理">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                <span class="hidden md:inline text-sm font-semibold whitespace-nowrap">CSV取込</span>
+                <span class="hidden md:inline text-sm font-semibold whitespace-nowrap">データ管理</span>
             </button>
             <button onclick="app.switchView('manager')" class="px-2 py-2 hover:bg-soft-green-700 rounded-full transition-colors flex items-center gap-1" title="問題管理" aria-label="問題管理">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h6m-7 4h8m-8 4h5m-7 7h12a2 2 0 002-2V7a2 2 0 00-2-2h-2.5a2 2 0 00-2-2h-3a2 2 0 00-2 2H6a2 2 0 00-2 2v11a2 2 0 002 2z" /></svg>
@@ -230,7 +230,29 @@ window.importQuizBackup=function(file,merge=false){const r=new FileReader();r.on
             <div class="w-full max-w-2xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                    <h2 class="text-2xl font-bold">CSV取込</h2>
+                    <h2 class="text-2xl font-bold">データ管理</h2>
+                </div>
+                <div class="bg-soft-green-50 border border-soft-green-100 rounded-2xl p-2 flex gap-2 shadow-sm mb-4">
+<button id="btn-tab-import" class="data-tab-btn flex-1 px-4 py-2 rounded-xl font-bold text-sm" onclick="switchDataTab('import')">CSVインポート</button>
+<button id="btn-tab-export" class="data-tab-btn flex-1 px-4 py-2 rounded-xl font-bold text-sm" onclick="switchDataTab('export')">CSVエクスポート</button>
+<button id="btn-tab-backup" class="data-tab-btn flex-1 px-4 py-2 rounded-xl font-bold text-sm" onclick="switchDataTab('backup')">バックアップ</button>
+</div>
+<div id="data-tab-export" class="data-tab-panel hidden bg-white border border-soft-green-100 rounded-2xl p-4 mb-4">
+<label class="block text-sm font-bold mb-2">学習セット</label>
+<select id="csv-export-set" class="w-full px-3 py-2 border rounded-lg mb-3"></select>
+<button onclick="(function(){const s=document.getElementById('csv-export-set');const org=document.getElementById('manager-question-set-select');if(s&&org){org.value=s.value;} app.exportManagerQuestionsCSV();})()" class="px-4 py-2 bg-blue-600 text-white rounded-lg">CSV保存(UTF-8)</button>
+</div>
+<div id="data-tab-backup" class="data-tab-panel hidden bg-white border border-soft-green-100 rounded-2xl p-4 mb-4">
+<p class="text-sm mb-3"></p>
+<div class="grid md:grid-cols-2 gap-4"><div class="border rounded-xl p-4"><h4 class="font-bold mb-2">バックアップ保存</h4><label class="block text-sm font-bold mb-2">学習セット</label><select id="backup-set-select" class="w-full px-3 py-2 border rounded-lg mb-3"></select><button onclick="exportSelectedSetBackup()" class="px-4 py-2 bg-soft-green-600 text-white rounded-lg w-full">JSONバックアップ保存</button></div><div class="border rounded-xl p-4"><h4 class="font-bold mb-2">バックアップ復元</h4><input type="file" id="backup-file" accept=".json" class="w-full mb-3"><button onclick="restoreSelectedSetBackup(document.getElementById('backup-file').files[0])" class="px-4 py-2 bg-amber-500 text-white rounded-lg w-full">JSONから復元</button><p class="text-xs text-gray-500 mt-2">同名の学習セットが存在する場合は上書き確認を行います。</p></div></div><div class="hidden">
+
+
+<button onclick="importQuizBackup(document.getElementById('backup-file').files[0],false)" class="px-4 py-2 bg-amber-500 text-white rounded-lg">全置換復元</button>
+<button onclick="importQuizBackup(document.getElementById('backup-file').files[0],true)" class="px-4 py-2 bg-blue-500 text-white rounded-lg">追加マージ復元</button>
+</div>
+</div>
+<div id="data-tab-import" class="data-tab-panel">
+<div class="flex items-center gap-2 mb-4 text-soft-green-800">
                 </div>
                 <p class="text-sm text-soft-green-700 bg-soft-green-50 p-4 rounded-xl border border-soft-green-100">
                     CSVファイルから問題を追加します。1列目が問題、2列目が解答、3列目が解説、4列目がジャンル、5列目がサブジャンルです。1列目と2列目があれば取り込めます。解説が空欄の場合は、チェックを入れるとAIで補完できます。
@@ -273,7 +295,7 @@ window.importQuizBackup=function(file,merge=false){const r=new FileReader();r.on
                     </div>
             </div>
         </div>
-        <!-- View: Manager -->
+        </div><!-- View: Manager -->
         <div id="view-manager" class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
             <div class="w-full max-w-4xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
@@ -346,7 +368,7 @@ window.importQuizBackup=function(file,merge=false){const r=new FileReader();r.on
                                 <div class="text-xs font-semibold text-soft-green-700 bg-white border border-soft-green-200 rounded-lg px-3 py-2 self-start sm:self-auto">表示: <span id="manager-question-visible-count">0</span> / <span id="manager-question-total-count">0</span> 問</div>
                                 <div class="flex flex-wrap gap-2 justify-start sm:justify-end">
                                     <button id="manager-duplicate-check-btn" onclick="app.checkAndMergeDuplicateQuestions()" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold transition-colors text-xs shadow-sm whitespace-nowrap">重複問題を一括チェック</button>
-                                    <button id="manager-export-csv-btn" onclick="app.exportManagerQuestionsCSV()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors text-xs shadow-sm whitespace-nowrap">CSV保存（UTF-8）</button>
+                                    
                                 </div>
                                 <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                                     <div id="manager-bulk-genre-status" class="text-xs font-semibold text-soft-green-700 bg-soft-green-50 border border-soft-green-200 rounded-lg px-3 py-2">未設定: 0問 / 1回あたり最大30問</div>
@@ -982,7 +1004,7 @@ window.importQuizBackup=function(file,merge=false){const r=new FileReader();r.on
                 this.showToast('APIキーを保存しました', 'success');
             },
 
-            switchView(viewId) {
+            switchView(viewId) { if(viewId==='csv-import'){setTimeout(()=>{const b=document.getElementById('manager-question-set-select');const a=document.getElementById('csv-export-set');const c=document.getElementById('backup-set-select');if(a&&b)a.innerHTML=b.innerHTML;if(c&&b)c.innerHTML=b.innerHTML;},50);} 
                 this.synth.cancel();
                 this.stopTextReveal();
                 if (this.audioElement) {
@@ -3061,6 +3083,47 @@ ${text}
 
         window.addEventListener('DOMContentLoaded', () => app.init());
     </script>
-<div id="backup-tab-proposal" style="position:fixed;right:8px;bottom:8px;background:#fff;padding:8px;border:1px solid #ccc;z-index:50"><button onclick="exportQuizBackup()">バックアップ保存</button><input type="file" onchange="importQuizBackup(this.files[0],false)"></div>
+
+<div id="backup-management-panel" style="display:none">
+<h3>バックアップ</h3>
+<button onclick="exportSelectedSetBackup()">バックアップ保存(JSON)</button>
+<input type="file" id="backup-file-input" accept=".json" onchange="if(this.files[0]) importQuizBackup(this.files[0],false)">
+<button onclick="document.getElementById('backup-file-input').click()">バックアップ復元</button>
+</div>
+
+<script>
+function switchDataTab(tab){document.querySelectorAll(".data-tab-panel").forEach(x=>x.classList.add("hidden"));document.getElementById("data-tab-"+tab)?.classList.remove("hidden");document.querySelectorAll(".data-tab-btn").forEach(x=>x.classList.remove("bg-soft-green-600","text-white"));document.getElementById("btn-tab-"+tab)?.classList.add("bg-soft-green-600","text-white");}
+document.addEventListener("DOMContentLoaded",()=>setTimeout(()=>switchDataTab('import'),100));
+</script>
+<script>
+window.exportSelectedSetBackup=function(){
+ const sel=document.getElementById('backup-set-select'); if(!sel)return;
+ const set=(app.studySets||[]).find(x=>x.id===sel.value); if(!set){alert('学習セットを選択してください');return;}
+ const data={version:'1.0',createdAt:Date.now(),studySet:set};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+ a.download='quiz_backup_'+(set.name||'set')+'.json';a.click();
+};
+window.restoreSelectedSetBackup=function(file){
+ if(!file){alert('バックアップファイルを選択してください');return;}
+ const r=new FileReader();
+ r.onload=()=>{
+  const d=JSON.parse(r.result); const set=d.studySet; if(!set)return alert('不正なバックアップです');
+  const existing=(app.studySets||[]).find(x=>x.name===set.name);
+  const backupDate=d.createdAt?new Date(d.createdAt).toLocaleString('ja-JP'):'不明'; if(existing && !confirm(`学習セット「${set.name}」
+
+バックアップ日時:
+${backupDate}
+
+同名の学習セットが存在します。
+上書きして復元しますか？`)) return;
+  if(existing){app.studySets=app.studySets.filter(x=>x.id!==existing.id);} 
+  app.studySets.push(set);
+  app.saveStudySets(); app.updateSetSelectors();
+  alert('復元完了');
+ };
+ r.readAsText(file);
+};
+</script>
 </body>
 </html>

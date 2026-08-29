@@ -172,7 +172,12 @@ const app = {
                 });
                 document.getElementById(`view-${viewId}`).classList.remove('hidden');
                 
-            if (viewId === 'manager') { this.renderManagerStats(); this.questionManager.renderQuestionList(); this.renderBulkEditList(); this.switchManagerTab(this.managerTab || 'overview'); }
+            if (viewId === 'manager') { 
+                this.renderManagerStats();
+                this.questionManager.renderQuestionList();
+                this.questionManager.renderBulkEditList();
+                this.switchManagerTab(this.managerTab || 'overview');
+               }
             },
 
             showToast(message, type = 'info') {
@@ -574,8 +579,20 @@ const app = {
                 this.updateStats();
             },
 
-            changeManagerSet(id) { this.managerSetId = id; this.questionListPage = 1; const set = this.studySets.find(s => s.id === id); if (set) document.getElementById('manager-set-name').value = set.name; const qSel = document.getElementById('manager-question-set-select'); if (qSel) qSel.value = id; this.renderManagerStats(); this.questionManager.renderQuestionList(); },
-            changeQuestionListSet(id) { this.changeManagerSet(id); },
+            changeManagerSet(id) {
+                this.managerSetId = id; 
+                this.questionListPage = 1; 
+                const set = this.studySets.find(s => s.id === id);
+                if (set) document.getElementById('manager-set-name').value = set.name; 
+                const qSel = document.getElementById('manager-question-set-select'); 
+                if (qSel) qSel.value = id; this.renderManagerStats(); 
+                this.questionManager.renderQuestionList(); 
+            },
+
+            changeQuestionListSet(id) {
+                this.changeManagerSet(id);
+            },
+            
             getTotalQuestionCount() { return this.studySets.reduce((sum, set) => sum + (set.questions ? set.questions.length : 0), 0); },
             switchManagerTab(tab) {
                 this.managerTab = ['overview','questions','bulk'].includes(tab) ? tab : 'overview';
@@ -585,45 +602,14 @@ const app = {
                 const buttons={overview:document.getElementById('manager-tab-btn-overview'),questions:document.getElementById('manager-tab-btn-questions'),bulk:document.getElementById('manager-tab-btn-bulk')};
                 Object.entries(buttons).forEach(([key,button])=>{if(button)button.className=`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${this.managerTab===key?'bg-soft-green-600 text-white shadow-sm':'text-soft-green-800 hover:bg-soft-green-100'}`;});
                 if(this.managerTab==='questions') this.questionManager.renderQuestionList();
-                if(this.managerTab==='bulk') this.renderBulkEditList();
+                if(this.managerTab==='bulk') this.questionManager.renderBulkEditList();
             },
-            getBulkEditSet(){
-                const id=this.bulkEditSetId||this.managerSetId||this.studySets[0]?.id;
-                return this.studySets.find(set=>set.id===id)||this.studySets[0]||null;
-            },
-            changeBulkEditSet(id){this.bulkEditSetId=id;this.bulkEditPage=1;this.bulkEditSelectedIds.clear();this.renderBulkEditList();},
             getBulkQuestionKey(q){return String(q?.id||q?.questionId||'');},
-            renderBulkEditList(){
-                const sourceSelect=document.getElementById('manager-bulk-set-select');
-                if(!sourceSelect)return;
-                if(!this.bulkEditSetId||!this.studySets.some(set=>set.id===this.bulkEditSetId))this.bulkEditSetId=this.managerSetId||this.studySets[0]?.id||null;
-                sourceSelect.innerHTML=this.studySets.map(set=>`<option value="${set.id}">${this.escapeHTML(set.name)}</option>`).join('');
-                sourceSelect.value=this.bulkEditSetId||'';
-                const targetSelect=document.getElementById('manager-bulk-move-target');
-                if(targetSelect){
-                    const current=targetSelect.value;
-                    const targets=this.studySets.filter(set=>set.id!==this.bulkEditSetId);
-                    targetSelect.innerHTML=targets.length?targets.map(set=>`<option value="${set.id}">${this.escapeHTML(set.name)}</option>`).join(''):'<option value="">移動先がありません</option>';
-                    if(targets.some(set=>set.id===current))targetSelect.value=current;
-                }
-                const set=this.getBulkEditSet(), questions=set?.questions||[], size=20;
-                const validIds=new Set(questions.map(q=>this.getBulkQuestionKey(q)));
-                this.bulkEditSelectedIds=new Set([...this.bulkEditSelectedIds].filter(id=>validIds.has(id)));
-                this.bulkEditTotalPages=Math.max(1,Math.ceil(questions.length/size));
-                this.bulkEditPage=Math.max(1,Math.min(this.bulkEditPage||1,this.bulkEditTotalPages));
-                const start=(this.bulkEditPage-1)*size, pageItems=questions.slice(start,start+size);
-                const list=document.getElementById('manager-bulk-question-list'),empty=document.getElementById('manager-bulk-question-empty'),pager=document.getElementById('manager-bulk-question-pager');
-                if(list)list.innerHTML=pageItems.map((q,i)=>{const key=this.getBulkQuestionKey(q),checked=this.bulkEditSelectedIds.has(key);return `<label class="p-3 hover:bg-soft-green-50 flex items-start gap-3 cursor-pointer"><input type="checkbox" data-bulk-question-id="${this.escapeHTML(key)}" ${checked?'checked':''} onchange="app.toggleBulkQuestionSelection('${this.escapeHTML(key)}',this.checked)" class="mt-1 w-4 h-4 rounded text-soft-green-600"><div class="min-w-0 flex-1"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900 break-words">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span></p></div></label>`;}).join('');
-                if(list)list.classList.toggle('hidden',!questions.length); if(empty)empty.classList.toggle('hidden',!!questions.length); if(pager)pager.classList.toggle('hidden',!questions.length);
-                const info=document.getElementById('manager-bulk-page-info');if(info)info.textContent=`${this.bulkEditPage} / ${this.bulkEditTotalPages}`;
-                [['manager-bulk-first',this.bulkEditPage<=1],['manager-bulk-prev',this.bulkEditPage<=1],['manager-bulk-next',this.bulkEditPage>=this.bulkEditTotalPages],['manager-bulk-last',this.bulkEditPage>=this.bulkEditTotalPages]].forEach(([id,disabled])=>{const b=document.getElementById(id);if(b)b.disabled=disabled;});
-                const pageSelect=document.getElementById('manager-bulk-select-page');if(pageSelect){pageSelect.checked=pageItems.length>0&&pageItems.every(q=>this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));pageSelect.indeterminate=pageItems.some(q=>this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)))&&!pageSelect.checked;}
-                const count=document.getElementById('manager-bulk-selected-count');if(count)count.textContent=this.bulkEditSelectedIds.size;
-            },
-            toggleBulkQuestionSelection(id,checked){if(checked)this.bulkEditSelectedIds.add(String(id));else this.bulkEditSelectedIds.delete(String(id));this.renderBulkEditList();},
-            toggleBulkPageSelection(checked){const set=this.getBulkEditSet(),size=20,start=(this.bulkEditPage-1)*size;(set?.questions||[]).slice(start,start+size).forEach(q=>{const id=this.getBulkQuestionKey(q);if(checked)this.bulkEditSelectedIds.add(id);else this.bulkEditSelectedIds.delete(id);});this.renderBulkEditList();},
             changeBulkEditPage(delta){this.goToBulkEditPage((this.bulkEditPage||1)+delta);},
-            goToBulkEditPage(page){this.bulkEditPage=Math.max(1,Math.min(Number(page)||1,this.bulkEditTotalPages||1));this.renderBulkEditList();},
+            goToBulkEditPage(page){
+                this.bulkEditPage=Math.max(1,Math.min(Number(page)||1,this.bulkEditTotalPages||1));
+                this.questionManager.renderBulkEditList();
+            },
             
             changeQuestionListPage(delta) {
                this.goToQuestionListPage(
@@ -632,18 +618,6 @@ const app = {
             goToQuestionListPage(page) {
                this.questionListPage = Math.max(1,Math.min(Number(page) || 1,this.questionListTotalPages || 1));
                this.questionManager.renderQuestionList();
-            },
-            async deleteSelectedBulkQuestions(){
-                const set=this.getBulkEditSet(),count=this.bulkEditSelectedIds.size;if(!set||!count)return this.showToast('削除する問題を選択してください','info');
-                if(!(await this.showModal('問題の一括削除',`選択した${count}問を削除しますか？`,'削除する','bg-red-600 hover:bg-red-700')))return;
-                set.questions=set.questions.filter(q=>!this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));this.bulkEditSelectedIds.clear();this.saveStudySets();this.renderManagerStats();this.questionManager.renderQuestionList();this.renderBulkEditList();this.showToast(`${count}問を削除しました`,'success');
-            },
-            async moveSelectedBulkQuestions(){
-                const source=this.getBulkEditSet(),targetId=document.getElementById('manager-bulk-move-target')?.value,target=this.studySets.find(set=>set.id===targetId),count=this.bulkEditSelectedIds.size;
-                if(!source||!count)return this.showToast('移動する問題を選択してください','info');if(!target)return this.showToast('移動先の学習セットを選択してください','error');
-                if(target.questions.length+count>MAX_QUESTIONS_PER_SET)return this.showToast(`移動先の登録上限(${MAX_QUESTIONS_PER_SET}問)を超えます`,'error');
-                if(!(await this.showModal('問題の一括移動',`選択した${count}問を「${target.name}」へ移動しますか？`,'移動する','bg-indigo-600 hover:bg-indigo-700')))return;
-                const moving=source.questions.filter(q=>this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));source.questions=source.questions.filter(q=>!this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));target.questions.push(...moving);this.bulkEditSelectedIds.clear();this.saveStudySets();this.renderManagerStats();this.questionManager.renderQuestionList();this.renderBulkEditList();this.showToast(`${moving.length}問を移動しました`,'success');
             },
             switchDistributionTab(metric) { this.managerDistributionMetric = metric === 'mastery' ? 'mastery' : 'accuracy'; this.renderManagerStats(); },
             switchGenreAnalysisTab(standard) { this.managerGenreStandard = standard === 'qma' ? 'qma' : 'aql'; this.renderManagerStats(); },
@@ -960,138 +934,6 @@ ${text}
             getGenreOptionsHTML(selectedGenre = '', includeAll = false) { const genres = Object.keys(this.getAISubgenres()); let html = includeAll ? '<option value="">ジャンル: すべて</option><option value="__UNSET__">未設定</option>' : '<option value="">未設定</option>'; html += genres.map(g=>`<option value="${this.escapeHTML(g)}" ${g===selectedGenre?'selected':''}>${this.escapeHTML(g)}</option>`).join(''); return html; },
             getSubgenreOptionsHTML(genre = '', selectedSubgenre = '', includeAll = false) { const prefix = includeAll ? '<option value="">サブジャンル: すべて</option>' : '<option value="">未設定</option>'; if (genre === '__UNSET__') return prefix; const options = genre ? (this.getAISubgenres()[genre] || []) : []; return prefix + options.map(x=>`<option value="${this.escapeHTML(x)}" ${x===selectedSubgenre?'selected':''}>${this.escapeHTML(x)}</option>`).join(''); },
 
-            normalizeQuestionForDuplicateMerge(text) {
-                return String(text || '').normalize('NFKC').toLowerCase()
-                    .replace(/[\s　、。,.，・:：;；!?！？'"“”‘’「」『』【】()（）\[\]［］]/g, '');
-            },
-            getQuestionIdOrderValue(q, fallbackIndex = 0) {
-                const id = String(q?.questionId || q?.id || '');
-                const matches = id.match(/\d+/g);
-                if (matches && matches.length) {
-                    const value = Number(matches.join(''));
-                    if (Number.isFinite(value)) return value;
-                }
-                return Number.MAX_SAFE_INTEGER - 100000 + fallbackIndex;
-            },
-            mergeExactDuplicateGroup(set, entries) {
-                const ordered = [...entries].sort((a, b) =>
-                    this.getQuestionIdOrderValue(a.q, a.index) - this.getQuestionIdOrderValue(b.q, b.index) || a.index - b.index
-                );
-                const keeper = ordered[0].q;
-                keeper.correct = ordered.reduce((sum, x) => sum + (Number(x.q.correct) || 0), 0);
-                keeper.total = ordered.reduce((sum, x) => sum + (Number(x.q.total) || 0), 0);
-                keeper.accuracy = keeper.total > 0 ? keeper.correct / keeper.total : 0;
-                const latest = [...ordered].sort((a, b) => (Number(b.q.lastAnsweredAt) || 0) - (Number(a.q.lastAnsweredAt) || 0))[0]?.q;
-                keeper.lastAnsweredAt = latest?.lastAnsweredAt || null;
-                keeper.lastResult = latest?.lastResult === true || latest?.lastResult === false ? latest.lastResult : null;
-                keeper.streak = Number(latest?.streak) || 0;
-                keeper.level = Math.max(...ordered.map(x => Number(x.q.level) || 0));
-                const fields = ['explanation', 'genre', 'subgenre', 'difficulty'];
-                fields.forEach(field => {
-                    if (!String(keeper[field] || '').trim()) {
-                        const source = ordered.find(x => String(x.q[field] || '').trim());
-                        if (source) keeper[field] = source.q[field];
-                    }
-                });
-                const pronunciationMap = new Map();
-                ordered.forEach(x => (Array.isArray(x.q.pronunciations) ? x.q.pronunciations : []).forEach(item => {
-                    if (item?.word && item?.pronunciation && !pronunciationMap.has(item.word)) pronunciationMap.set(item.word, item);
-                }));
-                if (pronunciationMap.size) keeper.pronunciations = [...pronunciationMap.values()];
-                const remove = new Set(ordered.slice(1).map(x => x.q));
-                set.questions = set.questions.filter(q => !remove.has(q));
-                return ordered.length - 1;
-            },
-            async checkAndMergeDuplicateQuestions() {
-                const setId = document.getElementById('manager-question-set-select')?.value || this.managerSetId;
-                const set = this.studySets.find(s => s.id === setId);
-                if (!set) return this.showToast('選択中の学習セットが見つかりません', 'error');
-                if (set.questions.length < 2) return this.showToast('重複チェック対象の問題がありません', 'info');
-
-                const exactMap = new Map();
-                set.questions.forEach((q, index) => {
-                    const key = `${this.normalizeQuestionForDuplicateMerge(q.q)}|${this.normalizeQuestionForDuplicateMerge(q.a)}`;
-                    if (!exactMap.has(key)) exactMap.set(key, []);
-                    exactMap.get(key).push({ q, index });
-                });
-                let exactMerged = 0;
-                [...exactMap.values()].filter(group => group.length > 1).forEach(group => {
-                    exactMerged += this.mergeExactDuplicateGroup(set, group);
-                });
-
-                const answerMap = new Map();
-                set.questions.forEach((q, index) => {
-                    const key = this.normalizeQuestionForDuplicateMerge(q.a);
-                    if (!key) return;
-                    if (!answerMap.has(key)) answerMap.set(key, []);
-                    answerMap.get(key).push({ q, index });
-                });
-                const ambiguous = [...answerMap.values()].filter(group => {
-                    if (group.length < 2) return false;
-                    return new Set(group.map(x => this.normalizeQuestionForDuplicateMerge(x.q.q))).size > 1;
-                });
-
-                if (!ambiguous.length) {
-                    if (exactMerged > 0) {
-                        this.saveStudySets(); this.renderManagerStats(); this.questionManager.renderQuestionList();
-                        return this.showToast(`問題文・解答が同一の重複を${exactMerged}問統合しました`, 'success');
-                    }
-                    return this.showToast('統合対象の重複問題はありませんでした', 'info');
-                }
-
-                this.pendingDuplicateMerge = { setId, groups: ambiguous, exactMerged };
-                document.getElementById('duplicate-merge-summary').textContent =
-                    `完全一致の自動統合: ${exactMerged}問 / 選択が必要な同一解答グループ: ${ambiguous.length}件`;
-                document.getElementById('duplicate-merge-groups').innerHTML = ambiguous.map((group, groupIndex) => {
-                    const answer = this.escapeHTML(group[0].q.a || '');
-                    const options = group.map((entry, optionIndex) => {
-                        const q = entry.q;
-                        const accuracy = Number(q.total) > 0 ? Math.round((Number(q.correct) || 0) / Number(q.total) * 100) + '%' : '--%';
-                        return `<label class="block border border-soft-green-200 rounded-xl p-3 hover:bg-purple-50 cursor-pointer">
-                            <div class="flex gap-3 items-start">
-                                <input type="radio" name="duplicate-group-${groupIndex}" value="${optionIndex}" ${optionIndex === 0 ? 'checked' : ''} class="mt-1">
-                                <div class="min-w-0">
-                                    <p class="text-sm font-bold text-soft-green-900 whitespace-pre-wrap">${this.escapeHTML(q.q || '')}</p>
-                                    <p class="text-xs text-soft-green-600 mt-1">ID: ${this.escapeHTML(q.questionId || q.id || '')} / 成績: ${Number(q.correct) || 0}正解・${Number(q.total) || 0}回答 / 正解率: ${accuracy}</p>
-                                </div>
-                            </div>
-                        </label>`;
-                    }).join('');
-                    const noMerge = `<label class="block border border-gray-300 rounded-xl p-3 hover:bg-gray-50 cursor-pointer"><div class="flex gap-3 items-start"><input type="radio" name="duplicate-group-${groupIndex}" value="none" class="mt-1"><div><p class="text-sm font-bold text-gray-800">統合しない</p><p class="text-xs text-gray-600 mt-1">このグループの問題をすべて残します。</p></div></div></label>`;
-                    return `<section class="border border-purple-200 rounded-2xl p-4 bg-purple-50/30">
-                        <h4 class="font-bold text-purple-900 mb-3">解答: ${answer}</h4>
-                        <div class="space-y-2">${options}${noMerge}</div>
-                    </section>`;
-                }).join('');
-                const modal = document.getElementById('duplicate-merge-modal');
-                const panel = document.getElementById('duplicate-merge-panel');
-                modal.classList.remove('hidden'); void modal.offsetWidth;
-                modal.classList.remove('opacity-0'); panel.classList.remove('scale-95');
-            },
-            closeDuplicateMergeModal() {
-                const modal = document.getElementById('duplicate-merge-modal');
-                const panel = document.getElementById('duplicate-merge-panel');
-                modal.classList.add('opacity-0'); panel.classList.add('scale-95');
-                setTimeout(() => modal.classList.add('hidden'), 300);
-            },
-            applySelectedDuplicateMerges() {
-                const pending = this.pendingDuplicateMerge;
-                const set = this.studySets.find(s => s.id === pending?.setId);
-                if (!pending || !set) return this.showToast('統合対象が見つかりません', 'error');
-                const remove = new Set();
-                pending.groups.forEach((group, groupIndex) => {
-                    const selectedValue = document.querySelector(`input[name="duplicate-group-${groupIndex}"]:checked`)?.value ?? '0';
-                    if (selectedValue === 'none') return;
-                    const selected = Number(selectedValue);
-                    group.forEach((entry, optionIndex) => { if (optionIndex !== selected) remove.add(entry.q); });
-                });
-                set.questions = set.questions.filter(q => !remove.has(q));
-                const selectedMerged = remove.size;
-                this.pendingDuplicateMerge = null;
-                this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList();
-                this.closeDuplicateMergeModal();
-                this.showToast(`重複問題を統合しました（完全一致: ${pending.exactMerged}問、選択統合: ${selectedMerged}問）`, 'success');
-            },
             exportManagerQuestionsCSV(){
                 const setId=document.getElementById('manager-question-set-select')?.value||this.managerSetId;
                 const target=this.studySets.find(set=>set.id===setId);
@@ -1109,109 +951,6 @@ ${text}
                 this.showToast(`「${target.name}」の${rows.length}問をCSV保存しました`,'success');
             },
 
-            async createBulkExplanationsForManagerSet(){
-                if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error');
-                const set=this.studySets.find(s=>s.id===this.managerSetId);
-                if(!set)return this.showToast('学習セットが見つかりません','error');
-                const priority=q=>{
-                    const total=Number(q.total)||0, accuracy=total>0?(Number(q.correct)||0)/total:1;
-                    if(total>0&&accuracy===0)return 1;
-                    if(total>0&&accuracy<0.5)return 2;
-                    if(total===0)return 3;
-                    return 4;
-                };
-                const targets=set.questions.filter(q=>!(q.explanation||'').trim()).map((q,index)=>({q,index,priority:priority(q)})).sort((a,b)=>a.priority-b.priority||a.index-b.index).slice(0,CSV_EXPLANATION_LIMIT).map(x=>x.q);
-                const remaining=set.questions.filter(q=>!(q.explanation||'').trim()).length;
-                if(!targets.length)return this.showToast('解説未設定の問題はありません','success');
-                const confirmed=await this.showModal('AI解説一括作成',`解説未設定の${remaining}問から、優先度順に最大${CSV_EXPLANATION_LIMIT}問の解説を作成します。\nプロンプトは最大${CSV_EXPLANATION_PROMPT_LIMIT}回です。実行しますか？`,'作成する','bg-amber-500 hover:bg-amber-600');
-                if(!confirmed)return;
-                const btn=document.getElementById('manager-bulk-explanation-btn');
-                const status=document.getElementById('manager-bulk-explanation-status');
-                const oldText=btn.textContent;
-                btn.disabled=true; btn.textContent='解説作成中...'; btn.classList.add('opacity-70','cursor-not-allowed');
-                try{
-                    await this.fillExplanationsWithAI(targets,status,CSV_EXPLANATION_BATCH_SIZE,CSV_EXPLANATION_PROMPT_LIMIT);
-                    const created=targets.filter(q=>(q.explanation||'').trim()).length;
-                    this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList();
-                    this.showToast(`${created}問のAI解説を作成して保存しました`,'success');
-                }catch(e){
-                    this.saveStudySets(); this.renderQuestionList();
-                    this.showToast('AI解説一括作成に失敗しました: '+e.message,'error');
-                }finally{
-                    btn.disabled=false; btn.textContent=oldText; btn.classList.remove('opacity-70','cursor-not-allowed');
-                }
-            },
-            async classifyUnsetGenresForManagerSet(){
-                if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error');
-                const set=this.studySets.find(s=>s.id===this.managerSetId);
-                if(!set)return this.showToast('学習セットが見つかりません','error');
-                const targets=set.questions.filter(q=>!(q.genre||'').trim());
-                if(targets.length===0)return this.showToast('ジャンル未設定の問題はありません','success');
-                const limit=BULK_GENRE_CLASSIFY_LIMIT;
-                const batch=targets.slice(0,limit).map((q,idx)=>({idx,q:this.normalizeQuestionData(q)}));
-                const confirmed=await this.showModal('ジャンル一括自動判定',`ジャンル未設定の問題 ${targets.length}問のうち、1回あたり最大${limit}問を自動判定します。\n今回 ${batch.length}問を判定して保存しますか？`,'判定する','bg-soft-green-600 hover:bg-soft-green-700');
-                if(!confirmed)return;
-                const btn=document.getElementById('manager-bulk-genre-btn');
-                const status=document.getElementById('manager-bulk-genre-status');
-                const oldText=btn?btn.textContent:'';
-                if(btn){btn.disabled=true;btn.textContent='判定中...';btn.classList.add('opacity-70','cursor-not-allowed');}
-                if(status)status.textContent=`${batch.length}問を判定中...`;
-                try{
-                    const candidates=Object.entries(this.getAISubgenres()).map(([g,subs])=>`${g}: ${subs.join('、')}`).join('\n');
-                    const items=batch.map(item=>`[${item.idx}] Q:${item.q.q}\nA:${item.q.a}`).join('\n\n');
-                    const prompt=`以下のクイズ問題を、候補のジャンルとサブジャンルから分類してください。\n出力は必ずJSON配列のみとし、説明文やMarkdownは不要です。\n形式:[{"idx":0,"genre":"ジャンル","subgenre":"サブジャンル"}]\nidxは入力の番号をそのまま返してください。genreは候補ジャンルから、subgenreはそのgenreの候補サブジャンルから選んでください。判断が難しい場合も最も近い候補を1つ選んでください。\n\n候補:\n${candidates}\n\n問題:\n${items}`;
-                    const parsed=this.parseAIJSON(await this.fetchGemini(prompt,true));
-                    if(!Array.isArray(parsed))throw new Error('JSON配列として解析できませんでした');
-                    const defs=this.getAISubgenres();
-                    let updated=0, skipped=0;
-                    parsed.forEach(item=>{
-                        const idx=Number(item.idx);
-                        const target=batch.find(x=>x.idx===idx);
-                        if(!target){skipped++;return;}
-                        const genre=String(item.genre||'').trim();
-                        let subgenre=String(item.subgenre||'').trim();
-                        if(!defs[genre]){skipped++;return;}
-                        if(subgenre&&!defs[genre].includes(subgenre))subgenre='';
-                        target.q.genre=genre;
-                        target.q.subgenre=subgenre;
-                        updated++;
-                    });
-                    this.saveStudySets();
-                    this.renderManagerStats();
-                    this.renderQuestionList();
-                    this.showToast(`${updated}問のジャンルを自動判定して保存しました${skipped?`（スキップ: ${skipped}問）`:''}`,'success');
-                }catch(e){
-                    this.showToast('ジャンル一括自動判定に失敗しました: '+e.message,'error');
-                    this.renderQuestionList();
-                }finally{
-                    if(btn){btn.disabled=false;btn.textContent=oldText||'ジャンル一括自動判定';btn.classList.remove('opacity-70','cursor-not-allowed');}
-                }
-            },
-            openQuestionDetail(id){
-                const r=this.questionManager.findManagerQuestionById(id);
-                if(!r.q)return this.showToast('問題が見つかりません','error');
-                document.getElementById('detail-question-id').value=r.q.id;
-                document.getElementById('detail-question-q').value=r.q.q;
-                document.getElementById('detail-confirm-point').value=r.q.confirmPoint || r.q.q.length;
-                this.syncConfirmPointLimit();
-                document.getElementById('detail-question-a').value=r.q.a;
-                const mastery=this.getMasteryMetrics(r.q);
-                document.getElementById('question-detail-meta').textContent=`回答 ${r.q.total}回 / 正解 ${r.q.correct}回 / 習熟度 ${mastery.score}点 / 平均確定ポイント比 ${mastery.avgRatioText}`;
-                document.getElementById('detail-question-explanation').value=r.q.explanation||'';
-                const moveSelect=document.getElementById('detail-question-move-set');
-                if(moveSelect){
-                    moveSelect.innerHTML=this.studySets.map(set=>`<option value="${set.id}">${this.escapeHTML(set.name)}</option>`).join('');
-                    moveSelect.value=r.set.id;
-                }
-                const gs=document.getElementById('detail-question-genre'),ss=document.getElementById('detail-question-subgenre');
-                gs.innerHTML=this.getGenreOptionsHTML(r.q.genre||'',false); gs.value=r.q.genre||'';
-                ss.innerHTML=this.getSubgenreOptionsHTML(r.q.genre||'',r.q.subgenre||'',false); ss.value=r.q.subgenre||'';
-                this.renderDetailPronunciations(r.q);
-                const modal=document.getElementById('question-detail-modal'),panel=document.getElementById('question-detail-panel');
-                modal.classList.remove('hidden');void modal.offsetWidth;modal.classList.remove('opacity-0');panel.classList.remove('scale-95');
-            },
-            closeQuestionDetail(){const modal=document.getElementById('question-detail-modal'), panel=document.getElementById('question-detail-panel'); modal.classList.add('opacity-0'); panel.classList.add('scale-95'); setTimeout(()=>modal.classList.add('hidden'),300);},
-            openCurrentQuizQuestionDetail(){const set=this.studySets.find(s=>s.id===this.activeSetId); const q=set?.questions[this.currentQuestionIndex]; if(!q)return this.showToast('現在の問題が見つかりません','error'); this.managerSetId=this.activeSetId; this.updateSetSelectors(); this.openQuestionDetail(this.getQuestionId(q));},
             syncConfirmPointLimit(){
                 const text=document.getElementById('detail-question-q')?.value||'';
                 const input=document.getElementById('detail-confirm-point');
@@ -1245,46 +984,6 @@ ${text}
             },
             handleQuestionDetailGenreChange(){const g=document.getElementById('detail-question-genre')?.value||''; const ss=document.getElementById('detail-question-subgenre'); if(ss)ss.innerHTML=this.getSubgenreOptionsHTML(g,'',false);},
 
-            saveQuestionDetail(){
-                const id=document.getElementById('detail-question-id').value;
-                const r = this.questionManager.findManagerQuestionById(id);
-                if(!r.q)return this.showToast('問題が見つかりません','error');
-                const qText=document.getElementById('detail-question-q').value.trim();
-                const aText=document.getElementById('detail-question-a').value.trim();
-                if(!qText||!aText)return this.showToast('問題文と解答を入力してください','error');
-                const destinationId=document.getElementById('detail-question-move-set')?.value||r.set.id;
-                const destination=this.studySets.find(set=>set.id===destinationId);
-                if(!destination)return this.showToast('移動先の学習セットが見つかりません','error');
-                const isMoving=destination.id!==r.set.id;
-                if(isMoving&&destination.questions.length>=MAX_QUESTIONS_PER_SET)return this.showToast(`移動先の登録上限(${MAX_QUESTIONS_PER_SET}問)に達しています。`,'error');
-                r.q.q=qText;
-                const cpInput=Number(document.getElementById('detail-confirm-point')?.value);
-                r.q.confirmPoint=Number.isFinite(cpInput)&&cpInput>0?Math.min(qText.length,Math.round(cpInput)):0;
-                r.q.a=aText;
-                r.q.explanation=document.getElementById('detail-question-explanation').value.trim();
-                r.q.genre=document.getElementById('detail-question-genre').value||'';
-                r.q.subgenre=r.q.genre?(document.getElementById('detail-question-subgenre').value||''):'';
-                if(isMoving){
-                    r.set.questions.splice(r.index,1);
-                    destination.questions.push(r.q);
-                }else{
-                    r.set.questions[r.index]=r.q;
-                }
-                this.saveStudySets();
-                this.updateSetSelectors();
-                this.renderManagerStats();
-                this.renderQuestionList();
-                const quizSet=this.studySets.find(set=>set.id===this.activeSetId);
-                const current=quizSet?.questions[this.currentQuestionIndex];
-                if(current&&this.getQuestionId(current)===id){
-                    document.getElementById('quiz-question-text').textContent=r.q.q;
-                    document.getElementById('quiz-answer-text').textContent=r.q.a;
-                    document.getElementById('quiz-explanation-text').textContent=r.q.explanation||'解説はありません。';
-                }
-                this.closeQuestionDetail();
-                this.showToast(isMoving?`問題を「${destination.name}」へ移動して保存しました`:'問題を保存しました','success');
-            },
-            async deleteQuestionFromDetail(){const id=document.getElementById('detail-question-id').value; const r=this.questionManager.findManagerQuestionById(id); if(!r.q)return; if(!(await this.showModal('問題の削除',`この問題を削除しますか？\n\n${r.q.q}`,'削除する','bg-red-600 hover:bg-red-700')))return; r.set.questions.splice(r.index,1); this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList(); this.closeQuestionDetail(); this.showToast('問題を削除しました','success');},
             openRegeneratePolicyModal(){const m=document.getElementById('regenerate-policy-modal'),p=document.getElementById('regenerate-policy-panel'); document.querySelector('input[name="regenerate-policy"][value="correct"]').checked=true; m.classList.remove('hidden');void m.offsetWidth;m.classList.remove('opacity-0');p.classList.remove('scale-95');},
             closeRegeneratePolicyModal(){const m=document.getElementById('regenerate-policy-modal'),p=document.getElementById('regenerate-policy-panel');m.classList.add('opacity-0');p.classList.add('scale-95');setTimeout(()=>m.classList.add('hidden'),300);},
             closeRegenerateCompareModal(){const m=document.getElementById('regenerate-compare-modal'),p=document.getElementById('regenerate-compare-panel');m.classList.add('opacity-0');p.classList.add('scale-95');setTimeout(()=>m.classList.add('hidden'),300);},
@@ -1322,47 +1021,6 @@ ${text}
                 }
             },
 
-            /**
-             * AI解説の生成
-             */
-            async generateExplanationForQuestion() {
-                if (!this.geminiApiKey) {
-                    return this.showToast('Gemini APIキーを設定画面で登録してください','error');
-                }
-
-                const q = document.getElementById('detail-question-q').value.trim();
-
-                const a = document.getElementById('detail-question-a').value.trim();
-
-                if (!q || !a) {
-                    return this.showToast('問題文と解答を入力してください','error');
-                }
-
-                const btn = document.getElementById('detail-ai-explanation-btn');
-
-                const oldText = btn.textContent;
-
-                btn.disabled = true;
-                btn.textContent = '生成中...';
-
-                try {
-                    const prompt = this.buildAIExplanationPrompt(q, a);
-
-                    const exp = (await this.fetchGemini(prompt, false)).trim().replace(/^```[a-z]*|```$/gi, '').trim();
-
-                    document.getElementById('detail-question-explanation').value = exp;
-
-                    this.showToast('AI解説を再セットしました','success');
-
-                } catch (e) {
-                    this.showToast('AI解説生成に失敗しました: '+e.message,'error');
-                } finally {
-                    btn.disabled=false;
-                    btn.textContent=oldText;
-                }
-            },
-
-            async classifyQuestionGenreForDetail(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const q=document.getElementById('detail-question-q').value.trim(), a=document.getElementById('detail-question-a').value.trim(); if(!q||!a)return this.showToast('問題文と解答を入力してください','error'); const btn=document.getElementById('detail-ai-genre-btn'), old=btn.textContent; btn.disabled=true; btn.textContent='判定中...'; try{ const candidates=Object.entries(this.getAISubgenres()).map(([g,subs])=>`${g}: ${subs.join('、')}`).join('\n'); const prompt=`以下のクイズ問題を候補のジャンルとサブジャンルから分類してください。JSONのみ返してください。\n形式:{"genre":"ジャンル","subgenre":"サブジャンル"}\n候補:\n${candidates}\nQ:${q}\nA:${a}`; const parsed=this.parseAIJSON(await this.fetchGemini(prompt,true)); const genre=String(parsed.genre||''), sub=String(parsed.subgenre||''); const defs=this.getAISubgenres(); if(!defs[genre]) throw new Error('候補内のジャンルを判定できませんでした'); document.getElementById('detail-question-genre').value=genre; const ss=document.getElementById('detail-question-subgenre'); ss.innerHTML=this.getSubgenreOptionsHTML(genre,sub,false); if([...ss.options].some(o=>o.value===sub)) ss.value=sub; this.showToast(`ジャンルを自動判定しました: ${genre}${sub?' / '+sub:''}`,'success'); }catch(e){this.showToast('ジャンル自動判定に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
             getQuestionId(q){return q.questionId||q.id;}, getCycleSeenSet(set){if(!set)return new Set(); if(!Array.isArray(set.cycleSeenQuestionIds))set.cycleSeenQuestionIds=[]; return new Set(set.cycleSeenQuestionIds);}, resetQuestionCycle(set){if(set){set.cycleSeenQuestionIds=[]; set.cycleStartedAt=Date.now();}}, isCycleCompleted(set,questions){const seen=this.getCycleSeenSet(set); return questions.length>0&&questions.map(q=>this.getQuestionId(q)).every(id=>seen.has(id));}, markQuestionSeenInCycle(set,q){if(!set||!q)return; const id=this.getQuestionId(q); const seen=this.getCycleSeenSet(set); seen.add(id); set.cycleSeenQuestionIds=Array.from(seen); if(!set.cycleStartedAt)set.cycleStartedAt=Date.now();},
 
             getAccuracyRatio(q) {
@@ -1391,6 +1049,12 @@ ${text}
 
             isStaleQuestion(q, now = Date.now()) {
                 return !!(q.lastAnsweredAt && (now - Number(q.lastAnsweredAt)) >= STALE_REVIEW_MS);
+            },
+
+            renderQuestionList() {
+                if (this.questionManager) {
+                    this.questionManager.renderQuestionList();
+                }
             },
 
             updateStats() {
@@ -1484,51 +1148,11 @@ ${text}
                 this.questionManager.updateQuestionFilterOptions();
                 this.renderQuestionList();
             },
-            async clearManagerSetData() {
-                const targetSet = this.studySets.find(s => s.id === this.managerSetId);
-                const confirmed = await this.showModal('確認', `学習セット「${targetSet.name}」の問題をすべてリセットしますか？\nセット自体は削除されません。`, 'リセットする', 'bg-red-600 hover:bg-red-700');
-                if (confirmed) {
-                    targetSet.questions = [];
-                    this.saveStudySets();
-                    this.renderManagerStats();
-                    this.showToast('問題データをリセットしました', 'info');
-                }
-            },
 
-            async deleteHighAccuracyQuestions() {
-                const targetSet = this.studySets.find(s => s.id === this.managerSetId);
-                if (!targetSet || targetSet.questions.length === 0) return this.showToast('問題がありません', 'error');
-                const metric = document.getElementById('manager-delete-metric')?.value || 'mastery';
-                const mode = document.getElementById('manager-delete-mode')?.value || 'percent';
-                const percent = parseInt(document.getElementById('manager-delete-percent')?.value || '10', 10);
-                const inputCount = parseInt(document.getElementById('manager-delete-count')?.value || '', 10);
-                const metricLabel = metric === 'mastery' ? '習熟度' : '正解率';
-                const deletable = metric === 'mastery' ? [...targetSet.questions] : targetSet.questions.filter(q => q.total > 0 && this.getAccuracyRatio(q) > 0);
-                if (!deletable.length) return this.showToast(`削除対象の問題がありません`, 'error');
-                deletable.sort((a,b) => {
-                    const valueA = metric === 'mastery' ? this.getMasteryMetrics(a).score : this.getAccuracyRatio(a);
-                    const valueB = metric === 'mastery' ? this.getMasteryMetrics(b).score : this.getAccuracyRatio(b);
-                    if (valueA !== valueB) return valueB - valueA;
-                    return (b.total || 0) - (a.total || 0);
-                });
-                let deleteCount, label;
-                if (mode === 'count') {
-                    if (!Number.isInteger(inputCount) || inputCount < 1 || inputCount > 999) return this.showToast('削除する問題数は1〜999の整数で入力してください', 'error');
-                    deleteCount = Math.min(inputCount, deletable.length);
-                    label = `${metricLabel}上位 ${deleteCount}問`;
-                } else {
-                    deleteCount = Math.ceil(deletable.length * (percent / 100));
-                    label = `${metricLabel}上位 ${percent}%（${deleteCount}問）`;
-                }
-                if (!(await this.showModal('確認', `${label} の問題を削除しますか？`, '削除する', 'bg-red-600 hover:bg-red-700'))) return;
-                const toDelete = new Set(deletable.slice(0, deleteCount));
-                const initialLen = targetSet.questions.length;
-                targetSet.questions = targetSet.questions.filter(q => !toDelete.has(q));
-                this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList(); this.renderBulkEditList();
-                this.showToast(`${initialLen - targetSet.questions.length}問を削除しました`, 'success');
+            escapeCSVValue(value) {
+                const str = String(value ?? '');
+                return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
             },
-
-            escapeCSVValue(value) { const str = String(value ?? ''); return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str; },
 
             applyDictionary(text){return this.applyPronunciations(text,null);},
             applyPronunciations(text,question=null){let res=String(text??'');const local=Array.isArray(question?.pronunciations)?question.pronunciations:[],global=Array.isArray(this.dictionary)?this.dictionary:[],used=new Set();[...local,...global].filter(x=>x?.word&&x.pronunciation).sort((a,b)=>b.word.length-a.word.length).forEach(x=>{if(used.has(x.word))return;res=res.split(x.word).join(x.pronunciation);used.add(x.word);});return res;},

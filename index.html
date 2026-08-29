@@ -281,9 +281,36 @@
                         </div>
                         <div class="bg-white p-4 rounded-xl border border-soft-green-200 space-y-3">
                             <div><label class="block text-xs font-semibold text-soft-green-700 mb-1">表示する学習セット</label><select id="manager-question-set-select" onchange="app.changeQuestionListSet(this.value)" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm font-semibold text-soft-green-900"></select></div>
-                            <input type="text" id="manager-question-search" oninput="app.questionListPage = 1; app.renderQuestionList()" placeholder="問題文・解答・解説・タグで検索" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm">
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3"><select id="manager-filter-genre" onchange="app.questionListPage = 1; app.updateQuestionFilterSubgenreOptions(); app.renderQuestionList();" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"><option value="">ジャンル: すべて</option></select><select id="manager-filter-subgenre" onchange="app.questionListPage = 1; app.renderQuestionList()" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"><option value="">サブジャンル: すべて</option></select><select id="manager-filter-mastery" onchange="app.questionListPage = 1; app.renderQuestionList()" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"><option value="">習熟度: すべて</option><option value="0-19">0〜19%</option><option value="20-39">20〜39%</option><option value="40-59">40〜59%</option><option value="60-79">60〜79%</option><option value="80-100">80〜100%</option></select></div>
-                            <div id="manager-question-list" class="border border-soft-green-100 rounded-xl overflow-hidden divide-y divide-soft-green-100 max-h-[520px] overflow-y-auto bg-white"></div><div id="manager-question-empty" class="hidden p-8 text-center text-soft-green-400 bg-white border border-soft-green-100 rounded-xl">表示できる問題がありません。</div><div id="manager-question-pager" class="hidden flex flex-wrap items-center justify-between gap-2 pt-2"><div class="flex gap-2"><button id="manager-question-first" onclick="app.goToQuestionListPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">最初</button><button id="manager-question-prev" onclick="app.changeQuestionListPage(-1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">前へ</button></div><span id="manager-question-page-info" class="text-xs font-bold text-soft-green-700">1 / 1</span><div class="flex gap-2"><button id="manager-question-next" onclick="app.changeQuestionListPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">次へ</button><button id="manager-question-last" onclick="app.goToQuestionListPage(app.questionListTotalPages || 1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">最後</button></div></div>
+                            <input type="text" id="manager-question-search" oninput="app.questionListPage = 1; app.questionManager.renderQuestionList()" placeholder="問題文・解答・解説・タグで検索" class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <select id="manager-filter-genre" onchange="app.questionListPage = 1; app.questionManager.updateQuestionFilterSubgenreOptions(); app.questionManager.renderQuestionList();" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                                    <option value="">ジャンル: すべて</option>
+                                </select>
+                                <select id="manager-filter-subgenre" onchange="app.questionListPage = 1; app.questionManager.renderQuestionList()" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                                    <option value="">サブジャンル: すべて</option>
+                                </select>
+                                <select id="manager-filter-mastery" onchange="app.questionListPage = 1; app.questionManager.renderQuestionList()" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                                    <option value="">習熟度: すべて</option>
+                                    <option value="0-19">0〜19%</option>
+                                    <option value="20-39">20〜39%</option>
+                                    <option value="40-59">40〜59%</option>
+                                    <option value="60-79">60〜79%</option>
+                                    <option value="80-100">80〜100%</option>
+                                    </select>
+                            </div>
+                            <div id="manager-question-list" class="border border-soft-green-100 rounded-xl overflow-hidden divide-y divide-soft-green-100 max-h-[520px] overflow-y-auto bg-white"></div>
+                            <div id="manager-question-empty" class="hidden p-8 text-center text-soft-green-400 bg-white border border-soft-green-100 rounded-xl">表示できる問題がありません。</div>
+                            <div id="manager-question-pager" class="hidden flex flex-wrap items-center justify-between gap-2 pt-2">
+                                <div class="flex gap-2">
+                                    <button id="manager-question-first" onclick="app.goToQuestionListPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">最初</button>
+                                    <button id="manager-question-prev" onclick="app.changeQuestionListPage(-1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">前へ</button>
+                                </div>
+                                <span id="manager-question-page-info" class="text-xs font-bold text-soft-green-700">1 / 1</span>
+                                <div class="flex gap-2">
+                                    <button id="manager-question-next" onclick="app.changeQuestionListPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">次へ</button>
+                                    <button id="manager-question-last" onclick="app.goToQuestionListPage(app.questionListTotalPages || 1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">最後</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div id="manager-tab-bulk" class="manager-bulk-section hidden border-t border-soft-green-200 pt-4">
@@ -397,7 +424,7 @@
                         <label for="audio-export-explanation" class="ml-2 text-sm font-semibold text-soft-green-800 cursor-pointer">解答の後に解説を読み上げる</label>
                     </div>
                     
-                    <button onclick="app.startAudioExport()" id="btn-start-export" class="w-full py-4 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold text-lg shadow-md transition-colors flex justify-center items-center gap-2 mt-4">
+                    <button onclick="app.audioManager.startAudioExport()" id="btn-start-export" class="w-full py-4 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold text-lg shadow-md transition-colors flex justify-center items-center gap-2 mt-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
                         音声を作成する
                     </button>
@@ -413,13 +440,13 @@
                     <div id="audio-export-result" class="hidden flex flex-col gap-3 mt-4 border-t border-soft-green-200 pt-4">
                         <p class="text-sm font-bold text-soft-green-800 text-center mb-2">作成完了！</p>
                         <div class="flex flex-col sm:flex-row gap-2">
-                            <button id="btn-play-audio" onclick="app.playExportedAudio()" class="flex-1 py-3 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors flex justify-center items-center gap-2">
+                            <button id="btn-play-audio" onclick="app.audioManager.playExportedAudio()" class="flex-1 py-3 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors flex justify-center items-center gap-2">
                                 ブラウザで再生
                             </button>
-                            <button id="btn-stop-audio" onclick="app.stopExportedAudio()" class="hidden flex-1 py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors justify-center items-center gap-2">
+                            <button id="btn-stop-audio" onclick="app.audioManager.stopExportedAudio()" class="hidden flex-1 py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors justify-center items-center gap-2">
                                 停止
                             </button>
-                            <button id="btn-download-audio" onclick="app.downloadExportedAudio()" class="flex-1 py-3 bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-xl font-bold shadow-md transition-colors flex justify-center items-center gap-2">
+                            <button id="btn-download-audio" onclick="app.audioManager.downloadExportedAudio()" class="flex-1 py-3 bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-xl font-bold shadow-md transition-colors flex justify-center items-center gap-2">
                                 MP3保存
                             </button>
                         </div>
@@ -717,6 +744,8 @@
     
     <script src="constants.js"></script>
     <script src="dictionary-manager.js"></script>
+    <script src="audio-manager.js"></script>
+    <script src="question-manager.js"></script>
     <script src="api.js"></script>
     <script src="app.js"></script>
 

@@ -7,9 +7,6 @@ const app = {
             managerTab: 'overview',
             managerGenreStandard: 'aql',
             managerDistributionMetric: 'accuracy',
-            questionListPage: 1,
-            bulkEditPage: 1,
-            bulkEditTotalPages: 1,
             bulkEditSetId: null,
             bulkEditSelectedIds: new Set(),
             dictionary: [],
@@ -29,10 +26,7 @@ const app = {
             
             geminiApiKey: "",
             ttsApiKey: "",
-            
-            exportedAudioBlob: null,
-            exportedAudioUrl: null,
-            audioElement: null,
+
             
             //問題一覧ページング用変数
 	        questionListPage: 1,
@@ -43,8 +37,10 @@ const app = {
             init() {
                 //外部モジュールのロード
                 this.dictionaryManager = new DictionaryManager(this);
-                this.dictionaryManager.load();
+                this.audioManager = new AudioManager(this);
+                this.questionManager = new QuestionManager(this);
 
+                this.dictionaryManager.load(); //辞書データ読み込み
                 this.updateViewportHeight();
                 window.addEventListener('resize', () => this.updateViewportHeight(), { passive: true });
                 window.visualViewport?.addEventListener('resize', () => this.updateViewportHeight(), { passive: true });
@@ -176,7 +172,7 @@ const app = {
                 });
                 document.getElementById(`view-${viewId}`).classList.remove('hidden');
                 
-                if (viewId === 'manager') { this.renderManagerStats(); this.renderQuestionList(); this.renderBulkEditList(); this.switchManagerTab(this.managerTab || 'overview'); }
+            if (viewId === 'manager') { this.renderManagerStats(); this.questionManager.renderQuestionList(); this.renderBulkEditList(); this.switchManagerTab(this.managerTab || 'overview'); }
             },
 
             showToast(message, type = 'info') {
@@ -578,7 +574,7 @@ const app = {
                 this.updateStats();
             },
 
-            changeManagerSet(id) { this.managerSetId = id; this.questionListPage = 1; const set = this.studySets.find(s => s.id === id); if (set) document.getElementById('manager-set-name').value = set.name; const qSel = document.getElementById('manager-question-set-select'); if (qSel) qSel.value = id; this.renderManagerStats(); this.renderQuestionList(); },
+            changeManagerSet(id) { this.managerSetId = id; this.questionListPage = 1; const set = this.studySets.find(s => s.id === id); if (set) document.getElementById('manager-set-name').value = set.name; const qSel = document.getElementById('manager-question-set-select'); if (qSel) qSel.value = id; this.renderManagerStats(); this.questionManager.renderQuestionList(); },
             changeQuestionListSet(id) { this.changeManagerSet(id); },
             getTotalQuestionCount() { return this.studySets.reduce((sum, set) => sum + (set.questions ? set.questions.length : 0), 0); },
             switchManagerTab(tab) {
@@ -588,7 +584,7 @@ const app = {
                 document.querySelectorAll('.manager-bulk-section').forEach(el => el.classList.toggle('hidden', this.managerTab !== 'bulk'));
                 const buttons={overview:document.getElementById('manager-tab-btn-overview'),questions:document.getElementById('manager-tab-btn-questions'),bulk:document.getElementById('manager-tab-btn-bulk')};
                 Object.entries(buttons).forEach(([key,button])=>{if(button)button.className=`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${this.managerTab===key?'bg-soft-green-600 text-white shadow-sm':'text-soft-green-800 hover:bg-soft-green-100'}`;});
-                if(this.managerTab==='questions') this.renderQuestionList();
+                if(this.managerTab==='questions') this.questionManager.renderQuestionList();
                 if(this.managerTab==='bulk') this.renderBulkEditList();
             },
             getBulkEditSet(){
@@ -635,19 +631,19 @@ const app = {
             },
             goToQuestionListPage(page) {
                this.questionListPage = Math.max(1,Math.min(Number(page) || 1,this.questionListTotalPages || 1));
-               this.renderQuestionList();
+               this.questionManager.renderQuestionList();
             },
             async deleteSelectedBulkQuestions(){
                 const set=this.getBulkEditSet(),count=this.bulkEditSelectedIds.size;if(!set||!count)return this.showToast('削除する問題を選択してください','info');
                 if(!(await this.showModal('問題の一括削除',`選択した${count}問を削除しますか？`,'削除する','bg-red-600 hover:bg-red-700')))return;
-                set.questions=set.questions.filter(q=>!this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));this.bulkEditSelectedIds.clear();this.saveStudySets();this.renderManagerStats();this.renderQuestionList();this.renderBulkEditList();this.showToast(`${count}問を削除しました`,'success');
+                set.questions=set.questions.filter(q=>!this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));this.bulkEditSelectedIds.clear();this.saveStudySets();this.renderManagerStats();this.questionManager.renderQuestionList();this.renderBulkEditList();this.showToast(`${count}問を削除しました`,'success');
             },
             async moveSelectedBulkQuestions(){
                 const source=this.getBulkEditSet(),targetId=document.getElementById('manager-bulk-move-target')?.value,target=this.studySets.find(set=>set.id===targetId),count=this.bulkEditSelectedIds.size;
                 if(!source||!count)return this.showToast('移動する問題を選択してください','info');if(!target)return this.showToast('移動先の学習セットを選択してください','error');
                 if(target.questions.length+count>MAX_QUESTIONS_PER_SET)return this.showToast(`移動先の登録上限(${MAX_QUESTIONS_PER_SET}問)を超えます`,'error');
                 if(!(await this.showModal('問題の一括移動',`選択した${count}問を「${target.name}」へ移動しますか？`,'移動する','bg-indigo-600 hover:bg-indigo-700')))return;
-                const moving=source.questions.filter(q=>this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));source.questions=source.questions.filter(q=>!this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));target.questions.push(...moving);this.bulkEditSelectedIds.clear();this.saveStudySets();this.renderManagerStats();this.renderQuestionList();this.renderBulkEditList();this.showToast(`${moving.length}問を移動しました`,'success');
+                const moving=source.questions.filter(q=>this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));source.questions=source.questions.filter(q=>!this.bulkEditSelectedIds.has(this.getBulkQuestionKey(q)));target.questions.push(...moving);this.bulkEditSelectedIds.clear();this.saveStudySets();this.renderManagerStats();this.questionManager.renderQuestionList();this.renderBulkEditList();this.showToast(`${moving.length}問を移動しました`,'success');
             },
             switchDistributionTab(metric) { this.managerDistributionMetric = metric === 'mastery' ? 'mastery' : 'accuracy'; this.renderManagerStats(); },
             switchGenreAnalysisTab(standard) { this.managerGenreStandard = standard === 'qma' ? 'qma' : 'aql'; this.renderManagerStats(); },
@@ -963,8 +959,6 @@ ${text}
             parseAIJSON(text) { const clean = String(text || '').replace(/```json/gi, '').replace(/```/g, '').trim(); try { return JSON.parse(clean); } catch(e) { const m = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/); if (m) return JSON.parse(m[1]); throw e; } },
             getGenreOptionsHTML(selectedGenre = '', includeAll = false) { const genres = Object.keys(this.getAISubgenres()); let html = includeAll ? '<option value="">ジャンル: すべて</option><option value="__UNSET__">未設定</option>' : '<option value="">未設定</option>'; html += genres.map(g=>`<option value="${this.escapeHTML(g)}" ${g===selectedGenre?'selected':''}>${this.escapeHTML(g)}</option>`).join(''); return html; },
             getSubgenreOptionsHTML(genre = '', selectedSubgenre = '', includeAll = false) { const prefix = includeAll ? '<option value="">サブジャンル: すべて</option>' : '<option value="">未設定</option>'; if (genre === '__UNSET__') return prefix; const options = genre ? (this.getAISubgenres()[genre] || []) : []; return prefix + options.map(x=>`<option value="${this.escapeHTML(x)}" ${x===selectedSubgenre?'selected':''}>${this.escapeHTML(x)}</option>`).join(''); },
-            updateQuestionFilterOptions() { const gs=document.getElementById('manager-filter-genre'); if(!gs)return; const cur=gs.value||''; gs.innerHTML=this.getGenreOptionsHTML(cur,true); gs.value=cur; this.updateQuestionFilterSubgenreOptions(); },
-            updateQuestionFilterSubgenreOptions() { const g=document.getElementById('manager-filter-genre')?.value||''; const ss=document.getElementById('manager-filter-subgenre'); if(!ss)return; const cur=ss.value||''; ss.innerHTML=this.getSubgenreOptionsHTML(g,cur,true); if([...ss.options].some(o=>o.value===cur)) ss.value=cur; },
 
             normalizeQuestionForDuplicateMerge(text) {
                 return String(text || '').normalize('NFKC').toLowerCase()
@@ -1039,7 +1033,7 @@ ${text}
 
                 if (!ambiguous.length) {
                     if (exactMerged > 0) {
-                        this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList();
+                        this.saveStudySets(); this.renderManagerStats(); this.questionManager.renderQuestionList();
                         return this.showToast(`問題文・解答が同一の重複を${exactMerged}問統合しました`, 'success');
                     }
                     return this.showToast('統合対象の重複問題はありませんでした', 'info');
@@ -1114,7 +1108,7 @@ ${text}
                 document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
                 this.showToast(`「${target.name}」の${rows.length}問をCSV保存しました`,'success');
             },
-            renderQuestionList() { const list=document.getElementById('manager-question-list'), empty=document.getElementById('manager-question-empty'), pager=document.getElementById('manager-question-pager'); if(!list||!empty)return; const set=this.studySets.find(s=>s.id===this.managerSetId); const all=set?set.questions.map(q=>this.normalizeQuestionData(q)):[]; const search=(document.getElementById('manager-question-search')?.value||'').toLowerCase(); const g=document.getElementById('manager-filter-genre')?.value||''; const sg=document.getElementById('manager-filter-subgenre')?.value||''; const masteryFilter=document.getElementById('manager-filter-mastery')?.value||''; const filtered=all.filter(q=>{const mastery=this.getMasteryMetrics(q).score; const masteryOk=!masteryFilter||(masteryFilter==='0-19'&&mastery>=0&&mastery<20)||(masteryFilter==='20-39'&&mastery>=20&&mastery<40)||(masteryFilter==='40-59'&&mastery>=40&&mastery<60)||(masteryFilter==='60-79'&&mastery>=60&&mastery<80)||(masteryFilter==='80-100'&&mastery>=80&&mastery<=100); return ((!g)||(g==='__UNSET__'?!q.genre:q.genre===g))&&(!sg||q.subgenre===sg)&&masteryOk&&(!search||[q.q,q.a,q.explanation,q.genre,q.subgenre].some(v=>String(v||'').toLowerCase().includes(search)));}); const totalEl=document.getElementById('manager-question-total-count'), visibleEl=document.getElementById('manager-question-visible-count'); if(totalEl)totalEl.textContent=all.length; if(visibleEl)visibleEl.textContent=filtered.length; const unsetGenreCount=all.filter(q=>!(q.genre||'').trim()).length; const bulkStatus=document.getElementById('manager-bulk-genre-status'); if(bulkStatus)bulkStatus.textContent=`未設定: ${unsetGenreCount}問 / 1回あたり最大${BULK_GENRE_CLASSIFY_LIMIT}問`; const noExplanationCount=all.filter(q=>!(q.explanation||'').trim()).length; const bulkExpStatus=document.getElementById('manager-bulk-explanation-status'); if(bulkExpStatus)bulkExpStatus.textContent=`解説未設定: ${noExplanationCount}問 / 最大${CSV_EXPLANATION_LIMIT}問`; const bulkExpBtn=document.getElementById('manager-bulk-explanation-btn'); if(bulkExpBtn)bulkExpBtn.disabled=noExplanationCount===0; if(filtered.length===0){list.innerHTML='';empty.classList.remove('hidden');if(pager)pager.classList.add('hidden');return;} empty.classList.add('hidden'); const size=50,totalPages=Math.max(1,Math.ceil(filtered.length/size)); this.questionListTotalPages=totalPages; this.questionListPage=Math.max(1,Math.min(this.questionListPage||1,totalPages)); const start=(this.questionListPage-1)*size; list.innerHTML=filtered.slice(start,start+size).map((q,i)=>`<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1 min-w-0"><div class="text-xs text-soft-green-500 font-semibold">#${start+i+1} ・ ${this.escapeHTML(q.genre||'未設定')}${q.subgenre?' / '+this.escapeHTML(q.subgenre):''}</div><p class="text-sm font-bold text-soft-green-900 truncate whitespace-nowrap overflow-hidden" title="${this.escapeHTML(q.q)}">${this.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.escapeHTML(q.a)}</span> / 正解率: ${q.total>0?Math.round((q.correct/q.total)*100)+'%':'--%'} / 習熟度: ${this.getMasteryMetrics(q).score}点 / 確定比: ${this.getMasteryMetrics(q).avgRatioText}</p></div><button onclick="app.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`).join(''); if(pager){pager.classList.remove('hidden'); const info=document.getElementById('manager-question-page-info'); if(info)info.textContent=`${this.questionListPage} / ${totalPages}`; const first=document.getElementById('manager-question-first'),prev=document.getElementById('manager-question-prev'),next=document.getElementById('manager-question-next'),last=document.getElementById('manager-question-last'); [first,prev].forEach(b=>{if(b)b.disabled=this.questionListPage<=1;}); [next,last].forEach(b=>{if(b)b.disabled=this.questionListPage>=totalPages;});} },
+
             async createBulkExplanationsForManagerSet(){
                 if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error');
                 const set=this.studySets.find(s=>s.id===this.managerSetId);
@@ -1193,9 +1187,8 @@ ${text}
                     if(btn){btn.disabled=false;btn.textContent=oldText||'ジャンル一括自動判定';btn.classList.remove('opacity-70','cursor-not-allowed');}
                 }
             },
-            findManagerQuestionById(id){const set=this.studySets.find(s=>s.id===this.managerSetId); if(!set)return{set:null,q:null,index:-1}; const index=set.questions.findIndex(q=>(q.id||q.questionId)===id); return{set,q:index>=0?this.normalizeQuestionData(set.questions[index]):null,index};},
             openQuestionDetail(id){
-                const r=this.findManagerQuestionById(id);
+                const r=this.questionManager.findManagerQuestionById(id);
                 if(!r.q)return this.showToast('問題が見つかりません','error');
                 document.getElementById('detail-question-id').value=r.q.id;
                 document.getElementById('detail-question-q').value=r.q.q;
@@ -1251,9 +1244,10 @@ ${text}
                 return {score:Math.round((accuracyConfidence*75)+(timing*25)),accuracy,timing,avgRatio,avgRatioText:avgRatio===null?'--':`${Math.round(avgRatio*100)}%`};
             },
             handleQuestionDetailGenreChange(){const g=document.getElementById('detail-question-genre')?.value||''; const ss=document.getElementById('detail-question-subgenre'); if(ss)ss.innerHTML=this.getSubgenreOptionsHTML(g,'',false);},
+
             saveQuestionDetail(){
                 const id=document.getElementById('detail-question-id').value;
-                const r=this.findManagerQuestionById(id);
+                const r = this.questionManager.findManagerQuestionById(id);
                 if(!r.q)return this.showToast('問題が見つかりません','error');
                 const qText=document.getElementById('detail-question-q').value.trim();
                 const aText=document.getElementById('detail-question-a').value.trim();
@@ -1290,7 +1284,7 @@ ${text}
                 this.closeQuestionDetail();
                 this.showToast(isMoving?`問題を「${destination.name}」へ移動して保存しました`:'問題を保存しました','success');
             },
-            async deleteQuestionFromDetail(){const id=document.getElementById('detail-question-id').value; const r=this.findManagerQuestionById(id); if(!r.q)return; if(!(await this.showModal('問題の削除',`この問題を削除しますか？\n\n${r.q.q}`,'削除する','bg-red-600 hover:bg-red-700')))return; r.set.questions.splice(r.index,1); this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList(); this.closeQuestionDetail(); this.showToast('問題を削除しました','success');},
+            async deleteQuestionFromDetail(){const id=document.getElementById('detail-question-id').value; const r=this.questionManager.findManagerQuestionById(id); if(!r.q)return; if(!(await this.showModal('問題の削除',`この問題を削除しますか？\n\n${r.q.q}`,'削除する','bg-red-600 hover:bg-red-700')))return; r.set.questions.splice(r.index,1); this.saveStudySets(); this.renderManagerStats(); this.renderQuestionList(); this.closeQuestionDetail(); this.showToast('問題を削除しました','success');},
             openRegeneratePolicyModal(){const m=document.getElementById('regenerate-policy-modal'),p=document.getElementById('regenerate-policy-panel'); document.querySelector('input[name="regenerate-policy"][value="correct"]').checked=true; m.classList.remove('hidden');void m.offsetWidth;m.classList.remove('opacity-0');p.classList.remove('scale-95');},
             closeRegeneratePolicyModal(){const m=document.getElementById('regenerate-policy-modal'),p=document.getElementById('regenerate-policy-panel');m.classList.add('opacity-0');p.classList.add('scale-95');setTimeout(()=>m.classList.add('hidden'),300);},
             closeRegenerateCompareModal(){const m=document.getElementById('regenerate-compare-modal'),p=document.getElementById('regenerate-compare-panel');m.classList.add('opacity-0');p.classList.add('scale-95');setTimeout(()=>m.classList.add('hidden'),300);},
@@ -1327,9 +1321,78 @@ ${text}
                     btn.classList.remove('opacity-70','cursor-not-allowed');
                 }
             },
-            async generateExplanationForQuestion(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const q=document.getElementById('detail-question-q').value.trim(), a=document.getElementById('detail-question-a').value.trim(); if(!q||!a)return this.showToast('問題文と解答を入力してください','error'); const btn=document.getElementById('detail-ai-explanation-btn'), old=btn.textContent; btn.disabled=true; btn.textContent='生成中...'; try{ const prompt=this.buildAIExplanationPrompt(q,a); const exp=(await this.fetchGemini(prompt,false)).trim().replace(/^```[a-z]*|```$/gi,'').trim(); document.getElementById('detail-question-explanation').value=exp; this.showToast('AI解説を再セットしました','success'); }catch(e){this.showToast('AI解説生成に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
+
+            /**
+             * AI解説の生成
+             */
+            async generateExplanationForQuestion() {
+                if (!this.geminiApiKey) {
+                    return this.showToast('Gemini APIキーを設定画面で登録してください','error');
+                }
+
+                const q = document.getElementById('detail-question-q').value.trim();
+
+                const a = document.getElementById('detail-question-a').value.trim();
+
+                if (!q || !a) {
+                    return this.showToast('問題文と解答を入力してください','error');
+                }
+
+                const btn = document.getElementById('detail-ai-explanation-btn');
+
+                const oldText = btn.textContent;
+
+                btn.disabled = true;
+                btn.textContent = '生成中...';
+
+                try {
+                    const prompt = this.buildAIExplanationPrompt(q, a);
+
+                    const exp = (await this.fetchGemini(prompt, false)).trim().replace(/^```[a-z]*|```$/gi, '').trim();
+
+                    document.getElementById('detail-question-explanation').value = exp;
+
+                    this.showToast('AI解説を再セットしました','success');
+
+                } catch (e) {
+                    this.showToast('AI解説生成に失敗しました: '+e.message,'error');
+                } finally {
+                    btn.disabled=false;
+                    btn.textContent=oldText;
+                }
+            },
+
             async classifyQuestionGenreForDetail(){ if(!this.geminiApiKey)return this.showToast('Gemini APIキーを設定画面で登録してください','error'); const q=document.getElementById('detail-question-q').value.trim(), a=document.getElementById('detail-question-a').value.trim(); if(!q||!a)return this.showToast('問題文と解答を入力してください','error'); const btn=document.getElementById('detail-ai-genre-btn'), old=btn.textContent; btn.disabled=true; btn.textContent='判定中...'; try{ const candidates=Object.entries(this.getAISubgenres()).map(([g,subs])=>`${g}: ${subs.join('、')}`).join('\n'); const prompt=`以下のクイズ問題を候補のジャンルとサブジャンルから分類してください。JSONのみ返してください。\n形式:{"genre":"ジャンル","subgenre":"サブジャンル"}\n候補:\n${candidates}\nQ:${q}\nA:${a}`; const parsed=this.parseAIJSON(await this.fetchGemini(prompt,true)); const genre=String(parsed.genre||''), sub=String(parsed.subgenre||''); const defs=this.getAISubgenres(); if(!defs[genre]) throw new Error('候補内のジャンルを判定できませんでした'); document.getElementById('detail-question-genre').value=genre; const ss=document.getElementById('detail-question-subgenre'); ss.innerHTML=this.getSubgenreOptionsHTML(genre,sub,false); if([...ss.options].some(o=>o.value===sub)) ss.value=sub; this.showToast(`ジャンルを自動判定しました: ${genre}${sub?' / '+sub:''}`,'success'); }catch(e){this.showToast('ジャンル自動判定に失敗しました: '+e.message,'error');} finally{btn.disabled=false; btn.textContent=old;} },
-            getQuestionId(q){return q.questionId||q.id;}, getCycleSeenSet(set){if(!set)return new Set(); if(!Array.isArray(set.cycleSeenQuestionIds))set.cycleSeenQuestionIds=[]; return new Set(set.cycleSeenQuestionIds);}, resetQuestionCycle(set){if(set){set.cycleSeenQuestionIds=[]; set.cycleStartedAt=Date.now();}}, isCycleCompleted(set,questions){const seen=this.getCycleSeenSet(set); return questions.length>0&&questions.map(q=>this.getQuestionId(q)).every(id=>seen.has(id));}, markQuestionSeenInCycle(set,q){if(!set||!q)return; const id=this.getQuestionId(q); const seen=this.getCycleSeenSet(set); seen.add(id); set.cycleSeenQuestionIds=Array.from(seen); if(!set.cycleStartedAt)set.cycleStartedAt=Date.now();}, getAccuracyRatio(q){return q&&q.total?(Number.isFinite(Number(q.accuracy))?Number(q.accuracy):(q.correct||0)/q.total):0;}, isHighAccuracyQuestion(q){return (q.total||0)>=HIGH_ACCURACY_MIN_ATTEMPTS&&this.getAccuracyRatio(q)>=HIGH_ACCURACY_THRESHOLD;}, isHighAccuracyCooldown(q,now=Date.now()){return !!(q.lastAnsweredAt&&(now-Number(q.lastAnsweredAt))<HIGH_ACCURACY_COOLDOWN_MS);}, isLowAccuracyQuestion(q){return (q.total||0)>0&&this.getAccuracyRatio(q)<LOW_ACCURACY_THRESHOLD;}, isStaleQuestion(q,now=Date.now()){return !!(q.lastAnsweredAt&&(now-Number(q.lastAnsweredAt))>=STALE_REVIEW_MS);},
+            getQuestionId(q){return q.questionId||q.id;}, getCycleSeenSet(set){if(!set)return new Set(); if(!Array.isArray(set.cycleSeenQuestionIds))set.cycleSeenQuestionIds=[]; return new Set(set.cycleSeenQuestionIds);}, resetQuestionCycle(set){if(set){set.cycleSeenQuestionIds=[]; set.cycleStartedAt=Date.now();}}, isCycleCompleted(set,questions){const seen=this.getCycleSeenSet(set); return questions.length>0&&questions.map(q=>this.getQuestionId(q)).every(id=>seen.has(id));}, markQuestionSeenInCycle(set,q){if(!set||!q)return; const id=this.getQuestionId(q); const seen=this.getCycleSeenSet(set); seen.add(id); set.cycleSeenQuestionIds=Array.from(seen); if(!set.cycleStartedAt)set.cycleStartedAt=Date.now();},
+
+            getAccuracyRatio(q) {
+                if (!q || !q.total) {
+                    return 0;
+                }
+
+                if (Number.isFinite(Number(q.accuracy))) {
+                    return Number(q.accuracy);
+                }
+
+                return (q.correct || 0) / q.total;
+            },
+
+            isHighAccuracyQuestion(q) {
+                return ((q.total || 0) >= HIGH_ACCURACY_MIN_ATTEMPTS && this.getAccuracyRatio(q) >= HIGH_ACCURACY_THRESHOLD);
+            },
+
+            isHighAccuracyCooldown(q, now = Date.now()) {
+                return !!(q.lastAnsweredAt && (now - Number(q.lastAnsweredAt)) < HIGH_ACCURACY_COOLDOWN_MS);
+            },
+
+            isLowAccuracyQuestion(q) {
+                return ((q.total || 0) > 0 && this.getAccuracyRatio(q) < LOW_ACCURACY_THRESHOLD);
+            },
+
+            isStaleQuestion(q, now = Date.now()) {
+                return !!(q.lastAnsweredAt && (now - Number(q.lastAnsweredAt)) >= STALE_REVIEW_MS);
+            },
+
             updateStats() {
                 const targetSet = this.studySets.find(s => s.id === this.activeSetId);
                 if (!targetSet) return;
@@ -1418,7 +1481,7 @@ ${text}
                     const rows = [...map.entries()].sort((a, b) => b[1].total - a[1].total).map(([name, r]) => `<tr class="border-t border-soft-green-100"><td class="px-3 py-2 font-semibold">${this.escapeHTML(name)}</td><td class="px-3 py-2 text-right">${r.total}</td><td class="px-3 py-2 text-right">${r.attempted ? Math.round(r.correct / r.attempted * 100) + '%' : '--%'}</td><td class="px-3 py-2 text-right">${r.unanswered}</td></tr>`).join('');
                     genreBox.innerHTML = `<table class="w-full text-sm"><thead class="bg-soft-green-100 text-soft-green-800"><tr><th class="px-3 py-2 text-left">ジャンル（${label}）</th><th class="px-3 py-2 text-right">登録問題数</th><th class="px-3 py-2 text-right">平均正解率</th><th class="px-3 py-2 text-right">未回答数</th></tr></thead><tbody>${rows}</tbody></table>`;
                 }
-                this.updateQuestionFilterOptions();
+                this.questionManager.updateQuestionFilterOptions();
                 this.renderQuestionList();
             },
             async clearManagerSetData() {
@@ -1747,56 +1810,7 @@ ${text}
                     btn.classList.remove('hidden'); loader.classList.add('hidden'); loader.classList.remove('flex');
                 }
             },
-            base64ToAudioBuffer(base64, ctx) {
-                const bin = atob(base64);
-                const bytes = new Uint8Array(bin.length);
-                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-                
-                const samples = bytes.length / 2;
-                const buffer = ctx.createBuffer(1, samples, 24000);
-                const view = new DataView(bytes.buffer);
-                const channel = buffer.getChannelData(0);
-                for (let i = 0; i < samples; i++) channel[i] = view.getInt16(i * 2, true) / 32768;
-                return buffer;
-            },
 
-            createSilentBuffer(ctx, seconds) {
-                return ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate);
-            },
-
-            encodeMonoAudioBufferToMP3(buffer) {
-                const samples = buffer.getChannelData(0);
-                const sampleRate = buffer.sampleRate;
-                const mp3enc = new lamejs.Mp3Encoder(1, sampleRate, 128);
-                const mp3Data = [];
-                
-                const sampleBlockSize = 1152;
-                for (let i = 0; i < samples.length; i += sampleBlockSize) {
-                    const chunk = samples.subarray(i, i + sampleBlockSize);
-                    const int16Chunk = new Int16Array(chunk.length);
-                    for (let j = 0; j < chunk.length; j++) {
-                        let val = chunk[j] * 32767.5;
-                        int16Chunk[j] = val < -32768 ? -32768 : val > 32767 ? 32767 : val;
-                    }
-                    const mp3buf = mp3enc.encodeBuffer(int16Chunk);
-                    if (mp3buf.length > 0) mp3Data.push(mp3buf);
-                }
-                const end = mp3enc.flush();
-                if (end.length > 0) mp3Data.push(end);
-                
-                return new Blob(mp3Data, { type: 'audio/mp3' });
-            },
-
-            escapeXML(text) {
-                return String(text ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
-            },
-            buildQuestionSSML(q, isLast, includeExp) {
-                const prefix = isLast ? '最終問題です' : '問題';
-                const question = this.escapeXML(this.applyPronunciations(q.q, q));
-                const answer = this.escapeXML(this.applyPronunciations(q.a, q));
-                const explanation = this.escapeXML(this.applyPronunciations(q.explanation || '', q));
-                return `<speak>${prefix}<break time="1s"/>${question}<break time="1s"/>${answer}${includeExp && explanation ? `<break time="1s"/>${explanation}` : ''}<break time="2s"/></speak>`;
-            },
             async mapWithConcurrency(items, limit, worker) {
                 const results = new Array(items.length);
                 let nextIndex = 0;
@@ -1809,111 +1823,6 @@ ${text}
                 };
                 await Promise.all(Array.from({length: Math.min(limit, items.length)}, run));
                 return results;
-            },
-            async startAudioExport() {
-                if (!this.ttsApiKey) return this.showToast('設定画面でGoogle Cloud Text-to-Speech APIキーを登録してください', 'error');
-                const targetSetId = document.getElementById('audio-export-target-set').value;
-                const targetSet = this.studySets.find(s => s.id === targetSetId);
-                const questions = targetSet ? targetSet.questions : [];
-                if (!questions.length) return this.showToast('対象のセットに問題が登録されていません', 'error');
-                const count = parseInt(document.getElementById('audio-export-count').value, 10);
-                const includeExp = document.getElementById('audio-export-explanation').checked;
-                const priorityMode = document.getElementById('audio-export-priority')?.value || 'unanswered';
-                const shuffled = [...questions];
-                for (let i = shuffled.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                }
-                const unanswered = shuffled.filter(q => (Number(q.total) || 0) === 0);
-                const lowAccuracy = shuffled.filter(q => (Number(q.total) || 0) > 0 && ((Number(q.correct) || 0) / Number(q.total)) < 0.5);
-                const remaining = shuffled.filter(q => !unanswered.includes(q) && !lowAccuracy.includes(q));
-                if (priorityMode === 'low-accuracy') {
-                    remaining.sort((a, b) => this.getAccuracyRatio(a) - this.getAccuracyRatio(b));
-                }
-                const prioritized = priorityMode === 'low-accuracy'
-                    ? [...lowAccuracy.sort((a, b) => this.getAccuracyRatio(a) - this.getAccuracyRatio(b)), ...unanswered, ...remaining]
-                    : [...unanswered, ...lowAccuracy.sort((a, b) => this.getAccuracyRatio(a) - this.getAccuracyRatio(b)), ...remaining];
-                const selected = prioritized.slice(0, Math.min(count, prioritized.length));
-                const startBtn = document.getElementById('btn-start-export');
-                const progContainer = document.getElementById('audio-export-progress-container');
-                const progBar = document.getElementById('audio-export-progress-bar');
-                const progStatus = document.getElementById('audio-export-status');
-                startBtn.classList.add('hidden');
-                document.getElementById('audio-export-result').classList.add('hidden');
-                progContainer.classList.remove('hidden'); progContainer.classList.add('flex');
-                const updateProg = (msg, pct) => { progStatus.textContent = msg; progBar.style.width = `${pct}%`; };
-                updateProg('準備中...', 0);
-                let decodeCtx = null;
-                try {
-                    const targetSampleRate = 24000;
-                    decodeCtx = new (window.AudioContext || window.webkitAudioContext)({sampleRate: targetSampleRate});
-                    let completed = 0;
-                    const buffers = await this.mapWithConcurrency(selected, 3, async (q, i) => {
-                        const ssml = this.buildQuestionSSML(q, i === selected.length - 1, includeExp);
-                        const b64 = await this.fetchCloudTextToSpeechAPI(ssml);
-                        const buffer = this.base64ToAudioBuffer(b64, decodeCtx);
-                        completed++;
-                        updateProg(`音声生成中 (${completed}/${selected.length})...`, completed / selected.length * 90);
-                        return buffer;
-                    });
-                    await decodeCtx.close(); decodeCtx = null;
-                    updateProg('音声を結合・MP3変換中...', 95);
-                    const totalLength = buffers.reduce((sum, b) => sum + b.length, 0);
-                    const renderCtx = new OfflineAudioContext(1, totalLength, targetSampleRate);
-                    let offset = 0;
-                    for (const buf of buffers) {
-                        const source = renderCtx.createBufferSource(); source.buffer = buf;
-                        source.connect(renderCtx.destination); source.start(offset / targetSampleRate); offset += buf.length;
-                    }
-                    const finalBuffer = await renderCtx.startRendering();
-                    this.exportedAudioBlob = this.encodeMonoAudioBufferToMP3(finalBuffer);
-                    if (this.exportedAudioUrl) URL.revokeObjectURL(this.exportedAudioUrl);
-                    this.exportedAudioUrl = URL.createObjectURL(this.exportedAudioBlob);
-                    updateProg('完了！', 100);
-                    setTimeout(() => {
-                        progContainer.classList.add('hidden'); progContainer.classList.remove('flex');
-                        document.getElementById('audio-export-result').classList.remove('hidden');
-                        startBtn.classList.remove('hidden'); startBtn.textContent = 'もう一度作成する';
-                    }, 500);
-                } catch (e) {
-                    if (decodeCtx) decodeCtx.close().catch(() => {});
-                    this.showToast(e.message, 'error');
-                    progContainer.classList.add('hidden'); progContainer.classList.remove('flex'); startBtn.classList.remove('hidden');
-                }
-            },
-
-            playExportedAudio() {
-                if (!this.exportedAudioUrl) return;
-                
-                if (!this.audioElement) {
-                    this.audioElement = new Audio(this.exportedAudioUrl);
-                    this.audioElement.onended = () => this.stopExportedAudio();
-                } else {
-                    this.audioElement.src = this.exportedAudioUrl;
-                }
-                
-                this.audioElement.play();
-                document.getElementById('btn-play-audio').classList.add('hidden');
-                document.getElementById('btn-stop-audio').classList.remove('hidden');
-                document.getElementById('btn-stop-audio').classList.add('flex');
-            },
-
-            stopExportedAudio() {
-                if (this.audioElement) {
-                    this.audioElement.pause();
-                    this.audioElement.currentTime = 0;
-                }
-                document.getElementById('btn-stop-audio').classList.add('hidden');
-                document.getElementById('btn-stop-audio').classList.remove('flex');
-                document.getElementById('btn-play-audio').classList.remove('hidden');
-            },
-
-            downloadExportedAudio() {
-                if (!this.exportedAudioUrl) return;
-                const a = document.createElement('a');
-                a.href = this.exportedAudioUrl;
-                a.download = `quiz_audio_${new Date().getTime()}.mp3`;
-                a.click();
             },
 
             getQuestionStage(q) { if (q.total === 0) return '未学習'; const accuracy = q.accuracy ?? (q.total > 0 ? q.correct / q.total : 0); if (q.level >= 4 && q.streak >= 3 && accuracy >= 0.85) return '定着済み'; if (q.level >= 2 && q.streak >= 1) return '定着途中'; return '学習中'; },

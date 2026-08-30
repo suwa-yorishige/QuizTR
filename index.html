@@ -164,7 +164,7 @@
                 </div>
 
                 <div class="grid md:grid-cols-2 gap-4">
-                    <button onclick="app.startQuiz('voice')"
+                    <button onclick="app.quizManager.startQuiz('voice')"
                         class="bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-2xl p-6 shadow-md shadow-soft-green-200 transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
                         <svg xmlns="http://www.w3.org/2000/svg"
                             class="h-12 w-12 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24"
@@ -175,7 +175,7 @@
                         <span class="text-xl font-bold">音声モード</span>
                         <span class="text-sm text-soft-green-100">問題文を音声で聞いて早押し</span>
                     </button>
-                    <button onclick="app.startQuiz('text')"
+                    <button onclick="app.quizManager.startQuiz('text')"
                         class="bg-white border border-soft-green-200 hover:border-soft-green-400 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">
                         <svg xmlns="http://www.w3.org/2000/svg"
                             class="h-12 w-12 text-soft-green-500 group-hover:scale-110 transition-transform" fill="none"
@@ -992,7 +992,7 @@
                             class="text-lg md:text-2xl font-medium leading-relaxed text-soft-green-50 min-h-[7rem] whitespace-pre-wrap">
                         </p>
                     </div>
-                    <button onclick="app.buzz()"
+                    <button onclick="app.quizManager.buzz()"
                         class="buzzer-btn w-40 h-40 md:w-48 md:h-48 rounded-full flex items-center justify-center text-white font-bold text-2xl md:text-3xl outline-none focus:ring-4 focus:ring-red-400">
                         早押し！
                     </button>
@@ -1008,7 +1008,7 @@
                             class="text-lg md:text-2xl font-medium leading-relaxed mb-6 md:mb-8 relative z-10 text-soft-green-50">
                         </p>
 
-                        <button id="btn-show-answer" onclick="app.showAnswer()"
+                        <button id="btn-show-answer" onclick="app.quizManager.showAnswer()"
                             class="w-full py-3 md:py-4 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-xl font-bold text-lg shadow-lg transition-colors">
                             解答を表示
                         </button>
@@ -1024,7 +1024,7 @@
 
                             <p class="text-sm text-soft-green-300 mb-3">この問題は正解できましたか？</p>
                             <div class="flex flex-col sm:flex-row gap-3 md:gap-4 w-full mb-6">
-                                <button onclick="app.recordResult(false)"
+                                <button onclick="app.quizManager.recordResult(false)"
                                     class="flex-1 py-3 md:py-4 bg-soft-green-700 hover:bg-soft-green-600 border border-soft-green-600 text-white rounded-xl font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -1033,7 +1033,7 @@
                                     </svg>
                                     不正解
                                 </button>
-                                <button onclick="app.skipQuestion()"
+                                <button onclick="app.quizManager.skipQuestion()"
                                     class="flex-1 py-3 md:py-4 bg-soft-green-800 hover:bg-soft-green-700 border border-soft-green-600 text-white rounded-xl font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-soft-green-300"
                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1042,7 +1042,7 @@
                                     </svg>
                                     スキップ
                                 </button>
-                                <button onclick="app.recordResult(true)"
+                                <button onclick="app.quizManager.recordResult(true)"
                                     class="flex-1 py-3 md:py-4 bg-soft-green-600 hover:bg-soft-green-500 border border-soft-green-400 text-white rounded-xl font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,164,113,0.4)]">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-300" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -1054,12 +1054,9 @@
                             </div>
 
                             <div class="mb-2 flex flex-col sm:flex-row gap-2 justify-center">
-                                <button id="quiz-edit-question-btn" onclick="app.openCurrentQuizQuestionDetail()"
-                                    class="px-4 py-2 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-lg font-bold text-sm">問題編集</button>
-                                <button id="quiz-derivative-btn" onclick="app.startDerivativeCreation()"
-                                    class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">デリバティブ作成</button>
-                                <button id="quiz-image-search-btn" onclick="app.searchCurrentQuizImage()"
-                                    class="px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">画像検索</button>
+                                <button id="quiz-edit-question-btn" onclick="app.questionManager.openCurrentQuizQuestionDetail()" class="px-4 py-2 bg-soft-green-500 hover:bg-soft-green-400 text-white rounded-lg font-bold text-sm">問題編集</button>
+                                <button id="quiz-derivative-btn" onclick="app.quizManager.startDerivativeCreation()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">デリバティブ作成</button>
+                                <button id="quiz-image-search-btn" onclick="app.quizManager.searchCurrentQuizImage()" class="px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">画像検索</button>
                             </div>
                         </div>
                     </div>
@@ -1102,7 +1099,7 @@
                     <div>
                         <h3 class="text-xl font-bold text-soft-green-900">問題の詳細・編集</h3>
                         <p class="text-xs text-soft-green-600 mt-1" id="question-detail-meta">--</p>
-                    </div><button onclick="app.closeQuestionDetail()"
+                    </div><button onclick="app.questionManager.closeQuestionDetail()"
                         class="text-soft-green-500 hover:text-soft-green-800 font-bold text-xl leading-none">×</button>
                 </div><input type="hidden" id="detail-question-id">
                 <div>
@@ -1196,7 +1193,7 @@
                     <div>
                         <h3 class="text-xl font-bold text-soft-green-900">デリバティブ問題作成</h3>
                         <p id="derivative-step-text" class="text-xs text-soft-green-600 mt-1">固有名詞を抽出します</p>
-                    </div><button onclick="app.closeDerivativeModal()"
+                    </div><button onclick="app.quizManager.closeDerivativeModal()"
                         class="text-soft-green-500 hover:text-soft-green-800 font-bold text-xl">×</button>
                 </div>
                 <div id="derivative-loading" class="hidden py-8 flex-col items-center gap-3">
@@ -1206,11 +1203,11 @@
                 <div id="derivative-candidates" class="hidden space-y-3">
                     <div class="flex justify-between gap-3">
                         <p class="text-sm text-soft-green-700">解答候補を複数選択できます。</p><button
-                            onclick="app.toggleAllDerivativeCandidates()"
+                            onclick="app.quizManager.toggleAllDerivativeCandidates()"
                             class="text-xs font-bold text-soft-green-700">すべて選択／解除</button>
                     </div>
                     <div id="derivative-candidate-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div><button
-                        onclick="app.generateSelectedDerivativeQuestions()"
+                        onclick="app.quizManager.generateSelectedDerivativeQuestions()"
                         class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold">選択した候補から問題を作成</button>
                 </div>
                 <div id="derivative-preview" class="hidden space-y-4">
@@ -1220,9 +1217,9 @@
                             class="w-full px-3 py-2 rounded-lg border border-soft-green-300 bg-white text-sm font-semibold text-soft-green-900"></select>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 justify-end"><button
-                            onclick="app.backToDerivativeCandidates()"
+                            onclick="app.quizManager.backToDerivativeCandidates()"
                             class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold text-sm">候補選択に戻る</button><button
-                            onclick="app.addDerivativeQuestions()"
+                            onclick="app.quizManager.addDerivativeQuestions()"
                             class="px-5 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold text-sm shadow-md">選択した問題をまとめて追加</button>
                     </div>
                 </div>
@@ -1354,6 +1351,7 @@
     <script src="dictionary-manager.js"></script>
     <script src="audio-manager.js"></script>
     <script src="question-manager.js"></script>
+    <script src="quiz-manager.js"></script>
     <script src="api.js"></script>
     <script src="app.js"></script>
 

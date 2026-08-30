@@ -12,7 +12,16 @@
  * - AI解説生成
  * - 問題整理/削除
  */
+/**
+ * QuestionManager クラス
+ * 問題管理UI（一覧表示、詳細編集、一括編集、重複統合、ジャンル自動判定、AI解説生成、問題整理）を担当するクラス。
+ * 問題の表示・編集・削除・統合などの管理機能を一括処理。
+ */
 class QuestionManager {
+    /**
+     * コンストラクタ
+     * @param {Object} app - メインアプリケーションインスタンス
+     */
     constructor(app) {
         this.app = app;
     }
@@ -21,6 +30,10 @@ class QuestionManager {
     // 問題一覧
     // =========================
 
+    /**
+     * 問題一覧をレンダリング
+     * フィルタ条件（検索キーワード、ジャンル、習熟度）に基づいて問題を抽出し、ページネーション付きで表示
+     */
     renderQuestionList() {
         const list = document.getElementById('manager-question-list');
         const empty = document.getElementById('manager-question-empty');
@@ -95,6 +108,10 @@ class QuestionManager {
         }
     }
 
+    /**
+     * 問題フィルタのジャンルオプション更新
+     * 利用可能なジャンル一覧をドロップダウンに反映し、サブジャンルを再更新
+     */
     updateQuestionFilterOptions() {
         const gs = document.getElementById('manager-filter-genre');
         if (!gs) return;
@@ -104,6 +121,10 @@ class QuestionManager {
         this.updateQuestionFilterSubgenreOptions();
     }
 
+    /**
+     * 問題フィルタのサブジャンルオプション更新
+     * 選択されたジャンルに対応したサブジャンルをドロップダウンに反映
+     */
     updateQuestionFilterSubgenreOptions() {
         const g = document.getElementById('manager-filter-genre')?.value || '';
         const ss = document.getElementById('manager-filter-subgenre');
@@ -117,6 +138,12 @@ class QuestionManager {
     // 問題詳細編集
     // =========================
 
+    /**
+     * IDから問題と所属セットを検索
+     * 指定されたIDの問題をマネージャーのアクティブセット内から検索し、セット・問題・インデックスを返す
+     * @param {string} id - 検索対象の問題ID
+     * @returns {Object} {set, q, index} 問題が見つからない場合はq=null
+     */
     findManagerQuestionById(id) {
         const set = this.app.studySets.find(s => s.id === this.app.managerSetId);
         if (!set) {
@@ -126,6 +153,11 @@ class QuestionManager {
         return { set, q: index >= 0 ? this.app.normalizeQuestionData(set.questions[index]) : null, index };
     }
 
+    /**
+     * 問題詳細編集モーダルを開く
+     * 指定ID の問題をフォームに読み込み、詳細編集用モーダルウィンドウを表示
+     * @param {string} id - 開く問題のID
+     */
     openQuestionDetail(id) {
         const r = this.findManagerQuestionById(id);
         if (!r.q) return this.app.showToast('問題が見つかりません', 'error');
@@ -162,6 +194,9 @@ class QuestionManager {
         panel.classList.remove('scale-95');
     }
 
+    /**
+     * 問題詳細編集モーダルを閉じる
+     */
     closeQuestionDetail() {
         const modal = document.getElementById('question-detail-modal');
         const panel = document.getElementById('question-detail-panel');
@@ -170,6 +205,10 @@ class QuestionManager {
         setTimeout(() => modal.classList.add('hidden'), 300);
     }
 
+    /**
+     * 問題詳細の変更を保存
+     * フォーム内容を問題データに反映し、セット間移動・上限チェック・UI更新を実行
+     */
     saveQuestionDetail() {
         const id = document.getElementById('detail-question-id').value;
         const r = this.findManagerQuestionById(id);
@@ -219,6 +258,10 @@ class QuestionManager {
         this.app.showToast(isMoving ? `問題を「${destination.name}」へ移動して保存しました` : '問題を保存しました', 'success');
     }
 
+    /**
+     * 問題詳細モーダルから問題を削除
+     * ユーザー確認後、問題を削除しモーダルを閉じる
+     */
     async deleteQuestionFromDetail() {
         const id = document.getElementById('detail-question-id').value;
         const r = this.findManagerQuestionById(id);
@@ -232,6 +275,10 @@ class QuestionManager {
         this.app.showToast('問題を削除しました', 'success');
     }
 
+    /**
+     * 現在のクイズ出題中の問題を詳細編集で開く
+     * クイズ中の問題をマネージャーで即座に編集できるショートカット
+     */
     openCurrentQuizQuestionDetail() {
         const set = this.app.studySets.find(s => s.id === this.app.activeSetId);
         const q = set?.questions[this.app.currentQuestionIndex];
@@ -245,11 +292,21 @@ class QuestionManager {
     // 一括編集
     // =========================
 
+    /**
+     * 一括編集対象のセットを取得
+     * 優先順位：bulkEditSetId > managerSetId > 最初のセット
+     * @returns {Object|null} 一括編集対象のセット
+     */
     getBulkEditSet() {
         const id = this.app.bulkEditSetId || this.app.managerSetId || this.app.studySets[0]?.id;
         return this.app.studySets.find(set => set.id === id) || this.app.studySets[0] || null;
     }
 
+    /**
+     * 一括編集リストをレンダリング
+     * セット内の問題を20問ずつ表示し、チェックボックスで選択、ページネーション対応。
+     * 各問題の選択状態・ページ内全選択状態を同期
+     */
     renderBulkEditList() {
         const sourceSelect = document.getElementById('manager-bulk-set-select');
         if (!sourceSelect) return;
@@ -314,6 +371,11 @@ class QuestionManager {
         if (count) count.textContent = this.app.bulkEditSelectedIds.size;
     }
 
+    /**
+     * 一括編集対象セットを切り替え
+     * セット変更時は選択状態をリセットしページを初期化
+     * @param {string} id - 新しい対象セットID
+     */
     changeBulkEditSet(id) {
         this.app.bulkEditSetId = id;
         this.app.bulkEditPage = 1;
@@ -321,6 +383,10 @@ class QuestionManager {
         this.renderBulkEditList();
     }
 
+    /**
+     * 一括編集で選択した問題を削除
+     * ユーザー確認後、選択問題をセットから削除
+     */
     async deleteSelectedBulkQuestions() {
         const set = this.getBulkEditSet();
         const count = this.app.bulkEditSelectedIds.size;
@@ -336,6 +402,10 @@ class QuestionManager {
         this.app.showToast(`${count}問を削除しました`, 'success');
     }
 
+    /**
+     * 一括編集で選択した問題を別セットに移動
+     * 移動先の上限チェック、ユーザー確認後に問題を移動
+     */
     async moveSelectedBulkQuestions() {
         const source = this.getBulkEditSet();
         const targetId = document.getElementById('manager-bulk-move-target')?.value;
@@ -361,12 +431,23 @@ class QuestionManager {
         this.app.showToast(`${moving.length}問を移動しました`, 'success');
     }
 
+    /**
+     * 一括編集で問題の選択状態を切り替え
+     * チェックボックス状態を内部状態に同期してリスト再表示
+     * @param {string} id - 問題キー
+     * @param {boolean} checked - 選択状態
+     */
     toggleBulkQuestionSelection(id, checked) {
         if (checked) this.app.bulkEditSelectedIds.add(String(id));
         else this.app.bulkEditSelectedIds.delete(String(id));
         this.renderBulkEditList();
     }
 
+    /**
+     * 一括編集でページ内の全問題を一括選択/解除
+     * 現在表示されているページの20問を一括で選択状態切り替え
+     * @param {boolean} checked - 選択状態
+     */
     toggleBulkPageSelection(checked) {
         const set = this.getBulkEditSet();
         const size = 20;
@@ -383,6 +464,10 @@ class QuestionManager {
     // AI機能
     // =========================
 
+    /**
+     * 問題詳細から単一問題の解説をAI生成
+     * Gemini APIで問題文・解答から自動解説を生成してフォームに設定
+     */
     async generateExplanationForQuestion() {
         if (!this.app.geminiApiKey) {
             return this.app.showToast('Gemini APIキーを設定画面で登録してください', 'error');
@@ -412,6 +497,10 @@ class QuestionManager {
         }
     }
 
+    /**
+     * マネージャーセット内の解説未設定問題を一括でAI生成
+     * 優先度順（不正解多い→未学習→既習）に最大制限問を生成し、バッチ処理で効率化
+     */
     async createBulkExplanationsForManagerSet() {
         if (!this.app.geminiApiKey) return this.app.showToast('Gemini APIキーを設定画面で登録してください', 'error');
         const set = this.app.studySets.find(s => s.id === this.app.managerSetId);
@@ -466,6 +555,10 @@ class QuestionManager {
         }
     }
 
+    /**
+     * 問題詳細から単一問題のジャンルをAI自動判定
+     * Gemini APIで問題文・解答からジャンル・サブジャンルを判定してドロップダウンに反映
+     */
     async classifyQuestionGenreForDetail() {
         if (!this.app.geminiApiKey) return this.app.showToast('Gemini APIキーを設定画面で登録してください', 'error');
         const q = document.getElementById('detail-question-q').value.trim();
@@ -500,6 +593,10 @@ class QuestionManager {
         }
     }
 
+    /**
+     * マネージャーセット内のジャンル未設定問題を一括でAI判定
+     * 優先度順に最大制限問を判定し、ジャンル・サブジャンルを自動セット
+     */
     async classifyUnsetGenresForManagerSet() {
         if (!this.app.geminiApiKey) return this.app.showToast('Gemini APIキーを設定画面で登録してください', 'error');
         const set = this.app.studySets.find(s => s.id === this.app.managerSetId);
@@ -558,6 +655,10 @@ class QuestionManager {
     // 重複統合
     // =========================
 
+    /**
+     * 重複問題の自動検出とマージUI表示
+     * 完全一致は自動統合、同一解答で異なる問題文は確認ダイアログで統合対象を選択
+     */
     async checkAndMergeDuplicateQuestions() {
         const setId = document.getElementById('manager-question-set-select')?.value || this.app.managerSetId;
         const set = this.app.studySets.find(s => s.id === setId);
@@ -632,6 +733,10 @@ class QuestionManager {
         panel.classList.remove('scale-95');
     }
 
+    /**
+     * 重複統合ダイアログで選択された統合を実行
+     * ユーザーが選択した統合対象を削除し、成績データを統合
+     */
     applySelectedDuplicateMerges() {
         const pending = this.app.pendingDuplicateMerge;
         const set = this.app.studySets.find(s => s.id === pending?.setId);
@@ -656,6 +761,9 @@ class QuestionManager {
         this.app.showToast(`重複問題を統合しました（完全一致: ${pending.exactMerged}問、選択統合: ${selectedMerged}問）`, 'success');
     }
 
+    /**
+     * 重複統合ダイアログを閉じる
+     */
     closeDuplicateMergeModal() {
         const modal = document.getElementById('duplicate-merge-modal');
         const panel = document.getElementById('duplicate-merge-panel');
@@ -668,6 +776,10 @@ class QuestionManager {
     // 問題整理
     // =========================
 
+    /**
+     * 高い正解率・習熟度の問題を削除
+     * 習熟度または正解率の上位を指定数またはパーセント削除。十分理解した問題の整理に使用
+     */
     async deleteHighAccuracyQuestions() {
         const targetSet = this.app.studySets.find(s => s.id === this.app.managerSetId);
         if (!targetSet || targetSet.questions.length === 0) return this.app.showToast('問題がありません', 'error');
@@ -712,6 +824,10 @@ class QuestionManager {
         this.app.showToast(`${initialLen - targetSet.questions.length}問を削除しました`, 'success');
     }
 
+    /**
+     * マネージャーセット内の全問題データをリセット
+     * セット自体は保持したまま、問題すべてを削除。確認ダイアログ付き
+     */
     async clearManagerSetData() {
         const targetSet = this.app.studySets.find(s => s.id === this.app.managerSetId);
         const confirmed = await this.app.showModal('確認', `学習セット「${targetSet.name}」の問題をすべてリセットしますか？\nセット自体は削除されません。`, 'リセットする', 'bg-red-600 hover:bg-red-700');
@@ -726,12 +842,23 @@ class QuestionManager {
     // =========================
     // ユーティリティ
     // =========================
-
-    normalizeQuestionForDuplicateMerge(text) {
+    /**
+     * 重複判定用にテキストを正規化
+     * NFKC 正規化、小文字化、スペース・句読点・記号を除去して比較可能に
+     * @param {string} text - 正規化対象テキスト
+     * @returns {string} 正規化済みテキスト
+     */    normalizeQuestionForDuplicateMerge(text) {
         return String(text || '').normalize('NFKC').toLowerCase()
             .replace(/[\s 、。,.，・:：;；!?！？'"“”‘’「」『』【】()（）\[\]［］]/g, '');
     }
 
+    /**
+     * 完全重複グループを統合
+     * 複数の重複問題から1つを保持し、成績データを合算。説明・ジャンル・音声設定をマージ
+     * @param {Object} set - 対象のセット
+     * @param {Array} entries - 重複グループの問題配列
+     * @returns {number} 削除した問題数
+     */
     mergeExactDuplicateGroup(set, entries) {
         const ordered = [...entries].sort((a, b) =>
             this.getQuestionIdOrderValue(a.q, a.index) - this.getQuestionIdOrderValue(b.q, b.index) || a.index - b.index
@@ -766,6 +893,13 @@ class QuestionManager {
         return ordered.length - 1;
     }
 
+    /**
+     * 問題IDの数値部分を抽出してソート用スコア化
+     * IDに含まれる数字を結合して数値化、含まれない場合は大きい値を返す
+     * @param {Object} q - 問題オブジェクト
+     * @param {number} fallbackIndex - フォールバック時のインデックス
+     * @returns {number} ソート用スコア
+     */
     getQuestionIdOrderValue(q, fallbackIndex = 0) {
         const id = String(q?.questionId || q?.id || '');
         const matches = id.match(/\d+/g);

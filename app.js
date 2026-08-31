@@ -1078,6 +1078,83 @@ ${text}
         }
     },
 
+    render30DayLearningSummary() {
+        const values = [];
+
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            values.push(Number(this.dailyStats[key]) || 0);
+        }
+
+        const total = values.reduce((a, b) => a + b, 0);
+        const max = Math.max(...values, 1);
+
+        const totalEl = document.getElementById('stat-30day-total');
+        if (totalEl) totalEl.textContent = total;
+
+        const maxEl = document.getElementById('stat-30day-max');
+        if (maxEl) maxEl.textContent = max;
+
+        const svg = document.getElementById('learning-30day-chart');
+        if (!svg) return;
+
+        const chartOffsetX = 25;
+        const width = 275;
+        const height = 120;
+        const barWidth = width / values.length;
+
+        let html = '';
+
+        html += `
+            <text x="0" y="10" font-size="10" fill="#4b7f68">${max}</text>
+            <text x="0" y="60" font-size="10" fill="#4b7f68">${Math.round(max / 2)}</text>
+            <text x="0" y="118" font-size="10" fill="#4b7f68">0</text>
+        `;
+
+        html += `
+            <line x1="20" y1="0" x2="300" y2="0" stroke="#d5e8dc" stroke-width="1"/>
+            <line x1="20" y1="50" x2="300" y2="50" stroke="#d5e8dc" stroke-width="1"/>
+            <line x1="20" y1="100" x2="300" y2="100" stroke="#d5e8dc" stroke-width="1"/>
+        `;
+
+        values.forEach((value, i) => {
+            const h = (value / max) * 100;
+            const x = chartOffsetX + i * barWidth + 1;
+            const y = height - h;
+            const month = new Date(Date.now());
+            const d = new Date();
+            d.setDate(d.getDate() - (29 - i));
+            const label = `${d.getMonth() + 1}/${d.getDate()} : ${value}問`;
+            const fill = value > 0 ? '#3ba471' : '#dfece5';
+
+            html += `
+                <rect
+                    x="${x}"
+                    y="${y}"
+                    width="${barWidth - 2}"
+                    height="${h}"
+                    rx="2"
+                    fill="${fill}">
+                    <title>${label}</title>
+                </rect>`;
+        });
+
+        html += `
+            <line
+                x1="20"
+                y1="120"
+                x2="300"
+                y2="120"
+                stroke="#d5e8dc"
+                stroke-width="1"/>
+        `;
+
+        svg.innerHTML = html;
+    },
+
     updateStats() {
         const targetSet = this.studySets.find(s => s.id === this.activeSetId);
         if (!targetSet) return;
@@ -1090,6 +1167,7 @@ ${text}
 
         const acc = attempted === 0 ? 0 : Math.round((correct / attempted) * 100);
         document.getElementById('stat-accuracy').textContent = attempted > 0 ? `${acc}%` : '--%';
+        this.render30DayLearningSummary();
     },
 
     renderManagerStats() {

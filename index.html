@@ -163,6 +163,49 @@
                     </div>
                 </div>
 
+                <div class="bg-white rounded-2xl shadow-sm border border-soft-green-100 p-6">
+                    <h3 class="text-lg font-bold text-soft-green-800 mb-4">
+                        過去30日の学習サマリー
+                    </h3>
+
+                    <div class="grid md:grid-cols-[160px_1fr] gap-6 items-center">
+                        <div class="text-center">
+                            <p class="text-sm text-soft-green-600 mb-2">
+                                過去30日で
+                            </p>
+
+                            <p id="stat-30day-total" class="text-5xl font-bold text-soft-green-900">
+                                0
+                            </p>
+
+                            <p class="text-sm text-soft-green-700 mt-2">
+                                問学習
+                            </p>
+
+                            <div class="mt-4">
+                                <p class="text-xs text-soft-green-500">
+                                    最大
+                                </p>
+
+                                <p class="text-sm text-soft-green-700">
+                                    <span id="stat-30day-max">0</span>
+                                    問/日
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <svg id="learning-30day-chart" viewBox="0 0 300 120" class="w-full h-32">
+                            </svg>
+
+                            <div class="flex justify-between text-xs text-soft-green-500 mt-1">
+                                <span>29日前</span>
+                                <span>今日</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid md:grid-cols-2 gap-4">
                     <button onclick="app.quizManager.startQuiz('voice')"
                         class="bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-2xl p-6 shadow-md shadow-soft-green-200 transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-3 group">

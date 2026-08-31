@@ -995,9 +995,11 @@ ${text}
         const accuracyConfidence = (accuracy * 0.7) + (Math.min(1, correct / 5) * 0.3);
         const valid = q.buzzRecords.filter(r => r && r.correct === true && Number.isFinite(Number(r.charIndex)));
         const timing = valid.length ? valid.reduce((sum, r) => sum + this.getBuzzPositionScore(q, r), 0) / valid.length : 0;
+        const rawScore = Math.round((accuracyConfidence * 75) + (timing * 25));
+        const score = correct >= 2 ? rawScore : Math.min(rawScore, 80);
         const ratios = valid.map(r => Number(r.charIndex) / this.getEffectiveConfirmPoint(q));
         const avgRatio = ratios.length ? ratios.reduce((a, b) => a + b, 0) / ratios.length : null;
-        return { score: Math.round((accuracyConfidence * 75) + (timing * 25)), accuracy, timing, avgRatio, avgRatioText: avgRatio === null ? '--' : `${Math.round(avgRatio * 100)}%` };
+        return { score, accuracy, timing, avgRatio, avgRatioText: avgRatio === null ? '--' : `${Math.round(avgRatio * 100)}%` };
     },
     handleQuestionDetailGenreChange() { const g = document.getElementById('detail-question-genre').value || ''; const ss = document.getElementById('detail-question-subgenre'); if (ss) ss.innerHTML = this.getSubgenreOptionsHTML(g, '', false); },
 

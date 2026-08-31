@@ -11,6 +11,7 @@ const app = {
     bulkEditSelectedIds: new Set(),
     dictionary: [],
     dailyStats: {},
+    summaryPeriod: 30,
     currentQuestionIndex: -1,
     quizMode: 'voice',
     textRevealTimer: null,
@@ -1078,10 +1079,11 @@ ${text}
         }
     },
 
-    render30DayLearningSummary() {
+    renderLearningSummary() {
+        const period = this.summaryPeriod;
         const values = [];
 
-        for (let i = 29; i >= 0; i--) {
+        for (let i = period - 1; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
 
@@ -1091,12 +1093,30 @@ ${text}
 
         const total = values.reduce((a, b) => a + b, 0);
         const max = Math.max(...values, 1);
+        const average = Math.round(total / period);
 
         const totalEl = document.getElementById('stat-30day-total');
         if (totalEl) totalEl.textContent = total;
 
         const maxEl = document.getElementById('stat-30day-max');
         if (maxEl) maxEl.textContent = max;
+
+        const avgEl = document.getElementById('stat-average');
+        if (avgEl) avgEl.textContent = average;
+
+        const periodLabel = document.getElementById('summary-period-label');
+        if (periodLabel) periodLabel.textContent = period;
+
+        const startLabel = document.getElementById('summary-start-label');
+        if (startLabel) startLabel.textContent = `${period - 1}日前`;
+
+        [7, 14, 30].forEach(days => {
+            const btn = document.getElementById(`summary-tab-${days}`);
+            if (!btn) return;
+            btn.className = days === period
+                ? 'px-3 py-1 text-xs rounded-md bg-soft-green-600 text-white font-bold'
+                : 'px-3 py-1 text-xs rounded-md text-soft-green-700';
+        });
 
         const svg = document.getElementById('learning-30day-chart');
         if (!svg) return;
@@ -1124,9 +1144,8 @@ ${text}
             const h = (value / max) * 100;
             const x = chartOffsetX + i * barWidth + 1;
             const y = height - h;
-            const month = new Date(Date.now());
             const d = new Date();
-            d.setDate(d.getDate() - (29 - i));
+            d.setDate(d.getDate() - (period - 1 - i));
             const label = `${d.getMonth() + 1}/${d.getDate()} : ${value}問`;
             const fill = value > 0 ? '#3ba471' : '#dfece5';
 
@@ -1155,6 +1174,11 @@ ${text}
         svg.innerHTML = html;
     },
 
+    changeSummaryPeriod(days) {
+        this.summaryPeriod = days;
+        this.renderLearningSummary();
+    },
+
     updateStats() {
         const targetSet = this.studySets.find(s => s.id === this.activeSetId);
         if (!targetSet) return;
@@ -1167,7 +1191,7 @@ ${text}
 
         const acc = attempted === 0 ? 0 : Math.round((correct / attempted) * 100);
         document.getElementById('stat-accuracy').textContent = attempted > 0 ? `${acc}%` : '--%';
-        this.render30DayLearningSummary();
+        this.renderLearningSummary();
     },
 
     renderManagerStats() {

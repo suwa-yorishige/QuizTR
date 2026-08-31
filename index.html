@@ -193,7 +193,7 @@
 
         <!-- View: CsvImport -->
         <div id="view-csv-import"
-            class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            class="app-view hidden fade-in">
             <div class="w-full max-w-2xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -203,7 +203,7 @@
                     </svg>
                     <h2 class="text-2xl font-bold">データ管理</h2>
                 </div>
-                <div class="bg-soft-green-50 border border-soft-green-100 rounded-2xl p-2 flex gap-2 shadow-sm mb-4">
+                <div class="card p-2 flex gap-2 mb-4">
                     <button id="btn-tab-import" class="data-tab-btn flex-1 px-4 py-2 rounded-xl font-bold text-sm"
                         onclick="switchDataTab('import')">CSVインポート</button>
                     <button id="btn-tab-export" class="data-tab-btn flex-1 px-4 py-2 rounded-xl font-bold text-sm"
@@ -306,7 +306,7 @@
             </div>
         </div><!-- View: Manager -->
         <div id="view-manager"
-            class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            class="app-view hidden fade-in">
             <div class="w-full max-w-4xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -316,36 +316,36 @@
                     </svg>
                     <h2 class="text-2xl font-bold">問題管理</h2>
                 </div>
-                <div class="bg-soft-green-50 border border-soft-green-100 rounded-2xl p-2 flex gap-2 shadow-sm">
+                <div class="card p-2 flex gap-2">
                     <button id="manager-tab-btn-overview" onclick="app.switchManagerTab('overview')"
-                        class="flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors bg-soft-green-600 text-white shadow-sm">管理・分析</button>
+                        class="btn-primary flex-1 px-4 py-2 rounded-xl shadow-sm text-sm">管理・分析</button>
                     <button id="manager-tab-btn-questions" onclick="app.switchManagerTab('questions')"
-                        class="flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors text-soft-green-800 hover:bg-soft-green-100">問題一覧・個別編集</button>
+                        class="btn-secondary flex-1 px-4 py-2 rounded-xl text-sm">問題一覧・個別編集</button>
                     <button id="manager-tab-btn-bulk" onclick="app.switchManagerTab('bulk')"
-                        class="flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors text-soft-green-800 hover:bg-soft-green-100">問題一括編集</button>
+                        class="btn-secondary flex-1 px-4 py-2 rounded-xl text-sm">問題一括編集</button>
                 </div>
 
-                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-100 shadow-sm space-y-6">
+                <div class="card p-6 space-y-6">
 
                     <div class="manager-overview-section border-b border-soft-green-200 pb-4">
                         <h3 class="text-lg font-bold text-soft-green-800 mb-3">学習セットの管理</h3>
                         <div class="flex flex-col sm:flex-row gap-3 mb-4">
                             <select id="manager-active-set" onchange="app.changeManagerSet(this.value)"
-                                class="flex-1 px-4 py-2 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white font-semibold text-soft-green-900"></select>
+                                class="form-select flex-1 bg-white font-semibold text-soft-green-900"></select>
                             <div class="flex gap-2">
                                 <button onclick="app.createNewSet()"
-                                    class="flex-1 sm:flex-none px-4 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-semibold transition-colors shadow-sm text-sm">新規作成</button>
+                                    class="btn-primary flex-1 sm:flex-none px-4 py-2 rounded-xl shadow-sm text-sm">新規作成</button>
                                 <button onclick="app.deleteManagerSet()"
-                                    class="flex-1 sm:flex-none px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-colors shadow-sm text-sm">削除</button>
+                                    class="btn-danger flex-1 sm:flex-none px-4 py-2 rounded-xl shadow-sm text-sm">削除</button>
                             </div>
                         </div>
                         <div
-                            class="flex flex-col sm:flex-row gap-3 items-center bg-white p-4 rounded-xl border border-soft-green-200">
+                            class="card-white flex flex-col sm:flex-row gap-3 items-center p-4">
                             <label class="text-sm font-semibold text-soft-green-800 whitespace-nowrap">名称変更</label>
                             <input type="text" id="manager-set-name" maxlength="30" placeholder="最大全角30文字"
-                                class="flex-1 w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm">
+                                class="form-input flex-1 text-sm">
                             <button onclick="app.renameManagerSet()"
-                                class="w-full sm:w-auto px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-sm">変更を保存</button>
+                                class="btn-secondary w-full sm:w-auto px-4 py-2 rounded-lg text-sm">変更を保存</button>
                         </div>
                     </div>
 
@@ -358,17 +358,17 @@
                         <p class="text-sm text-soft-green-700 text-right mb-4"><span id="manager-total-count"
                                 class="font-bold">0</span> / 1,500 問</p>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div class="bg-white p-4 rounded-xl border border-soft-green-200 text-center">
+                            <div class="card-white p-4 text-center">
                                 <p class="text-xs font-semibold text-soft-green-600">未回答問題数</p>
                                 <p id="manager-summary-unanswered" class="text-2xl font-bold text-soft-green-900 mt-1">0
                                 </p>
                             </div>
-                            <div class="bg-white p-4 rounded-xl border border-soft-green-200 text-center">
+                            <div class="card-white p-4 text-center">
                                 <p class="text-xs font-semibold text-soft-green-600">解説なし問題数</p>
                                 <p id="manager-summary-no-explanation"
                                     class="text-2xl font-bold text-soft-green-900 mt-1">0</p>
                             </div>
-                            <div class="bg-white p-4 rounded-xl border border-soft-green-200 text-center">
+                            <div class="card-white p-4 text-center">
                                 <p class="text-xs font-semibold text-soft-green-600">ジャンル未設定問題数</p>
                                 <p id="manager-summary-no-genre" class="text-2xl font-bold text-soft-green-900 mt-1">0
                                 </p>
@@ -379,11 +379,11 @@
                     <div class="manager-overview-section border-t border-soft-green-200 pt-4">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                             <h3 class="text-lg font-bold text-soft-green-800">正解率／習熟度分布</h3>
-                            <div class="bg-white border border-soft-green-200 rounded-xl p-1 flex gap-1">
+                            <div class="card-white p-1 flex gap-1">
                                 <button id="distribution-tab-accuracy" onclick="app.switchDistributionTab('accuracy')"
-                                    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-soft-green-600 text-white">正解率</button>
+                                    class="btn-primary px-3 py-1.5 rounded-lg text-xs">正解率</button>
                                 <button id="distribution-tab-mastery" onclick="app.switchDistributionTab('mastery')"
-                                    class="px-3 py-1.5 rounded-lg text-xs font-bold text-soft-green-800 hover:bg-soft-green-100">習熟度</button>
+                                    class="btn-secondary px-3 py-1.5 rounded-lg text-xs">習熟度</button>
                             </div>
                         </div>
                         <div id="manager-stats-chart" class="space-y-2"><!-- JS will populate this --></div>
@@ -391,11 +391,11 @@
                     <div class="manager-overview-section border-t border-soft-green-200 pt-4">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                             <h3 class="text-lg font-bold text-soft-green-800">ジャンル別分析</h3>
-                            <div class="bg-white border border-soft-green-200 rounded-xl p-1 flex gap-1">
+                            <div class="card-white p-1 flex gap-1">
                                 <button id="genre-analysis-tab-aql" onclick="app.switchGenreAnalysisTab('aql')"
-                                    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-soft-green-600 text-white">AQL基準</button>
+                                    class="btn-primary px-3 py-1.5 rounded-lg text-xs">AQL基準</button>
                                 <button id="genre-analysis-tab-qma" onclick="app.switchGenreAnalysisTab('qma')"
-                                    class="px-3 py-1.5 rounded-lg text-xs font-bold text-soft-green-800 hover:bg-soft-green-100">QMA基準</button>
+                                    class="btn-secondary px-3 py-1.5 rounded-lg text-xs">QMA基準</button>
                             </div>
                         </div>
                         <div id="manager-genre-summary"
@@ -427,7 +427,7 @@
                                         未設定: 0問 / 1回あたり最大30問</div>
                                     <button id="manager-bulk-genre-btn"
                                         onclick="app.questionManager.classifyUnsetGenresForManagerSet()"
-                                        class="px-3 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold transition-colors text-xs shadow-sm whitespace-nowrap">ジャンル一括自動判定</button>
+                                        class="btn-primary px-3 py-2 rounded-lg text-xs shadow-sm whitespace-nowrap">ジャンル一括自動判定</button>
                                     <div id="manager-bulk-explanation-status"
                                         class="text-xs font-semibold text-soft-green-700 bg-soft-green-50 border border-soft-green-200 rounded-lg px-3 py-2">
                                         解説未設定: 0問 / 最大15問</div>
@@ -437,30 +437,30 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border border-soft-green-200 space-y-3">
+                        <div class="card-white p-4 space-y-3">
                             <div><label
                                     class="block text-xs font-semibold text-soft-green-700 mb-1">表示する学習セット</label><select
                                     id="manager-question-set-select" onchange="app.changeQuestionListSet(this.value)"
-                                    class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm font-semibold text-soft-green-900"></select>
+                                    class="form-select bg-white text-sm font-semibold text-soft-green-900"></select>
                             </div>
                             <input type="text" id="manager-question-search"
                                 oninput="app.questionListPage = 1; app.questionManager.renderQuestionList()"
                                 placeholder="問題文・解答・解説・タグで検索"
-                                class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm">
+                                class="form-input text-sm">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <select id="manager-filter-genre"
                                     onchange="app.questionListPage = 1; app.questionManager.updateQuestionFilterSubgenreOptions(); app.questionManager.renderQuestionList();"
-                                    class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                                    class="form-select bg-white text-sm">
                                     <option value="">ジャンル: すべて</option>
                                 </select>
                                 <select id="manager-filter-subgenre"
                                     onchange="app.questionListPage = 1; app.questionManager.renderQuestionList()"
-                                    class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                                    class="form-select bg-white text-sm">
                                     <option value="">サブジャンル: すべて</option>
                                 </select>
                                 <select id="manager-filter-mastery"
                                     onchange="app.questionListPage = 1; app.questionManager.renderQuestionList()"
-                                    class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                                    class="form-select bg-white text-sm">
                                     <option value="">習熟度: すべて</option>
                                     <option value="0-19">0〜19%</option>
                                     <option value="20-39">20〜39%</option>
@@ -479,18 +479,18 @@
                                 class="hidden flex flex-wrap items-center justify-between gap-2 pt-2">
                                 <div class="flex gap-2">
                                     <button id="manager-question-first" onclick="app.goToQuestionListPage(1)"
-                                        class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">最初</button>
+                                        class="btn-secondary px-3 py-2 rounded-lg text-xs">最初</button>
                                     <button id="manager-question-prev" onclick="app.changeQuestionListPage(-1)"
-                                        class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">前へ</button>
+                                        class="btn-secondary px-3 py-2 rounded-lg text-xs">前へ</button>
                                 </div>
                                 <span id="manager-question-page-info" class="text-xs font-bold text-soft-green-700">1 /
                                     1</span>
                                 <div class="flex gap-2">
                                     <button id="manager-question-next" onclick="app.changeQuestionListPage(1)"
-                                        class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">次へ</button>
+                                        class="btn-secondary px-3 py-2 rounded-lg text-xs">次へ</button>
                                     <button id="manager-question-last"
                                         onclick="app.goToQuestionListPage(app.questionListTotalPages || 1)"
-                                        class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">最後</button>
+                                        class="btn-secondary px-3 py-2 rounded-lg text-xs">最後</button>
                                 </div>
                             </div>
                         </div>
@@ -501,7 +501,7 @@
                                 <h3 class="text-lg font-bold text-soft-green-800 mb-1">問題一括編集</h3>
                                 <p class="text-sm text-soft-green-600">チェックした問題をまとめて削除、または別の学習セットへ移動できます。</p>
                             </div>
-                            <div class="bg-white p-4 rounded-xl border border-soft-green-200 space-y-3">
+                            <div class="card-white p-4 space-y-3">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label class="block text-xs font-semibold text-soft-green-700 mb-1">編集する学習セット</label>
@@ -527,17 +527,17 @@
                                 <div id="manager-bulk-question-pager"
                                     class="hidden flex flex-wrap items-center justify-between gap-2 pt-2">
                                     <div class="flex gap-2">
-                                        <button id="manager-bulk-first" onclick="app.goToBulkEditPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold text-xs">最初</button>
-                                        <button id="manager-bulk-prev" onclick="app.changeBulkEditPage(-1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold text-xs">前へ</button>
+                                        <button id="manager-bulk-first" onclick="app.goToBulkEditPage(1)" class="btn-secondary px-3 py-2 rounded-lg text-xs">最初</button>
+                                        <button id="manager-bulk-prev" onclick="app.changeBulkEditPage(-1)" class="btn-secondary px-3 py-2 rounded-lg text-xs">前へ</button>
                                     </div>
                                     <span id="manager-bulk-page-info"class="text-xs font-bold text-soft-green-700">1 / 1</span>
                                     <div class="flex gap-2">
-                                        <button id="manager-bulk-next" onclick="app.changeBulkEditPage(1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold text-xs">次へ</button>
-                                        <button id="manager-bulk-last" onclick="app.goToBulkEditPage(app.bulkEditTotalPages || 1)" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold text-xs">最後</button>
+                                        <button id="manager-bulk-next" onclick="app.changeBulkEditPage(1)" class="btn-secondary px-3 py-2 rounded-lg text-xs">次へ</button>
+                                        <button id="manager-bulk-last" onclick="app.goToBulkEditPage(app.bulkEditTotalPages || 1)" class="btn-secondary px-3 py-2 rounded-lg text-xs">最後</button>
                                     </div>
                                 </div>
                                 <div class="flex flex-col sm:flex-row gap-2 pt-2 border-t border-soft-green-100">
-                                    <button onclick="app.questionManager.deleteSelectedBulkQuestions()" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm">選択した問題を削除</button>
+                                    <button onclick="app.questionManager.deleteSelectedBulkQuestions()" class="btn-danger flex-1 px-4 py-2 rounded-lg text-sm">選択した問題を削除</button>
                                     <button onclick="app.questionManager.moveSelectedBulkQuestions()" class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm">選択した問題を移動</button>
                                 </div>
                             </div>
@@ -547,17 +547,17 @@
                         <h3 class="text-lg font-bold text-soft-green-800 mb-2">問題の整理</h3>
                         <p class="text-sm text-soft-green-600 mb-4">習熟度または正解率が高い問題を、上位割合または上位問題数で一括削除します。</p>
 
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-4 rounded-xl border border-soft-green-200">
+                        <div class="card-white flex flex-col sm:flex-row sm:items-center gap-3 p-4">
                             <label class="text-sm font-semibold text-soft-green-800">削除対象</label>
-                            <select id="manager-delete-metric" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                            <select id="manager-delete-metric" class="form-select bg-white text-sm">
                                 <option value="mastery">習熟度</option>
                                 <option value="accuracy">正解率</option>
                             </select>
-                            <select id="manager-delete-mode" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                            <select id="manager-delete-mode" class="form-select bg-white text-sm">
                                 <option value="percent">上位割合</option>
                                 <option value="count">上位問題数</option>
                             </select>
-                            <select id="manager-delete-percent" class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm">
+                            <select id="manager-delete-percent" class="form-select bg-white text-sm">
                                 <option value="10">10%</option>
                                 <option value="20">20%</option>
                                 <option value="30">30%</option>
@@ -571,9 +571,9 @@
                             <input type="text" id="manager-delete-count" maxlength="3" inputmode="numeric"
                                 pattern="\d{1,3}" placeholder="問題数（1〜999）"
                                 oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3)"
-                                class="px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm w-full sm:w-40">
+                                class="form-input bg-white text-sm w-full sm:w-40">
                             <button onclick="app.questionManager.deleteHighAccuracyQuestions()"
-                                class="sm:ml-auto bg-soft-green-600 hover:bg-soft-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm w-full sm:w-auto">
+                                class="btn-primary sm:ml-auto px-4 py-2 rounded-lg text-sm w-full sm:w-auto">
                                 実行
                             </button>
                         </div>
@@ -591,7 +591,7 @@
 
         <!-- View: Audio Export -->
         <div id="view-audio-export"
-            class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            class="app-view hidden fade-in">
             <div class="w-full max-w-2xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -608,16 +608,16 @@
                     生成形式: <span class="font-bold">「問題」→(1秒)→問題文→(1秒)→解答→(1秒)→解説→(2秒)→...</span>
                 </p>
 
-                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-100 shadow-sm space-y-4">
+                <div class="card p-6 space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-soft-green-800 mb-2">出力対象の学習セット</label>
                         <select id="audio-export-target-set"
-                            class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white mb-4"></select>
+                            class="form-select bg-white mb-4"></select>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-soft-green-800 mb-2">出力する問題数</label>
                         <select id="audio-export-count"
-                            class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                            class="form-select bg-white">
                             <option value="10">10問</option>
                             <option value="20">20問</option>
                             <option value="30">30問</option>
@@ -634,7 +634,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-soft-green-800 mb-2">読み上げ対象の優先順</label>
                         <select id="audio-export-priority"
-                            class="w-full px-4 py-3 rounded-xl border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                            class="form-select bg-white">
                             <option value="unanswered">未回答の問題を優先して出力する</option>
                             <option value="low-accuracy">正解率の低い問題を優先して出力する</option>
                         </select>
@@ -649,7 +649,7 @@
                     </div>
 
                     <button onclick="app.audioManager.startAudioExport()" id="btn-start-export"
-                        class="w-full py-4 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold text-lg shadow-md transition-colors flex justify-center items-center gap-2 mt-4">
+                        class="btn-primary w-full py-4 rounded-xl text-lg shadow-md mt-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
@@ -674,7 +674,7 @@
                         <p class="text-sm font-bold text-soft-green-800 text-center mb-2">作成完了！</p>
                         <div class="flex flex-col sm:flex-row gap-2">
                             <button id="btn-play-audio" onclick="app.audioManager.playExportedAudio()"
-                                class="flex-1 py-3 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors flex justify-center items-center gap-2">
+                                class="btn-secondary flex-1 py-3 rounded-xl gap-2">
                                 ブラウザで再生
                             </button>
                             <button id="btn-stop-audio" onclick="app.audioManager.stopExportedAudio()"
@@ -682,7 +682,7 @@
                                 停止
                             </button>
                             <button id="btn-download-audio" onclick="app.audioManager.downloadExportedAudio()"
-                                class="flex-1 py-3 bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-xl font-bold shadow-md transition-colors flex justify-center items-center gap-2">
+                                class="btn-primary flex-1 py-3 rounded-xl shadow-md gap-2">
                                 MP3保存
                             </button>
                         </div>
@@ -693,7 +693,7 @@
 
         <!-- View: AI Generator -->
         <div id="view-ai-generator"
-            class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            class="app-view hidden fade-in">
             <div class="w-full max-w-2xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -703,21 +703,21 @@
                     </svg>
                     <h2 class="text-2xl font-bold">AI問題生成</h2>
                 </div>
-                <div class="bg-soft-green-50 border border-soft-green-100 rounded-2xl p-2 flex gap-2 shadow-sm">
+                <div class="card p-2 flex gap-2">
                     <button id="ai-tab-btn-normal" onclick="app.switchAIGeneratorTab('normal')"
-                        class="flex-1 px-4 py-2 rounded-xl font-bold text-sm bg-soft-green-600 text-white shadow-sm">通常生成</button>
+                        class="btn-primary flex-1 px-4 py-2 rounded-xl shadow-sm text-sm">通常生成</button>
                     <button id="ai-tab-btn-memo" onclick="app.switchAIGeneratorTab('memo')"
-                        class="flex-1 px-4 py-2 rounded-xl font-bold text-sm text-soft-green-800 hover:bg-soft-green-100">メモ取り込み</button>
+                        class="btn-secondary flex-1 px-4 py-2 rounded-xl text-sm">メモ取り込み</button>
                 </div>
-                <div class="bg-soft-green-50 p-6 rounded-2xl border border-soft-green-100 shadow-sm space-y-4">
+                <div class="card p-6 space-y-4">
                     <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">追加先の学習セット</label><select
                             id="ai-target-set"
-                            class="w-full px-4 py-3 rounded-xl border border-soft-green-200 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white"></select>
+                            class="form-select bg-white"></select>
                     </div>
                     <div id="ai-tab-normal" class="space-y-4">
                         <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">ジャンル</label><select
                                 id="ai-genre" onchange="app.handleAIGenreChange()"
-                                class="w-full px-4 py-3 rounded-xl border border-soft-green-200 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white">
+                                class="form-select bg-white">
                                 <option value="">(指定なし / フリーワードのみ)</option>
                                 <option value="理系">理系</option>
                                 <option value="文学">文学</option>
@@ -736,23 +736,23 @@
                         <div id="ai-subgenre-container" class="hidden"><label
                                 class="block text-sm font-semibold text-soft-green-800 mb-2">サブジャンルの選択</label><select
                                 id="ai-subgenre"
-                                class="w-full px-4 py-3 rounded-xl border border-soft-green-200 bg-white">
+                                class="form-select bg-white">
                                 <option value=""></option>
                             </select></div>
                         <div id="ai-topic-container"><label
                                 class="block text-sm font-semibold text-soft-green-800 mb-2">テーマ・キーワード
                                 (フリーワード)</label><input type="text" id="ai-topic" placeholder="例: 徳川家康、プログラミング、宇宙"
-                                class="w-full px-4 py-3 rounded-xl border border-soft-green-200"></div>
+                                class="form-input"></div>
                         <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">難易度</label><select
                                 id="ai-difficulty"
-                                class="w-full px-4 py-3 rounded-xl border border-soft-green-200 bg-white">
+                                class="form-select bg-white">
                                 <option value="初級">初級</option>
                                 <option value="中級" selected>中級</option>
                                 <option value="上級">上級</option>
                                 <option value="超級">超級</option>
                             </select></div>
                         <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">生成する問題数</label><select
-                                id="ai-count" class="w-full px-4 py-3 rounded-xl border border-soft-green-200 bg-white">
+                                id="ai-count" class="form-select bg-white">
                                 <option value="10">10問</option>
                                 <option value="20">20問</option>
                                 <option value="30">30問</option>
@@ -760,7 +760,7 @@
                                 <option value="50">50問</option>
                             </select></div>
                         <button onclick="app.generateQuestionsWithAI()" id="btn-generate-ai"
-                            class="w-full py-4 bg-soft-green-500 hover:bg-soft-green-600 text-white rounded-xl font-bold text-lg shadow-md">問題を生成する</button>
+                            class="btn-primary w-full py-4 rounded-xl text-lg shadow-md">問題を生成する</button>
                     </div>
                     <div id="ai-tab-memo" class="hidden space-y-4">
                         <div><label
@@ -769,12 +769,12 @@
 田中理恵　声優
 田中理恵　体操選手
 峰竜太　タレント
-峰竜太　競艇選手" class="w-full px-4 py-3 rounded-xl border border-soft-green-200 focus:ring-2 focus:ring-soft-green-400"></textarea>
+峰竜太　競艇選手" class="form-textarea"></textarea>
                             <p id="ai-memo-count" class="text-xs font-bold text-soft-green-700 mt-2">有効候補数: 0 / 10</p>
                         </div>
                         <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">難易度</label><select
                                 id="ai-memo-difficulty"
-                                class="w-full px-4 py-3 rounded-xl border border-soft-green-200 bg-white">
+                                class="form-select bg-white">
                                 <option value="初級">初級</option>
                                 <option value="中級" selected>中級</option>
                                 <option value="上級">上級</option>
@@ -784,7 +784,7 @@
                                 onclick="app.normalizeMemoAnswersWithAI()"
                                 class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold">名称を補正して確認</button><button
                                 onclick="app.resetMemoImport()"
-                                class="w-full py-3 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 border border-soft-green-300 rounded-xl font-bold">リセット</button>
+                                class="btn-secondary w-full py-3 border border-soft-green-300 rounded-xl">リセット</button>
                         </div>
                         <div id="ai-memo-normalized" class="hidden space-y-3">
                             <div class="flex items-center justify-between">
@@ -793,13 +793,13 @@
                             </div>
                             <div id="ai-memo-normalized-list" class="space-y-2"></div><button id="btn-generate-memo"
                                 onclick="app.generateMemoQuestions()"
-                                class="w-full py-3 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold">問題を一括作成</button>
+                                class="btn-primary w-full py-3 rounded-xl">問題を一括作成</button>
                         </div>
                         <div id="ai-memo-preview" class="hidden space-y-3">
                             <h3 class="font-bold text-soft-green-900">生成結果</h3>
                             <div id="ai-memo-preview-list" class="space-y-3"></div><button
                                 onclick="app.saveMemoQuestions()"
-                                class="w-full py-3 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold">選択した問題を保存</button>
+                                class="btn-primary w-full py-3 rounded-xl">選択した問題を保存</button>
                         </div>
                     </div>
                     <div id="ai-loading" class="hidden flex-col items-center justify-center py-4">
@@ -812,7 +812,7 @@
         </div>
         <!-- View: Dictionary -->
         <div id="view-dictionary"
-            class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            class="app-view hidden fade-in">
             <div class="w-full max-w-2xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -830,18 +830,18 @@
                 </p>
 
                 <div
-                    class="bg-soft-green-50 p-4 rounded-xl flex flex-col sm:flex-row gap-3 border border-soft-green-200">
+                    class="card p-4 flex flex-col sm:flex-row gap-3">
                     <input type="text" id="dict-word" placeholder="変換前の単語 (例: 徳川家康)"
-                        class="flex-1 px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500">
+                        class="form-input flex-1">
                     <input type="text" id="dict-pronunciation" placeholder="読み方 (例: とくがわいえやす)"
-                        class="flex-1 px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500">
+                        class="form-input flex-1">
                     <button onclick="app.dictionaryManager.addEntry()"
-                        class="bg-soft-green-600 hover:bg-soft-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors whitespace-nowrap">
+                        class="btn-primary px-6 py-2 rounded-lg whitespace-nowrap">
                         登録
                     </button>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-soft-green-200 shadow-sm space-y-3">
+                <div class="card-white p-4 shadow-sm space-y-3">
                     <div>
                         <h3 class="text-sm font-bold text-soft-green-800">CSV取り込み・保存</h3>
                         <p class="text-xs text-soft-green-600 mt-1">カンマ区切りCSVで管理します。1列目は「単語」、2列目は「読み方」です。</p>
@@ -853,9 +853,9 @@
                         <input type="file" id="dict-csv-upload" accept=".csv,text/csv" class="hidden"
                             onchange="app.dictionaryManager.handleFileUpload(event)">
                         <button onclick="document.getElementById('dict-csv-upload').click()"
-                            class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-sm">CSVを取り込む</button>
+                            class="btn-secondary px-4 py-2 rounded-lg text-sm">CSVを取り込む</button>
                         <button onclick="app.dictionaryManager.exportCSV()"
-                            class="px-4 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold transition-colors text-sm">CSVを保存</button>
+                            class="btn-primary px-4 py-2 rounded-lg text-sm">CSVを保存</button>
                     </div>
                 </div>
 
@@ -881,7 +881,7 @@
 
         <!-- View: Settings -->
         <div id="view-settings"
-            class="absolute inset-0 overflow-y-auto p-4 md:p-8 bg-white hidden fade-in flex flex-col items-center pb-24">
+            class="app-view hidden fade-in">
             <div class="w-full max-w-2xl space-y-6">
                 <div class="flex items-center gap-2 mb-4 text-soft-green-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -894,8 +894,8 @@
                     <h2 class="text-2xl font-bold">APIキー設定</h2>
                 </div>
 
-                <div class="bg-soft-green-50 rounded-2xl shadow-sm border border-soft-green-100 p-6">
-                    <p class="text-sm text-soft-green-700 mb-6 bg-white p-4 rounded-xl border border-soft-green-200">
+                <div class="card p-6">
+                    <p class="card-white text-sm text-soft-green-700 mb-6 p-4">
                         各機能を利用するためにはAPIキーが必要です。<br>
                         キーはブラウザのLocalStorageにのみ保存されます。
                     </p>
@@ -910,7 +910,7 @@
                             </div>
                             <p class="text-xs text-soft-green-600 mb-2">用途: AI問題生成、CSV取り込み時の自動解説生成、読み上げ用SSML(ふりがな)付与</p>
                             <input type="text" id="setting-gemini-key" placeholder="AIzaSy... (未設定時はCanvas内蔵キーを試行します)"
-                                class="w-full px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500 text-sm font-mono">
+                                class="form-input text-sm font-mono">
                         </div>
 
                         <div class="bg-white p-4 rounded-xl border border-soft-green-200">
@@ -919,12 +919,12 @@
                             <p class="text-xs text-soft-green-600 mb-2">用途: MP3音声ファイルの作成<br><span
                                     class="text-red-500">※GCPプロジェクトでText-to-Speech APIを有効化したキーが必要です。</span></p>
                             <input type="text" id="setting-tts-key" placeholder="AIzaSy..."
-                                class="w-full px-4 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-500 text-sm font-mono">
+                                class="form-input text-sm font-mono">
                         </div>
 
                         <div class="flex justify-end pt-2">
                             <button onclick="app.saveSettings()"
-                                class="bg-soft-green-600 hover:bg-soft-green-700 text-white px-8 py-3 rounded-xl font-bold transition-colors shadow-md w-full sm:w-auto">
+                                class="btn-primary px-8 py-3 rounded-xl shadow-md w-full sm:w-auto">
                                 設定を保存する
                             </button>
                         </div>
@@ -1108,7 +1108,7 @@
                             id="detail-ai-regenerate-btn" onclick="app.openRegeneratePolicyModal()"
                             class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-bold transition-colors text-xs">問題再作成</button>
                     </div><textarea id="detail-question-q" rows="4" oninput="app.syncConfirmPointLimit()"
-                        class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea>
+                        class="form-textarea text-sm"></textarea>
                     <div class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
                         <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                             <label class="text-sm font-bold text-amber-900 whitespace-nowrap">確定ポイント</label>
@@ -1129,12 +1129,12 @@
                             id="detail-ai-answer-btn" onclick="app.regenerateAnswerForQuestion()"
                             class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg font-bold transition-colors text-xs">解答再作成</button>
                     </div><input type="text" id="detail-question-a"
-                        class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm">
+                        class="form-input text-sm">
                     <p class="text-xs text-soft-green-600 mt-1">現在の事実に基づく解答候補をAIで作成します。反映後に内容を確認して保存してください。</p>
                 </div>
                 <div><label class="block text-sm font-bold text-soft-green-800 mb-1">移動先の学習セット</label><select
                         id="detail-question-move-set"
-                        class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm font-semibold text-soft-green-900"></select>
+                        class="form-select bg-white text-sm font-semibold text-soft-green-900"></select>
                     <p class="text-xs text-soft-green-600 mt-1">別の学習セットを選択し、「保存する」を押すと移動が確定します。</p>
                 </div>
                 <div class="bg-soft-green-50 border border-soft-green-200 rounded-xl p-4 space-y-3">
@@ -1155,11 +1155,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div><label class="block text-xs font-semibold text-soft-green-700 mb-1">ジャンル</label><select
                                 id="detail-question-genre" onchange="app.handleQuestionDetailGenreChange()"
-                                class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select>
+                                class="form-select bg-white text-sm"></select>
                         </div>
                         <div><label class="block text-xs font-semibold text-soft-green-700 mb-1">サブジャンル</label><select
                                 id="detail-question-subgenre"
-                                class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 bg-white text-sm"></select>
+                                class="form-select bg-white text-sm"></select>
                         </div>
                     </div>
                 </div>
@@ -1170,7 +1170,7 @@
                             onclick="app.questionManager.generateExplanationForQuestion()"
                             class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">AI解説を再セット</button>
                     </div><textarea id="detail-question-explanation" rows="4"
-                        class="w-full px-3 py-2 rounded-lg border border-soft-green-300 focus:outline-none focus:ring-2 focus:ring-soft-green-400 text-sm"></textarea>
+                        class="form-textarea text-sm"></textarea>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3 justify-between pt-2"><button
                         onclick="app.questionManager.deleteQuestionFromDetail()"

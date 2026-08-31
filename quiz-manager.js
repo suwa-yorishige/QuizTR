@@ -22,7 +22,7 @@ class QuizManager {
     getQuestionStage(q) {
         if (q.total === 0) return '未学習';
 
-        const accuracy = q.accuracy ?? (q.total > 0 ? q.correct / q.total : 0);
+        const accuracy = q.accuracy !== null && q.accuracy !== undefined ? q.accuracy : (q.total > 0 ? q.correct / q.total : 0);
 
         if (q.level >= 4 && q.streak >= 3 && accuracy >= 0.85) return '定着済み';
         if (q.level >= 2 && q.streak >= 1) return '定着途中';
@@ -83,7 +83,7 @@ class QuizManager {
             return 1.0 + Math.random() * 0.5;
         }
 
-        const accuracy = q.accuracy ?? (q.correct / q.total);
+        const accuracy = q.accuracy !== null && q.accuracy !== undefined ? q.accuracy : (q.correct / q.total);
         const wrongCount = Math.max(0, q.total - q.correct);
 
         const elapsed = q.lastAnsweredAt
@@ -150,7 +150,7 @@ class QuizManager {
      * @returns {Array} 優先度プールとする問題の配列
      */
     choosePriorityPool(candidates, now) {
-        if (!candidates?.length) return [];
+        if (!candidates || !candidates.length) return [];
 
         const unlearned = candidates.filter(c => (c.q.total || 0) === 0);
         if (unlearned.length) return unlearned;
@@ -212,7 +212,7 @@ class QuizManager {
      * 全問題を出題済みの場合はクイズを終了
      */
     nextQuestion() {
-        this.app.synth?.cancel();
+        if (this.app.synth) this.app.synth.cancel();
         this.stopTextReveal();
 
         const targetSet = this.app.studySets.find(s => s.id === this.app.activeSetId);
@@ -285,12 +285,12 @@ class QuizManager {
         const voiceIndicator = document.getElementById('quiz-voice-indicator');
         const textContainer = document.getElementById('quiz-text-reveal-container');
         if (this.app.quizMode === 'text') {
-            voiceIndicator?.classList.add('hidden');
-            textContainer?.classList.remove('hidden');
+            if (voiceIndicator) voiceIndicator.classList.add('hidden');
+            if (textContainer) textContainer.classList.remove('hidden');
             this.startTextReveal(q.q);
         } else {
-            voiceIndicator?.classList.remove('hidden');
-            textContainer?.classList.add('hidden');
+            if (voiceIndicator) voiceIndicator.classList.remove('hidden');
+            if (textContainer) textContainer.classList.add('hidden');
 
             const utterance = new SpeechSynthesisUtterance(this.app.applyPronunciations(q.q, q));
             this.app.currentVoiceCharIndex = 0;
@@ -318,7 +318,7 @@ class QuizManager {
      */
     buzz() {
         const targetSet = this.app.studySets.find(s => s.id === this.app.activeSetId);
-        const q = targetSet?.questions[this.app.currentQuestionIndex];
+        const q = targetSet && targetSet.questions && this.app.currentQuestionIndex >= 0 ? targetSet.questions[this.app.currentQuestionIndex] : null;
         if (q) {
             const len = Math.max(1, String(q.q || '').length);
             let charIndex = 0;
@@ -348,15 +348,15 @@ class QuizManager {
             };
         }
 
-        this.app.synth?.cancel();
+        if (this.app.synth) this.app.synth.cancel();
         this.stopTextReveal();
 
         const quizQuestionText = document.getElementById('quiz-question-text');
         if (this.app.quizMode === 'text') {
             if (quizQuestionText) quizQuestionText.textContent = this.buzzDisplayText || quizQuestionText.textContent;
-            quizQuestionText?.classList.remove('hidden');
+            if (quizQuestionText) quizQuestionText.classList.remove('hidden');
         } else {
-            quizQuestionText?.classList.add('hidden');
+            if (quizQuestionText) quizQuestionText.classList.add('hidden');
         }
 
         const statePlaying = document.getElementById('quiz-state-playing');
@@ -379,7 +379,7 @@ class QuizManager {
         if (quizQuestionText) quizQuestionText.classList.remove('hidden');
 
         const targetSet = this.app.studySets.find(s => s.id === this.app.activeSetId);
-        const q = targetSet?.questions[this.app.currentQuestionIndex];
+        const q = targetSet && targetSet.questions && this.app.currentQuestionIndex >= 0 ? targetSet.questions[this.app.currentQuestionIndex] : null;
         if (this.app.quizMode === 'voice' && q) {
             const utterance = new SpeechSynthesisUtterance(this.app.applyPronunciations(q.a, q));
             utterance.lang = 'ja-JP';
@@ -479,7 +479,7 @@ class QuizManager {
     async startDerivativeCreation() {
         if (!this.app.geminiApiKey) return this.app.showToast('Gemini APIキーを設定画面で登録してください', 'error');
         const set = this.app.studySets.find(s => s.id === this.app.activeSetId);
-        const current = set?.questions[this.app.currentQuestionIndex];
+        const current = set && set.questions && this.app.currentQuestionIndex >= 0 ? set.questions[this.app.currentQuestionIndex] : null;
         if (!current) return;
 
         this.openDerivativeModal();
@@ -551,10 +551,11 @@ class QuizManager {
     async generateSelectedDerivativeQuestions() {
         const selected = (this.app.derivativeCandidates || []).filter(x => x.selected);
         if (!selected.length) return this.app.showToast('候補を1つ以上選択してください', 'error');
-        const source = this.app.studySets.find(s => s.id === this.app.activeSetId)?.questions[this.app.currentQuestionIndex];
+        const targetSet = this.app.studySets.find(s => s.id === this.app.activeSetId);
+        const source = targetSet && targetSet.questions && this.app.currentQuestionIndex >= 0 ? targetSet.questions[this.app.currentQuestionIndex] : null;
         this.setDerivativeView('derivative-loading', '選択した候補の問題を作成中...');
         const results = await this.app.mapWithConcurrency(selected, 2, async x => {
-            try { return await this.app.generateDerivativeData(x.word, source?.q || '', '中級'); }
+            try { return await this.app.generateDerivativeData(x.word, source && source.q ? source.q : '', '中級'); }
             catch (e) {
                 return {
                     a: x.word, error: e.message, selected: false
@@ -601,7 +602,7 @@ class QuizManager {
      */
     searchCurrentQuizImage() {
         const targetSet = this.app.studySets.find(s => s.id === this.app.activeSetId);
-        const q = targetSet?.questions[this.app.currentQuestionIndex];
+        const q = targetSet && targetSet.questions && this.app.currentQuestionIndex >= 0 ? targetSet.questions[this.app.currentQuestionIndex] : null;
         if (!q) return this.app.showToast('検索対象の問題が見つかりません', 'error');
         const url = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q.a);
         const opened = window.open(url, '_blank', 'noopener,noreferrer');

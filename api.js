@@ -17,7 +17,8 @@ const api = {
             });
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.error?.message || `HTTP ${res.status}`);
+                const errorMessage = err && err.error && err.error.message ? err.error.message : `HTTP ${res.status}`;
+                throw new Error(errorMessage);
             }
             const data = await res.json();
             return data.candidates[0].content.parts[0].text;
@@ -45,7 +46,8 @@ const api = {
             });
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.error?.message || `HTTP ${res.status}`);
+                const errorMessage = err && err.error && err.error.message ? err.error.message : `HTTP ${res.status}`;
+                throw new Error(errorMessage);
             }
             const data = await res.json();
             return data.audioContent;

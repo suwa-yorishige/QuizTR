@@ -134,7 +134,7 @@ class AudioManager {
     }
 
     escapeXML(text) {
-        return String(text ?? '').replace(
+        return String(text !== null && text !== undefined ? text : '').replace(
             /[&<>"']/g,
             c => ({
                 '&':'&amp;',
@@ -184,7 +184,8 @@ class AudioManager {
         if (!questions.length) return this.app.showToast('対象のセットに問題が登録されていません', 'error');
         const count = parseInt(document.getElementById('audio-export-count').value, 10);
         const includeExp = document.getElementById('audio-export-explanation').checked;
-        const priorityMode = document.getElementById('audio-export-priority')?.value || 'unanswered';
+        const prioritySelect = document.getElementById('audio-export-priority');
+        const priorityMode = prioritySelect && prioritySelect.value ? prioritySelect.value : 'unanswered';
         const shuffled = [...questions];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));

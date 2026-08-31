@@ -42,10 +42,14 @@ class QuestionManager {
 
         const set = this.app.studySets.find(s => s.id === this.app.managerSetId);
         const all = set ? set.questions.map(q => this.app.normalizeQuestionData(q)) : [];
-        const search = (document.getElementById('manager-question-search')?.value || '').toLowerCase();
-        const g = document.getElementById('manager-filter-genre')?.value || '';
-        const sg = document.getElementById('manager-filter-subgenre')?.value || '';
-        const masteryFilter = document.getElementById('manager-filter-mastery')?.value || '';
+        const questionSearch = document.getElementById('manager-question-search');
+        const search = (questionSearch && questionSearch.value ? questionSearch.value : '').toLowerCase();
+        const genreFilter = document.getElementById('manager-filter-genre');
+        const g = genreFilter && genreFilter.value ? genreFilter.value : '';
+        const subgenreFilter = document.getElementById('manager-filter-subgenre');
+        const sg = subgenreFilter && subgenreFilter.value ? subgenreFilter.value : '';
+        const masteryFilterElement = document.getElementById('manager-filter-mastery');
+        const masteryFilter = masteryFilterElement && masteryFilterElement.value ? masteryFilterElement.value : '';
 
         const filtered = all.filter(q => {
             const mastery = this.app.getMasteryMetrics(q).score;
@@ -126,7 +130,8 @@ class QuestionManager {
      * 選択されたジャンルに対応したサブジャンルをドロップダウンに反映
      */
     updateQuestionFilterSubgenreOptions() {
-        const g = document.getElementById('manager-filter-genre')?.value || '';
+        const genreElement = document.getElementById('manager-filter-genre');
+        const g = genreElement && genreElement.value ? genreElement.value : '';
         const ss = document.getElementById('manager-filter-subgenre');
         if (!ss) return;
         const cur = ss.value || '';
@@ -218,7 +223,8 @@ class QuestionManager {
         const aText = document.getElementById('detail-question-a').value.trim();
         if (!qText || !aText) return this.app.showToast('問題文と解答を入力してください', 'error');
 
-        const destinationId = document.getElementById('detail-question-move-set')?.value || r.set.id;
+        const moveSetSelect = document.getElementById('detail-question-move-set');
+        const destinationId = moveSetSelect && moveSetSelect.value ? moveSetSelect.value : r.set.id;
         const destination = this.app.studySets.find(set => set.id === destinationId);
         if (!destination) return this.app.showToast('移動先の学習セットが見つかりません', 'error');
 
@@ -228,7 +234,8 @@ class QuestionManager {
         if (isMoving && destination.questions.length >= maxQuestions) return this.app.showToast(`移動先の登録上限(${maxQuestions}問)に達しています。`, 'error');
 
         r.q.q = qText;
-        const cpInput = Number(document.getElementById('detail-confirm-point')?.value);
+        const confirmPointElement = document.getElementById('detail-confirm-point');
+        const cpInput = Number(confirmPointElement && confirmPointElement.value ? confirmPointElement.value : 0);
         r.q.confirmPoint = Number.isFinite(cpInput) && cpInput > 0 ? Math.min(qText.length, Math.round(cpInput)) : 0;
         r.q.a = aText;
         r.q.explanation = document.getElementById('detail-question-explanation').value.trim();
@@ -248,7 +255,7 @@ class QuestionManager {
         this.renderQuestionList();
 
         const quizSet = this.app.studySets.find(set => set.id === this.app.activeSetId);
-        const current = quizSet?.questions[this.app.currentQuestionIndex];
+        const current = quizSet && quizSet.questions && quizSet.questions[this.app.currentQuestionIndex] ? quizSet.questions[this.app.currentQuestionIndex] : null;
         if (current && this.app.getQuestionId(current) === id) {
             document.getElementById('quiz-question-text').textContent = r.q.q;
             document.getElementById('quiz-answer-text').textContent = r.q.a;
@@ -281,7 +288,7 @@ class QuestionManager {
      */
     openCurrentQuizQuestionDetail() {
         const set = this.app.studySets.find(s => s.id === this.app.activeSetId);
-        const q = set?.questions[this.app.currentQuestionIndex];
+        const q = set && set.questions && this.app.currentQuestionIndex >= 0 ? set.questions[this.app.currentQuestionIndex] : null;
         if (!q) return this.app.showToast('現在の問題が見つかりません', 'error');
         this.app.managerSetId = this.app.activeSetId;
         this.app.updateSetSelectors();
@@ -298,7 +305,8 @@ class QuestionManager {
      * @returns {Object|null} 一括編集対象のセット
      */
     getBulkEditSet() {
-        const id = this.app.bulkEditSetId || this.app.managerSetId || this.app.studySets[0]?.id;
+        const fallbackId = this.app.studySets && this.app.studySets.length ? this.app.studySets[0].id : null;
+        const id = this.app.bulkEditSetId || this.app.managerSetId || fallbackId;
         return this.app.studySets.find(set => set.id === id) || this.app.studySets[0] || null;
     }
 
@@ -311,7 +319,8 @@ class QuestionManager {
         const sourceSelect = document.getElementById('manager-bulk-set-select');
         if (!sourceSelect) return;
         if (!this.app.bulkEditSetId || !this.app.studySets.some(set => set.id === this.app.bulkEditSetId)) {
-            this.app.bulkEditSetId = this.app.managerSetId || this.app.studySets[0]?.id || null;
+            const fallbackId = this.app.studySets && this.app.studySets.length ? this.app.studySets[0].id : null;
+            this.app.bulkEditSetId = this.app.managerSetId || fallbackId || null;
         }
         sourceSelect.innerHTML = this.app.studySets.map(set => `<option value="${set.id}">${this.app.escapeHTML(set.name)}</option>`).join('');
         sourceSelect.value = this.app.bulkEditSetId || '';
@@ -325,7 +334,7 @@ class QuestionManager {
         }
 
         const set = this.getBulkEditSet();
-        const questions = set?.questions || [];
+        const questions = set && set.questions ? set.questions : [];
         const size = 20;
         const validIds = new Set(questions.map(q => this.app.getBulkQuestionKey(q)));
         this.app.bulkEditSelectedIds = new Set([...this.app.bulkEditSelectedIds].filter(id => validIds.has(id)));
@@ -408,7 +417,8 @@ class QuestionManager {
      */
     async moveSelectedBulkQuestions() {
         const source = this.getBulkEditSet();
-        const targetId = document.getElementById('manager-bulk-move-target')?.value;
+        const targetSelect = document.getElementById('manager-bulk-move-target');
+        const targetId = targetSelect && targetSelect.value ? targetSelect.value : '';
         const target = this.app.studySets.find(set => set.id === targetId);
         const count = this.app.bulkEditSelectedIds.size;
 
@@ -452,7 +462,8 @@ class QuestionManager {
         const set = this.getBulkEditSet();
         const size = 20;
         const start = (this.app.bulkEditPage - 1) * size;
-        (set?.questions || []).slice(start, start + size).forEach(q => {
+        const questions = set && set.questions ? set.questions : [];
+        questions.slice(start, start + size).forEach(q => {
             const id = this.app.getBulkQuestionKey(q);
             if (checked) this.app.bulkEditSelectedIds.add(id);
             else this.app.bulkEditSelectedIds.delete(id);
@@ -660,7 +671,8 @@ class QuestionManager {
      * 完全一致は自動統合、同一解答で異なる問題文は確認ダイアログで統合対象を選択
      */
     async checkAndMergeDuplicateQuestions() {
-        const setId = document.getElementById('manager-question-set-select')?.value || this.app.managerSetId;
+        const select = document.getElementById('manager-question-set-select');
+        const setId = select && select.value ? select.value : this.app.managerSetId;
         const set = this.app.studySets.find(s => s.id === setId);
         if (!set) return this.app.showToast('選択中の学習セットが見つかりません', 'error');
         if (set.questions.length < 2) return this.app.showToast('重複チェック対象の問題がありません', 'info');
@@ -739,12 +751,13 @@ class QuestionManager {
      */
     applySelectedDuplicateMerges() {
         const pending = this.app.pendingDuplicateMerge;
-        const set = this.app.studySets.find(s => s.id === pending?.setId);
+        const set = pending && pending.setId ? this.app.studySets.find(s => s.id === pending.setId) : null;
         if (!pending || !set) return this.app.showToast('統合対象が見つかりません', 'error');
 
         const remove = new Set();
         pending.groups.forEach((group, groupIndex) => {
-            const selectedValue = document.querySelector(`input[name="duplicate-group-${groupIndex}"]:checked`)?.value ?? '0';
+            const checkedInput = document.querySelector(`input[name="duplicate-group-${groupIndex}"]:checked`);
+            const selectedValue = checkedInput && checkedInput.value ? checkedInput.value : '0';
             if (selectedValue === 'none') return;
             const selected = Number(selectedValue);
             group.forEach((entry, optionIndex) => { if (optionIndex !== selected) remove.add(entry.q); });
@@ -784,10 +797,14 @@ class QuestionManager {
         const targetSet = this.app.studySets.find(s => s.id === this.app.managerSetId);
         if (!targetSet || targetSet.questions.length === 0) return this.app.showToast('問題がありません', 'error');
 
-        const metric = document.getElementById('manager-delete-metric')?.value || 'mastery';
-        const mode = document.getElementById('manager-delete-mode')?.value || 'percent';
-        const percent = parseInt(document.getElementById('manager-delete-percent')?.value || '10', 10);
-        const inputCount = parseInt(document.getElementById('manager-delete-count')?.value || '', 10);
+        const metricElement = document.getElementById('manager-delete-metric');
+        const metric = metricElement && metricElement.value ? metricElement.value : 'mastery';
+        const modeElement = document.getElementById('manager-delete-mode');
+        const mode = modeElement && modeElement.value ? modeElement.value : 'percent';
+        const percentElement = document.getElementById('manager-delete-percent');
+        const percent = parseInt(percentElement && percentElement.value ? percentElement.value : '10', 10);
+        const inputCountElement = document.getElementById('manager-delete-count');
+        const inputCount = parseInt(inputCountElement && inputCountElement.value ? inputCountElement.value : '', 10);
 
         const metricLabel = metric === 'mastery' ? '習熟度' : '正解率';
         const deletable = metric === 'mastery' ? [...targetSet.questions] : targetSet.questions.filter(q => q.total > 0 && this.app.getAccuracyRatio(q) > 0);
@@ -868,10 +885,11 @@ class QuestionManager {
         keeper.total = ordered.reduce((sum, x) => sum + (Number(x.q.total) || 0), 0);
         keeper.accuracy = keeper.total > 0 ? keeper.correct / keeper.total : 0;
 
-        const latest = [...ordered].sort((a, b) => (Number(b.q.lastAnsweredAt) || 0) - (Number(a.q.lastAnsweredAt) || 0))[0]?.q;
-        keeper.lastAnsweredAt = latest?.lastAnsweredAt || null;
-        keeper.lastResult = latest?.lastResult === true || latest?.lastResult === false ? latest.lastResult : null;
-        keeper.streak = Number(latest?.streak) || 0;
+        const latest = [...ordered].sort((a, b) => (Number(b.q.lastAnsweredAt) || 0) - (Number(a.q.lastAnsweredAt) || 0))[0];
+        const latestQ = latest ? latest.q : null;
+        keeper.lastAnsweredAt = latestQ ? latestQ.lastAnsweredAt || null : null;
+        keeper.lastResult = latestQ && (latestQ.lastResult === true || latestQ.lastResult === false) ? latestQ.lastResult : null;
+        keeper.streak = Number(latestQ && latestQ.streak ? latestQ.streak : 0) || 0;
         keeper.level = Math.max(...ordered.map(x => Number(x.q.level) || 0));
 
         const fields = ['explanation', 'genre', 'subgenre', 'difficulty'];
@@ -883,9 +901,12 @@ class QuestionManager {
         });
 
         const pronunciationMap = new Map();
-        ordered.forEach(x => (Array.isArray(x.q.pronunciations) ? x.q.pronunciations : []).forEach(item => {
-            if (item?.word && item?.pronunciation && !pronunciationMap.has(item.word)) pronunciationMap.set(item.word, item);
-        }));
+        ordered.forEach(x => {
+            const pronunciations = Array.isArray(x.q.pronunciations) ? x.q.pronunciations : [];
+            pronunciations.forEach(item => {
+                if (item && item.word && item.pronunciation && !pronunciationMap.has(item.word)) pronunciationMap.set(item.word, item);
+            });
+        });
         if (pronunciationMap.size) keeper.pronunciations = [...pronunciationMap.values()];
 
         const remove = new Set(ordered.slice(1).map(x => x.q));
@@ -901,7 +922,8 @@ class QuestionManager {
      * @returns {number} ソート用スコア
      */
     getQuestionIdOrderValue(q, fallbackIndex = 0) {
-        const id = String(q?.questionId || q?.id || '');
+        const safeQ = q || {};
+        const id = String(safeQ.questionId || safeQ.id || '');
         const matches = id.match(/\d+/g);
         if (matches && matches.length) {
             const value = Number(matches.join(''));

@@ -59,13 +59,13 @@ class DictionaryManager {
      * @returns {string}
      */
     applyPronunciations(text, question = null) {
-        let res = String(text ?? '');
-        const local = Array.isArray(question?.pronunciations) ? question.pronunciations : [];
+        let res = String(text !== null && text !== undefined ? text : '');
+        const local = question && Array.isArray(question.pronunciations) ? question.pronunciations : [];
         const global = Array.isArray(this.dictionary) ? this.dictionary : [];
         const used = new Set();
         
         [...local, ...global]
-            .filter(x => x?.word && x.pronunciation)
+            .filter(x => x && x.word && x.pronunciation)
             .sort((a, b) => b.word.length - a.word.length)
             .forEach(x => {
                 if (used.has(x.word)) return;

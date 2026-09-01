@@ -41,6 +41,7 @@ const app = {
         this.audioManager = new AudioManager(this);
         this.questionManager = new QuestionManager(this);
         this.quizManager = new QuizManager(this);
+        this.aiManager = new AIManager(this);
 
         this.dictionaryManager.load(); //辞書データ読み込み
         this.updateViewportHeight();
@@ -718,44 +719,68 @@ const app = {
     },
 
     async fetchGemini(prompt, isJson = false) {
-        return await api.fetchGemini(this.geminiApiKey, prompt, isJson);
+        return await this.aiManager.fetchGemini(prompt, isJson);
     },
 
     async fetchCloudTextToSpeechAPI(ssml) {
         return await api.fetchCloudTextToSpeechAPI(this.ttsApiKey, ssml);
     },
 
+    // AI関連メソッドの委譲（互換性維持）
+    getAIExplanationInstruction() {
+        return this.aiManager.getAIExplanationInstruction();
+    },
+
+    buildAIExplanationPrompt(q, a) {
+        return this.aiManager.buildAIExplanationPrompt(q, a);
+    },
+
+    buildBatchAIExplanationPrompt(items) {
+        return this.aiManager.buildBatchAIExplanationPrompt(items);
+    },
+
+    async fillExplanationsWithAI(items, loadingText = null, batchSize = CSV_EXPLANATION_BATCH_SIZE, maxPrompts = Infinity) {
+        return await this.aiManager.fillExplanationsWithAI(items, loadingText, batchSize, maxPrompts);
+    },
+
     async fetchGeminiSSML(text) {
-        if (!this.geminiApiKey) {
-            return `<speak>${this.dictionaryManager.applyDictionary(text)}</speak>`;
-        }
+        return await this.aiManager.fetchGeminiSSML(text);
+    },
 
-        let dictPrompt = "";
-        if (this.dictionary.length > 0) {
-            dictPrompt = "以下の固有の読み方辞書を最優先で適用してください。\n" +
-                this.dictionary.map(d => `${d.word}: ${d.pronunciation}`).join("\n") + "\n\n";
-        }
+    async generateQuestionsWithAI() {
+        return await this.aiManager.generateQuestionsWithAI();
+    },
 
-        const prompt = `
-あなたはText-to-Speech用のSSML生成アシスタントです。
-入力された日本語のテキストを読み上げるためのSSMLタグを生成してください。
-括弧書きによる読みの指定がある場合や、読み方が不定な漢字（人名、地名、専門用語など）には、必ず<sub alias="ひらがな">対象語</sub>タグを付与してください。
-${dictPrompt}
-出力は必ず <speak> タグで囲まれたSSMLテキストのみとしてください。
+    async normalizeMemoAnswersWithAI() {
+        return await this.aiManager.normalizeMemoAnswersWithAI();
+    },
 
-入力テキスト:
-${text}
-`;
-        try {
-            const result = await this.fetchGemini(prompt, false);
-            if (result.includes("<speak>")) {
-                return result.trim();
-            }
-            throw new Error("Invalid SSML format returned");
-        } catch (e) {
-            console.warn("SSML生成に失敗。フォールバックを使用します。", e);
-            return `<speak>${this.applyDictionary(text)}</speak>`;
-        }
+    async generateMemoQuestions() {
+        return await this.aiManager.generateMemoQuestions();
+    },
+
+    async saveMemoQuestions() {
+        return await this.aiManager.saveMemoQuestions();
+    },
+
+    async regenerateQuestionForDetail() {
+        return await this.aiManager.regenerateQuestionForDetail();
+    },
+
+    applyRegeneratedQuestion() {
+        return this.aiManager.applyRegeneratedQuestion();
+    },
+
+    async regenerateAnswerForQuestion() {
+        return await this.aiManager.regenerateAnswerForQuestion();
+    },
+
+    async generatePronunciationCandidatesWithAI() {
+        return await this.aiManager.generatePronunciationCandidatesWithAI();
+    },
+
+    async generateDerivativeData(answer, contextText = '', difficulty = '中級') {
+        return await this.aiManager.generateDerivativeData(answer, contextText, difficulty);
     },
 
     async handleFileUpload(event) {
@@ -894,7 +919,7 @@ ${text}
 
         try {
             if (loadingText) loadingText.textContent = `CSV取り込み完了。AI解説生成中... (0/${targetItems.length})`;
-            await this.fillExplanationsWithAI(targetItems, loadingText, CSV_EXPLANATION_BATCH_SIZE, CSV_EXPLANATION_PROMPT_LIMIT);
+            await this.aiManager.fillExplanationsWithAI(targetItems, loadingText, CSV_EXPLANATION_BATCH_SIZE, CSV_EXPLANATION_PROMPT_LIMIT);
             this.saveStudySets();
             this.showToast(`AI解説を${targetItems.length}件追加しました${skippedCount ? `（上限超過のため${skippedCount}件は未生成）` : ''}`, 'success');
         } catch (e) {
@@ -906,39 +931,7 @@ ${text}
         }
     },
 
-    getAIExplanationInstruction() {
-        return 'クイズの解説は1〜2文で簡潔にまとめ、問題文の言い換えや重複を避けて、別の観点・関連知識・背景知識を含めてください。最後に必ず「暗記のコツ:」から始まる、短く実用的な暗記ポイントを付けてください。';
-    },
-    buildAIExplanationPrompt(q, a) {
-        return `${this.getAIExplanationInstruction()}\n出力は解説文のみ。\nQ:${q}\nA:${a}`;
-    },
-    buildBatchAIExplanationPrompt(items) {
-        return `${this.getAIExplanationInstruction()}\n各問題について同じ品質・構成で作成してください。\n必ず以下のJSON配列形式（文字列の配列）のみを出力してください。Markdownの装飾は不要です。\n["問題0の解説", "問題1の解説", ...]\n` + items.map((item, idx) => `[${idx}] Q:${item.q} A:${item.a}`).join("\n");
-    },
-    async fillExplanationsWithAI(items, loadingText = null, batchSize = CSV_EXPLANATION_BATCH_SIZE, maxPrompts = Infinity) {
-        let promptsUsed = 0;
-        for (let i = 0; i < items.length && promptsUsed < maxPrompts; i += batchSize) {
-            const batch = items.slice(i, i + batchSize);
-            promptsUsed++;
-            if (loadingText) loadingText.textContent = `解説生成中... (${Math.min(i + batch.length, items.length)}/${items.length})`;
-            const prompt = this.buildBatchAIExplanationPrompt(batch);
 
-            try {
-                const jsonStr = await this.fetchGemini(prompt, true);
-                const cleanStr = jsonStr.replace(/```json/gi, '').replace(/```/g, '').trim();
-                const exps = JSON.parse(cleanStr);
-                if (Array.isArray(exps)) {
-                    batch.forEach((item, idx) => {
-                        const value = exps[idx];
-                        if (typeof value === 'string') item.explanation = value;
-                        else if (value && typeof value === 'object') item.explanation = value.explanation || value.exp || value.text || '';
-                    });
-                }
-            } catch (e) {
-                console.warn('AI解説生成をスキップしました', e);
-            }
-        }
-    },
 
     parseAIJSON(text) { const clean = String(text || '').replace(/```json/gi, '').replace(/```/g, '').trim(); try { return JSON.parse(clean); } catch (e) { const m = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/); if (m) return JSON.parse(m[1]); throw e; } },
     getGenreOptionsHTML(selectedGenre = '', includeAll = false) { const genres = Object.keys(this.getAISubgenres()); let html = includeAll ? '<option value="">ジャンル: すべて</option><option value="__UNSET__">未設定</option>' : '<option value="">未設定</option>'; html += genres.map(g => `<option value="${this.escapeHTML(g)}" ${g === selectedGenre ? 'selected' : ''}>${this.escapeHTML(g)}</option>`).join(''); return html; },
@@ -1007,41 +1000,7 @@ ${text}
     openRegeneratePolicyModal() { const m = document.getElementById('regenerate-policy-modal'), p = document.getElementById('regenerate-policy-panel'); document.querySelector('input[name="regenerate-policy"][value="correct"]').checked = true; m.classList.remove('hidden'); void m.offsetWidth; m.classList.remove('opacity-0'); p.classList.remove('scale-95'); },
     closeRegeneratePolicyModal() { const m = document.getElementById('regenerate-policy-modal'), p = document.getElementById('regenerate-policy-panel'); m.classList.add('opacity-0'); p.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300); },
     closeRegenerateCompareModal() { const m = document.getElementById('regenerate-compare-modal'), p = document.getElementById('regenerate-compare-panel'); m.classList.add('opacity-0'); p.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300); },
-    async regenerateQuestionForDetail() {
-        if (!this.geminiApiKey) return this.showToast('Gemini APIキーを設定画面で登録してください', 'error');
-        const q = document.getElementById('detail-question-q').value.trim(), a = document.getElementById('detail-question-a').value.trim(); if (!q || !a) return this.showToast('問題文と解答を入力してください', 'error');
-        const checkedPolicy = document.querySelector('input[name="regenerate-policy"]:checked');
-        const policy = checkedPolicy && checkedPolicy.value ? checkedPolicy.value : 'correct';
-        this.closeRegeneratePolicyModal();
-        const instruction = policy === 'current' ? '元の問題文の事実関係を維持・確認したうえで、解答に関する現在または直近の確実に確認できる情報を自然な手掛かりとして組み入れてください。変動しやすい数値や確認できない情報は使わないでください。' : '問題文中の事実誤認、年代・人物・作品等の取り違え、時制が一致しない表現、基準時点が曖昧な表現を修正してください。確認できない手掛かりは削除してください。';
-        this.showToast('問題文を再作成しています...', 'info');
-        try { const prompt = `次の早押しクイズ問題を、解答を変更せずに再作成してください。\n方針:${instruction}\n全手掛かりを内部でファクトチェックし、確実な事実だけを使用してください。早押しクイズらしく前半は広い手掛かり、後半ほど特定しやすい構成にしてください。解答そのものは問題文に書かないでください。出力は問題文のみです。\n元の問題文:${q}\n解答:${a}`; const result = (await this.fetchGemini(prompt, false)).trim().replace(/^```[a-z]*|```$/gi, '').trim(); if (!result) throw new Error('問題文を再作成できませんでした'); this.pendingRegeneratedQuestion = { before: q, after: result, policy }; document.getElementById('regenerate-before-text').textContent = q; document.getElementById('regenerate-after-text').textContent = result; document.getElementById('regenerate-compare-policy').textContent = policy === 'current' ? '方針: 現在・直近の情報を組み入れる' : '方針: 誤り・時制を修正'; const m = document.getElementById('regenerate-compare-modal'), p = document.getElementById('regenerate-compare-panel'); m.classList.remove('hidden'); void m.offsetWidth; m.classList.remove('opacity-0'); p.classList.remove('scale-95'); } catch (e) { this.showToast('問題再作成に失敗しました: ' + e.message, 'error'); }
-    },
-    applyRegeneratedQuestion() { if (!this.pendingRegeneratedQuestion) return; document.getElementById('detail-question-q').value = this.pendingRegeneratedQuestion.after; this.pendingRegeneratedQuestion = null; this.closeRegenerateCompareModal(); this.showToast('再作成後の問題文を編集欄へ反映しました。保存してください', 'success'); },
-    async regenerateAnswerForQuestion() {
-        if (!this.geminiApiKey) return this.showToast('Gemini APIキーを設定画面で登録してください', 'error');
-        const question = document.getElementById('detail-question-q').value.trim();
-        const currentAnswer = document.getElementById('detail-question-a').value.trim();
-        if (!question) return this.showToast('問題文を入力してください', 'error');
-        const btn = document.getElementById('detail-ai-answer-btn');
-        const oldText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = '確認中...';
-        btn.classList.add('opacity-70', 'cursor-not-allowed');
-        try {
-            const prompt = `次のクイズ問題について、現在または直近の確実な事実に基づく正しい解答を1つ作成してください。時点によって変わる役職者、記録、制度、名称などは最新の状態を優先してください。問題文が過去の時点を明示している場合は、その時点に対応する解答にしてください。固有名詞は正式名称を使用してください。説明、理由、引用符、Markdownは付けず、解答だけを出力してください。\n問題文:${question}\n現在登録されている解答:${currentAnswer || '未設定'}`;
-            const answer = (await this.fetchGemini(prompt, false)).trim().replace(/^```[a-z]*|```$/gi, '').trim();
-            if (!answer) throw new Error('解答候補を作成できませんでした');
-            document.getElementById('detail-question-a').value = answer.replace(/^[「『"']|[」』"']$/g, '').trim();
-            this.showToast('解答候補を編集欄へ反映しました。内容を確認して保存してください', 'success');
-        } catch (e) {
-            this.showToast('解答再作成に失敗しました: ' + e.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = oldText;
-            btn.classList.remove('opacity-70', 'cursor-not-allowed');
-        }
-    },
+
 
     getQuestionId(q) { return q.questionId || q.id; }, getCycleSeenSet(set) { if (!set) return new Set(); if (!Array.isArray(set.cycleSeenQuestionIds)) set.cycleSeenQuestionIds = []; return new Set(set.cycleSeenQuestionIds); }, resetQuestionCycle(set) { if (set) { set.cycleSeenQuestionIds = []; set.cycleStartedAt = Date.now(); } }, isCycleCompleted(set, questions) { const seen = this.getCycleSeenSet(set); return questions.length > 0 && questions.map(q => this.getQuestionId(q)).every(id => seen.has(id)); }, markQuestionSeenInCycle(set, q) { if (!set || !q) return; const id = this.getQuestionId(q); const seen = this.getCycleSeenSet(set); seen.add(id); set.cycleSeenQuestionIds = Array.from(seen); if (!set.cycleStartedAt) set.cycleStartedAt = Date.now(); },
 
@@ -1361,7 +1320,7 @@ ${text}
     },
     openPronunciationModalFromDetail() { const id = document.getElementById('detail-question-id').value; this.openPronunciationModal(this.getQuestionByIdAcrossSets(id).q); },
     getQuestionByIdAcrossSets(id) { for (const set of this.studySets) { const index = set.questions.findIndex(q => this.getQuestionId(q) === id); if (index >= 0) return { set, q: this.normalizeQuestionData(set.questions[index]), index }; } return { set: null, q: null, index: -1 }; },
-    openPronunciationModal(q) { if (!q) return; this.pronunciationTargetQuestion = q; document.getElementById('pronunciation-question-id').value = this.getQuestionId(q); const globals = new Set(this.dictionary.map(x => x.word)); this.pronunciationCandidates = (q.pronunciations || []).filter(x => !globals.has(x.word)).map(x => ({ ...x, selected: true, scope: 'question', saved: true })); this.renderPronunciationCandidates(); const m = document.getElementById('pronunciation-modal'), p = document.getElementById('pronunciation-panel'); m.classList.remove('hidden'); void m.offsetWidth; m.classList.remove('opacity-0'); p.classList.remove('scale-95'); },
+    openPronunciationModal(q) { if (!q) return; this.pronunciationTargetQuestion = q; document.getElementById('pronunciation-question-id').value = this.getQuestionId(q); const globals = new Set(this.dictionary.map(x => x.word)); this.aiManager.pronunciationCandidates = (q.pronunciations || []).filter(x => !globals.has(x.word)).map(x => ({ ...x, selected: true, scope: 'question', saved: true })); this.renderPronunciationCandidates(); const m = document.getElementById('pronunciation-modal'), p = document.getElementById('pronunciation-panel'); m.classList.remove('hidden'); void m.offsetWidth; m.classList.remove('opacity-0'); p.classList.remove('scale-95'); },
 
     closePronunciationModal() {
         this.synth.cancel();
@@ -1369,12 +1328,10 @@ ${text}
         m.classList.add('opacity-0');
         p.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300);
     },
-
-    async generatePronunciationCandidatesWithAI() { const q = this.pronunciationTargetQuestion; if (!this.geminiApiKey) return this.showToast('Gemini APIキーを設定してください', 'error'); const l = document.getElementById('pronunciation-loading'), b = document.getElementById('pronunciation-ai-btn'); l.classList.remove('hidden'); l.classList.add('flex'); b.disabled = true; try { const parsed = this.parseAIJSON(await this.fetchGemini(`問題文と解答から音声で誤読されやすい固有名詞を抽出し、文脈に合う読みをひらがなで示してください。入力に実在する完全一致文字列のみ。JSON配列のみ:[{"word":"対象","pronunciation":"よみ"}]\n問題文:${q.q}\n解答:${q.a}`, true)); const globals = new Set(this.dictionary.map(x => x.word)); let added = 0; (Array.isArray(parsed) ? parsed : []).forEach(x => { const word = String(x.word || '').trim(), pronunciation = String(x.pronunciation || x.reading || '').trim(); if (!word || !pronunciation || globals.has(word) || (!q.q.includes(word) && !q.a.includes(word))) return; if (!this.pronunciationCandidates.some(c => c.word === word)) { this.pronunciationCandidates.push({ word, pronunciation, selected: true, scope: 'question' }); added++; } }); this.renderPronunciationCandidates(); this.showToast(added ? `${added}件の候補を追加しました` : '新しい候補はありませんでした', added ? 'success' : 'info'); } catch (e) { this.showToast('AI候補作成に失敗しました: ' + e.message, 'error'); } finally { l.classList.add('hidden'); l.classList.remove('flex'); b.disabled = false; } },
-    renderPronunciationCandidates() { const list = document.getElementById('pronunciation-candidate-list'), empty = document.getElementById('pronunciation-empty'), globals = new Set(this.dictionary.map(x => x.word)); this.pronunciationCandidates = (this.pronunciationCandidates || []).filter(x => !globals.has(x.word)); empty.classList.toggle('hidden', this.pronunciationCandidates.length > 0); list.innerHTML = this.pronunciationCandidates.map((x, i) => `<div class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_auto] gap-2 items-center border rounded-xl p-3"><input type="checkbox" ${x.selected !== false ? 'checked' : ''} onchange="app.pronunciationCandidates[${i}].selected=this.checked"><input class="px-2 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.word)}" oninput="app.pronunciationCandidates[${i}].word=this.value"><input class="col-start-2 sm:col-start-auto px-2 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.pronunciation)}" oninput="app.pronunciationCandidates[${i}].pronunciation=this.value"><div class="col-start-2 sm:col-start-auto flex gap-1"><select class="px-2 py-2 border rounded-lg text-xs" onchange="app.pronunciationCandidates[${i}].scope=this.value"><option value="question" ${x.scope !== 'global' ? 'selected' : ''}>この問題だけ</option><option value="global" ${x.scope === 'global' ? 'selected' : ''}>すべての問題</option></select><button onclick="app.pronunciationCandidates.splice(${i},1);app.renderPronunciationCandidates()" class="text-red-600 text-xs">削除</button></div></div>`).join(''); },
-    addPronunciationCandidate() { this.pronunciationCandidates.push({ word: '', pronunciation: '', selected: true, scope: 'question' }); this.renderPronunciationCandidates(); },
-    testSelectedPronunciations() { const x = this.pronunciationCandidates.filter(x => x.selected && x.pronunciation); if (!x.length) return this.showToast('候補を選択してください', 'error'); const u = new SpeechSynthesisUtterance(x.map(x => x.pronunciation).join('、')); u.lang = 'ja-JP'; this.synth.cancel(); this.synth.speak(u); },
-    savePronunciationSettings() { const r = this.getQuestionByIdAcrossSets(document.getElementById('pronunciation-question-id').value), globals = new Set(this.dictionary.map(x => x.word)), selected = this.pronunciationCandidates.filter(x => x.selected && x.word.trim() && x.pronunciation.trim() && !globals.has(x.word.trim())); if (!selected.length) return this.showToast('登録候補を選択してください', 'error'); const local = r.q.pronunciations || []; selected.forEach(x => { const e = { word: x.word.trim(), pronunciation: x.pronunciation.trim() }; if (x.scope === 'global') { this.dictionary.push(e); const i = local.findIndex(y => y.word === e.word); if (i >= 0) local.splice(i, 1); } else { const i = local.findIndex(y => y.word === e.word); if (i >= 0) local[i] = e; else local.push(e); } }); r.q.pronunciations = local; r.set.questions[r.index] = r.q; this.saveDictionary(); this.dictionaryManager.render(); this.saveStudySets(); this.renderDetailPronunciations(r.q); this.closePronunciationModal(); this.showToast(`${selected.length}件登録しました`, 'success'); },
+    renderPronunciationCandidates() { const list = document.getElementById('pronunciation-candidate-list'), empty = document.getElementById('pronunciation-empty'), globals = new Set(this.dictionary.map(x => x.word)); this.aiManager.pronunciationCandidates = (this.aiManager.pronunciationCandidates || []).filter(x => !globals.has(x.word)); empty.classList.toggle('hidden', this.aiManager.pronunciationCandidates.length > 0); list.innerHTML = this.aiManager.pronunciationCandidates.map((x, i) => `<div class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_auto] gap-2 items-center border rounded-xl p-3"><input type="checkbox" ${x.selected !== false ? 'checked' : ''} onchange="app.aiManager.pronunciationCandidates[${i}].selected=this.checked"><input class="px-2 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.word)}" oninput="app.aiManager.pronunciationCandidates[${i}].word=this.value"><input class="col-start-2 sm:col-start-auto px-2 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.pronunciation)}" oninput="app.aiManager.pronunciationCandidates[${i}].pronunciation=this.value"><div class="col-start-2 sm:col-start-auto flex gap-1"><select class="px-2 py-2 border rounded-lg text-xs" onchange="app.aiManager.pronunciationCandidates[${i}].scope=this.value"><option value="question" ${x.scope !== 'global' ? 'selected' : ''}>この問題だけ</option><option value="global" ${x.scope === 'global' ? 'selected' : ''}>すべての問題</option></select><button onclick="app.aiManager.pronunciationCandidates.splice(${i},1);app.renderPronunciationCandidates()" class="text-red-600 text-xs">削除</button></div></div>`).join(''); },
+    addPronunciationCandidate() { this.aiManager.pronunciationCandidates.push({ word: '', pronunciation: '', selected: true, scope: 'question' }); this.renderPronunciationCandidates(); },
+    testSelectedPronunciations() { const x = this.aiManager.pronunciationCandidates.filter(x => x.selected && x.pronunciation); if (!x.length) return this.showToast('候補を選択してください', 'error'); const u = new SpeechSynthesisUtterance(x.map(x => x.pronunciation).join('、')); u.lang = 'ja-JP'; this.synth.cancel(); this.synth.speak(u); },
+    savePronunciationSettings() { const r = this.getQuestionByIdAcrossSets(document.getElementById('pronunciation-question-id').value), globals = new Set(this.dictionary.map(x => x.word)), selected = this.aiManager.pronunciationCandidates.filter(x => x.selected && x.word.trim() && x.pronunciation.trim() && !globals.has(x.word.trim())); if (!selected.length) return this.showToast('登録候補を選択してください', 'error'); const local = r.q.pronunciations || []; selected.forEach(x => { const e = { word: x.word.trim(), pronunciation: x.pronunciation.trim() }; if (x.scope === 'global') { this.dictionary.push(e); const i = local.findIndex(y => y.word === e.word); if (i >= 0) local.splice(i, 1); } else { const i = local.findIndex(y => y.word === e.word); if (i >= 0) local[i] = e; else local.push(e); } }); r.q.pronunciations = local; r.set.questions[r.index] = r.q; this.saveDictionary(); this.dictionaryManager.render(); this.saveStudySets(); this.renderDetailPronunciations(r.q); this.closePronunciationModal(); this.showToast(`${selected.length}件登録しました`, 'success'); },
     renderDetailPronunciations(q) { const box = document.getElementById('detail-pronunciation-list'); if (!box) return; const x = q && q.pronunciations ? q.pronunciations : []; box.innerHTML = x.length ? x.map((d, i) => `<div class="flex justify-between bg-white border rounded-lg px-3 py-2"><span class="text-sm">${this.escapeHTML(d.word)} → ${this.escapeHTML(d.pronunciation)}</span><button onclick="app.removeLocalPronunciation(${i})" class="text-red-600 text-xs">削除</button></div>`).join('') : '<p class="text-xs text-soft-green-500">この問題固有の読み方は未設定です。</p>'; },
     removeLocalPronunciation(i) { const r = this.getQuestionByIdAcrossSets(document.getElementById('detail-question-id').value); r.q.pronunciations.splice(i, 1); r.set.questions[r.index] = r.q; this.saveStudySets(); this.renderDetailPronunciations(r.q); },
     switchAIGeneratorTab(tab) {
@@ -1388,7 +1345,7 @@ ${text}
     resetMemoImport(showMessage = true) {
         const memo = document.getElementById('ai-memo-list'); if (memo) memo.value = '';
         const difficulty = document.getElementById('ai-memo-difficulty'); if (difficulty) difficulty.value = '中級';
-        this.memoNormalizedAnswers = []; this.pendingMemoQuestions = [];
+        this.aiManager.memoNormalizedAnswers = []; this.aiManager.pendingMemoQuestions = [];
         const normalizedList = document.getElementById('ai-memo-normalized-list'); if (normalizedList) normalizedList.innerHTML = '';
         const previewList = document.getElementById('ai-memo-preview-list'); if (previewList) previewList.innerHTML = '';
         const memoNormalized = document.getElementById('ai-memo-normalized'); if (memoNormalized) memoNormalized.classList.add('hidden');
@@ -1421,176 +1378,6 @@ ${text}
         const count = this.parseMemoCandidates().length, el = document.getElementById('ai-memo-count');
         if (el) { el.textContent = `有効候補数: ${count} / 10`; el.classList.toggle('text-red-600', count > 10); }
         const btn = document.getElementById('btn-normalize-memo'); if (btn) btn.disabled = count === 0 || count > 10;
-    },
-    async normalizeMemoAnswersWithAI() {
-        if (!this.geminiApiKey) return this.showToast('Gemini APIキーを設定画面で登録してください', 'error');
-        const inputs = this.parseMemoCandidates();
-        if (!inputs.length) return this.showToast('メモを1行以上入力してください', 'error');
-        if (inputs.length > MAX_MEMO_QUESTIONS) return this.showToast(`有効な解答候補は${MAX_MEMO_QUESTIONS}件以内にしてください`, 'error');
-        const loader = document.getElementById('ai-loading'); loader.classList.remove('hidden'); loader.classList.add('flex');
-        try {
-            const prompt = `次のメモをクイズ作成用に補正してください。answerは解答候補、supplementは同姓同名や同名対象を区別し、問題の趣旨を決める補足事項です。タイプミス、誤変換、聞き取りミスを直してください。人物名は補足事項が示す対象に合う正式なフルネームにし、作品・施設・組織・出来事も正式名称にしてください。補足事項も誤記が明らかな場合は補正してください。別人・別対象に取り違えないでください。判断不能なら原文を維持してください。入力順を維持し、JSON配列のみ返してください。形式:[{"input":"原文","answer":"補正した解答","supplement":"補正した補足事項","note":"短い理由"}]\n入力:${JSON.stringify(inputs)}`;
-            const parsed = this.parseAIJSON(await this.fetchGemini(prompt, true));
-            this.memoNormalizedAnswers = inputs.map((input, i) => { const x = (Array.isArray(parsed) ? parsed : [])[i] || {}; return { input: input.raw, answer: String(x.answer || input.answer).trim(), supplement: String(x.supplement || input.supplement || '').trim(), note: String(x.note || '').trim() }; });
-            const list = document.getElementById('ai-memo-normalized-list');
-            list.innerHTML = this.memoNormalizedAnswers.map((x, i) => `<div class="bg-white border border-soft-green-200 rounded-xl p-3 space-y-2"><p class="text-xs text-soft-green-500">入力: ${this.escapeHTML(x.input)}${x.note ? ' / ' + this.escapeHTML(x.note) : ''}</p><div><label class="text-xs font-bold text-soft-green-700">解答候補</label><input class="w-full px-3 py-2 border rounded-lg text-sm font-semibold" value="${this.escapeHTML(x.answer)}" oninput="app.memoNormalizedAnswers[${i}].answer=this.value"></div><div><label class="text-xs font-bold text-soft-green-700">補足事項</label><input class="w-full px-3 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.supplement)}" oninput="app.memoNormalizedAnswers[${i}].supplement=this.value"></div></div>`).join('');
-            document.getElementById('btn-generate-memo').textContent = `${this.memoNormalizedAnswers.length}問を一括作成`;
-            document.getElementById('ai-memo-normalized').classList.remove('hidden');
-            document.getElementById('ai-memo-preview').classList.add('hidden');
-        } catch (e) { this.showToast('名称補正に失敗しました: ' + e.message, 'error'); }
-        finally { loader.classList.add('hidden'); loader.classList.remove('flex'); }
-    },
-    async generateDerivativeData(answer, contextText = '', difficulty = '中級') {
-        const genreCandidates = Object.entries(this.getAISubgenres()).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
-        const prompt = `「${answer}」が唯一の解答となる早押しクイズ問題を1問作成してください。前半は広い手掛かり、後半ほど特定しやすくしてください。すべての手掛かりを内部でファクトチェックし、確実な事実だけを使用してください。解答自体を問題文に書かないでください。難易度:${difficulty}。explanationは、${this.getAIExplanationInstruction()}\n候補からgenreと、その配下のsubgenreを1つずつ選んでください。\n${genreCandidates}\n出力JSON:{"q":"問題文","a":"${answer}","explanation":"解説","genre":"ジャンル","subgenre":"サブジャンル"}\n参考情報:${contextText}`;
-        const data = this.parseAIJSON(await this.fetchGemini(prompt, true));
-        const defs = this.getAISubgenres(), genre = String(data.genre || '').trim(), subgenre = String(data.subgenre || '').trim();
-        if (!data.q || !defs[genre] || !defs[genre].includes(subgenre)) throw new Error(`「${answer}」の生成結果が不正です`);
-        return { q: String(data.q).trim(), a: answer, explanation: String(data.explanation || '').trim(), genre, subgenre, selected: true };
-    },
-    async generateMemoQuestions() {
-        const candidates = (this.memoNormalizedAnswers || []).map(x => ({ answer: String(x.answer || '').trim(), supplement: String(x.supplement || '').trim() })).filter(x => x.answer);
-        if (!candidates.length || candidates.length > MAX_MEMO_QUESTIONS) return this.showToast(`補正済み候補を1〜${MAX_MEMO_QUESTIONS}件にしてください`, 'error');
-        const targetSetId = await this.getTargetSetId('ai-target-set'); if (!targetSetId) return;
-        const target = this.studySets.find(s => s.id === targetSetId), available = Math.min(MAX_QUESTIONS_PER_SET - target.questions.length, MAX_TOTAL_QUESTIONS - this.getTotalQuestionCount());
-        if (candidates.length > available) return this.showToast(`登録可能数は残り${available}問です`, 'error');
-        const loader = document.getElementById('ai-loading'); loader.classList.remove('hidden'); loader.classList.add('flex');
-        try {
-            // 同名でも補足事項が異なれば別候補として生成する。既存解答との重複は保存時に問題文も含めて確認する。
-            const seen = new Set(), unique = [];
-            candidates.forEach(x => { const k = this.normalizeAnswerForDuplicateCheck(x.answer) + '|' + this.normalizeAnswerForDuplicateCheck(x.supplement); if (k && !seen.has(k)) { seen.add(k); unique.push(x); } });
-            const difficulty = document.getElementById('ai-memo-difficulty').value;
-            const results = await this.mapWithConcurrency(unique, 2, async x => { try { const context = x.supplement ? `補足事項「${x.supplement}」で示される人物・対象だけを扱い、同姓同名・同名の別対象と混同しないこと。問題文の手掛かりはこの補足事項の趣旨に合わせること。` : 'メモ取り込みで指定された解答候補'; const data = await this.generateDerivativeData(x.answer, context, difficulty); data.supplement = x.supplement; return data; } catch (e) { return { a: x.answer, supplement: x.supplement, error: e.message, selected: false }; } });
-            this.pendingMemoQuestions = results;
-            document.getElementById('ai-memo-preview-list').innerHTML = results.map((x, i) => x.error ? `<div class="border border-red-200 bg-red-50 rounded-xl p-3"><p class="font-bold text-red-700">${this.escapeHTML(x.a)}${x.supplement ? '（' + this.escapeHTML(x.supplement) + '）' : ''}</p><p class="text-xs text-red-600">${this.escapeHTML(x.error)}</p></div>` : `<label class="block border border-soft-green-200 bg-white rounded-xl p-4"><div class="flex gap-3"><input type="checkbox" checked onchange="app.pendingMemoQuestions[${i}].selected=this.checked"><div><p class="font-bold text-amber-800">${this.escapeHTML(x.a)}${x.supplement ? ' <span class="text-xs text-soft-green-600">（' + this.escapeHTML(x.supplement) + '）</span>' : ''}</p><p class="text-sm mt-2">${this.escapeHTML(x.q)}</p></div></div></label>`).join('');
-            document.getElementById('ai-memo-preview').classList.remove('hidden');
-        } catch (e) { this.showToast('問題生成に失敗しました: ' + e.message, 'error'); }
-        finally { loader.classList.add('hidden'); loader.classList.remove('flex'); }
-    },
-    async saveMemoQuestions() {
-        const targetSetId = await this.getTargetSetId('ai-target-set'); if (!targetSetId) return;
-        const target = this.studySets.find(s => s.id === targetSetId), items = (this.pendingMemoQuestions || []).filter(x => x.selected && !x.error);
-        const available = Math.min(MAX_QUESTIONS_PER_SET - target.questions.length, MAX_TOTAL_QUESTIONS - this.getTotalQuestionCount());
-        const batchKeys = new Set();
-        const saved = []; items.slice(0, available).forEach(x => {
-            const k = this.normalizeAnswerForDuplicateCheck(x.a) + '|' + this.normalizeAnswerForDuplicateCheck(x.supplement || '');
-            const exactQuestionExists = target.questions.some(q => this.normalizeAnswerForDuplicateCheck(q.a) === this.normalizeAnswerForDuplicateCheck(x.a) && this.textSimilarity(q.q, x.q) >= 0.78);
-            if (!batchKeys.has(k) && !exactQuestionExists) { batchKeys.add(k); target.questions.push(this.createQuestionData(x.q, x.a, x.explanation, { genre: x.genre, subgenre: x.subgenre, difficulty: document.getElementById('ai-memo-difficulty').value })); saved.push(x); }
-        });
-        this.saveStudySets(); this.updateSetSelectors(); this.resetMemoImport(false); this.showToast(`${saved.length}問を保存しました`, 'success');
-    },
-    async generateQuestionsWithAI() {
-        if (!this.geminiApiKey) return this.showToast('Gemini APIキーを設定画面で登録してください', 'error');
-        const targetSetId = await this.getTargetSetId('ai-target-set');
-        if (!targetSetId) return;
-        const targetSet = this.studySets.find(s => s.id === targetSetId);
-        const genre = document.getElementById('ai-genre').value;
-        const subgenreElement = document.getElementById('ai-subgenre');
-        const subgenre = subgenreElement && subgenreElement.value ? subgenreElement.value : '';
-        const topic = genre ? '' : document.getElementById('ai-topic').value.trim();
-        const requestedCount = parseInt(document.getElementById('ai-count').value, 10);
-        const difficultyElement = document.getElementById('ai-difficulty');
-        const difficulty = difficultyElement && difficultyElement.value ? difficultyElement.value : '中級';
-        if (!genre && !topic) return this.showToast('ジャンルまたはテーマを入力してください', 'error');
-        if (targetSet.questions.length + requestedCount > MAX_QUESTIONS_PER_SET) return this.showToast(`セットの登録上限(${MAX_QUESTIONS_PER_SET}問)を超過します。`, 'error');
-        if (this.getTotalQuestionCount() + requestedCount > MAX_TOTAL_QUESTIONS) return this.showToast(`アプリ全体の登録上限(${MAX_TOTAL_QUESTIONS}問)を超過します。`, 'error');
-
-        const btn = document.getElementById('btn-generate-ai');
-        const loader = document.getElementById('ai-loading');
-        const loadingTitle = loader.querySelector('p.text-sm');
-        const originalLoadingText = loadingTitle ? loadingTitle.textContent : '';
-        btn.classList.add('hidden'); loader.classList.remove('hidden'); loader.classList.add('flex');
-
-        const existingQuestions = [...targetSet.questions];
-        const usedAnswers = new Set(existingQuestions.map(q => this.normalizeAnswerForDuplicateCheck(q.a)).filter(Boolean));
-        const accepted = [];
-        const acceptedAngles = [];
-        const defs = this.getAISubgenres();
-        let retries = 0;
-        try {
-            while (accepted.length < requestedCount && retries < 3) {
-                const shortage = requestedCount - accepted.length;
-                if (loadingTitle) loadingTitle.textContent = `解答と出題観点を設計中... (${accepted.length}/${requestedCount})`;
-                const plansRaw = await this.generateQuestionPlansWithAI({
-                    count: shortage, genre, subgenre, topic, difficulty,
-                    excludedAnswers: [...usedAnswers], excludedAngles: acceptedAngles
-                });
-                const planKeys = new Set();
-                const plans = [];
-                for (const raw of plansRaw) {
-                    const answer = String(raw.answer || raw.a || '').trim();
-                    const key = this.normalizeAnswerForDuplicateCheck(answer);
-                    const aliases = Array.isArray(raw.aliases) ? raw.aliases.map(x => String(x).trim()).filter(Boolean) : [];
-                    const aliasKeys = aliases.map(x => this.normalizeAnswerForDuplicateCheck(x));
-                    if (!answer || !key || usedAnswers.has(key) || aliasKeys.some(k => usedAnswers.has(k)) || planKeys.has(key)) continue;
-                    const angle = String(raw.angle || '').trim();
-                    const keywords = Array.isArray(raw.keywords) ? raw.keywords.map(String) : [];
-                    if (plans.some(p => this.textSimilarity([angle, ...keywords].join(' '), [p.angle, ...(p.keywords || [])].join(' ')) >= 0.68)) continue;
-                    const assignedGenre = defs[raw.genre] ? raw.genre : (genre || 'ノンセク');
-                    let assignedSubgenre = String(raw.subgenre || subgenre || '').trim();
-                    if (!(defs[assignedGenre] || []).includes(assignedSubgenre)) assignedSubgenre = (defs[assignedGenre] || [])[0] || '';
-                    plans.push({ answer, aliases, angle, keywords, genre: assignedGenre, subgenre: assignedSubgenre });
-                    planKeys.add(key);
-                    if (plans.length >= shortage) break;
-                }
-                if (!plans.length) { retries++; continue; }
-
-                const batches = [];
-                for (let i = 0; i < plans.length; i += 5) batches.push(plans.slice(i, i + 5));
-                const priorSummaries = accepted.map(x => ({ answer: x.a, angle: x.angle, keywords: x.keywords }));
-                let completedBatches = 0;
-                const batchResults = await this.mapWithConcurrency(batches, 2, async batch => {
-                    const result = await this.generateQuestionBatchFromPlans(batch, difficulty, priorSummaries);
-                    completedBatches++;
-                    if (loadingTitle) loadingTitle.textContent = `問題文を生成中... (${completedBatches}/${batches.length}バッチ)`;
-                    return { batch, result };
-                });
-
-                for (const { batch, result } of batchResults) {
-                    for (const item of result) {
-                        const plan = batch.find(p => this.normalizeAnswerForDuplicateCheck(p.answer) === this.normalizeAnswerForDuplicateCheck(item.a));
-                        if (!plan || !item.q || !item.a) continue;
-                        const key = this.normalizeAnswerForDuplicateCheck(item.a);
-                        if (usedAnswers.has(key)) continue;
-                        const candidate = {
-                            q: String(item.q).trim(), a: plan.answer,
-                            explanation: String(item.explanation || '').trim(),
-                            genre: plan.genre, subgenre: plan.subgenre,
-                            angle: plan.angle, keywords: plan.keywords
-                        };
-                        if (this.isSimilarQuestionCandidate(candidate, accepted, existingQuestions)) continue;
-                        usedAnswers.add(key);
-                        plan.aliases.forEach(a => usedAnswers.add(this.normalizeAnswerForDuplicateCheck(a)));
-                        accepted.push(candidate);
-                        acceptedAngles.push(candidate.angle);
-                        if (accepted.length >= requestedCount) break;
-                    }
-                    if (accepted.length >= requestedCount) break;
-                }
-                retries++;
-            }
-
-            // 保存直前の最終重複検査
-            const finalExisting = new Set(targetSet.questions.map(q => this.normalizeAnswerForDuplicateCheck(q.a)));
-            const finalItems = [];
-            for (const item of accepted) {
-                const key = this.normalizeAnswerForDuplicateCheck(item.a);
-                if (!key || finalExisting.has(key)) continue;
-                finalExisting.add(key);
-                finalItems.push(item);
-            }
-            finalItems.forEach(item => targetSet.questions.push(this.createQuestionData(item.q, item.a, item.explanation, { genre: item.genre, subgenre: item.subgenre, difficulty })));
-            this.saveStudySets();
-            if (finalItems.length) this.showToast(`${finalItems.length}問生成しました${finalItems.length < requestedCount ? `（重複・類似を除外したため指定数未満）` : '！'}`, 'success');
-            else this.showToast('重複しない問題を生成できませんでした。条件を変更して再試行してください。', 'error');
-            if (finalItems.length && document.getElementById('ai-topic')) document.getElementById('ai-topic').value = '';
-        } catch (e) {
-            console.error('AI question generation error', e);
-            this.showToast('生成失敗: ' + e.message, 'error');
-        } finally {
-            if (loadingTitle) loadingTitle.textContent = originalLoadingText;
-            btn.classList.remove('hidden'); loader.classList.add('hidden'); loader.classList.remove('flex');
-        }
     },
 
     async mapWithConcurrency(items, limit, worker) {

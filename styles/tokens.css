@@ -1,0 +1,15 @@
+:root {
+    --color-primary: #2f8f5e;
+    --color-primary-hover: #267b52;
+    --color-bg: #f2fbf5;
+    --color-surface: #ffffff;
+    --color-border: #dfece5;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --app-height: 100vh;
+}
+
+@supports (height: 100dvh) {
+    :root { --app-height: 100dvh; }
+}

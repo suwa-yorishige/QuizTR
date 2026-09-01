@@ -1,0 +1,27 @@
+@media (min-width: 768px) {
+    .app-view { padding: 2rem; }
+}
+
+@media (max-width: 767px) {
+    body > header { gap: 0.35rem; padding-block-end: 0.45rem; }
+    body > header h1 { min-width: 2rem; flex: 0 0 auto; }
+    body > header > div { flex: 1 1 auto; justify-content: flex-end; }
+    body > header button { min-width: 2.5rem; min-height: 2.5rem; padding: 0.5rem; }
+    main > [id^="view-"] { padding-top: 1rem; padding-left: 0.75rem; padding-right: 0.75rem; }
+    #view-quiz > div:first-child { padding-top: max(0.5rem, env(safe-area-inset-top, 0px)); }
+    #view-quiz > div:last-child { justify-content: flex-start; padding-top: 0.75rem; }
+    #quiz-state-playing { gap: 1.5rem; }
+    .buzzer-btn { width: min(10rem, 42vw); height: min(10rem, 42vw); }
+    #quiz-state-thinking > div { padding: 1.25rem; }
+    #answer-container .flex.flex-col.sm\:flex-row { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+@media (max-height: 700px) {
+    body > header { padding-block-end: 0.35rem; min-height: 3rem; }
+    main > [id^="view-"] { padding-top: 0.75rem; }
+    #quiz-state-playing { gap: 1rem; }
+    .buzzer-btn { width: 8.5rem; height: 8.5rem; }
+    #quiz-state-thinking > div { padding-top: 1rem; padding-bottom: 1rem; }
+    #quiz-question-text { margin-bottom: 1rem; }
+    #answer-container { margin-top: 0.75rem; }
+}

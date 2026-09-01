@@ -1,0 +1,11 @@
+.modal {
+    padding-top: max(1rem, env(safe-area-inset-top, 0px));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+.modal__panel { width: 100%; }
+.modal__header { border-bottom: 1px solid var(--color-border); }
+.modal__body { min-height: 0; }
+.modal__footer { display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+#custom-modal, #question-detail-modal { padding-top: max(1rem, env(safe-area-inset-top, 0px)); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }

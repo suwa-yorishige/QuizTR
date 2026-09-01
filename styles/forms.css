@@ -1,0 +1,19 @@
+.form-control,
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    border: 1px solid #a7d4bf;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.875rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+    background-color: var(--color-surface);
+}
+
+.form-control--textarea, .form-textarea { min-height: 5rem; resize: vertical; }
+.form-control:focus, .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: #3ba471;
+    box-shadow: 0 0 0 2px rgba(59, 164, 113, 0.2);
+}

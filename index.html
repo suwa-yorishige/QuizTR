@@ -42,7 +42,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
 
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles/tokens.css">
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/buttons.css">
+    <link rel="stylesheet" href="styles/forms.css">
+    <link rel="stylesheet" href="styles/cards.css">
+    <link rel="stylesheet" href="styles/modal.css">
+    <link rel="stylesheet" href="styles/quiz.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/responsive.css">
 
 </head>
 
@@ -1135,8 +1144,8 @@
 
     <!-- Custom Modal -->
     <div id="custom-modal"
-        class="hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[130] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300"
+        class="modal hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[130] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300"
             id="custom-modal-panel">
             <div class="p-6">
                 <h3 class="text-xl font-bold text-soft-green-900 mb-2" id="modal-title">確認</h3>
@@ -1159,8 +1168,8 @@
 
     <!-- Question Detail Modal -->
     <div id="question-detail-modal"
-        class="hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300"
+        class="modal hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300"
             id="question-detail-panel">
             <div class="p-5 md:p-6 space-y-4">
                 <div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3">
@@ -1253,9 +1262,9 @@
     </div>
     <!-- Derivative Question Modal -->
     <div id="derivative-modal"
-        class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[120] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        class="modal hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[120] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div id="derivative-panel"
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+            class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
             <div class="p-5 md:p-6 space-y-4">
                 <div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3">
                     <div>
@@ -1296,9 +1305,9 @@
     </div>
     <!-- Pronunciation Modal -->
     <div id="pronunciation-modal"
-        class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[140] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        class="modal hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[140] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div id="pronunciation-panel"
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+            class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
             <div class="p-5 md:p-6 space-y-4">
                 <div class="flex justify-between border-b pb-3">
                     <div>
@@ -1331,9 +1340,9 @@
     </div>
     <!-- Regenerate Policy Modal -->
     <div id="regenerate-policy-modal"
-        class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[145] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        class="modal hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[145] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div id="regenerate-policy-panel"
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300">
+            class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300">
             <div class="p-6 space-y-4">
                 <div class="flex justify-between border-b pb-3">
                     <div>
@@ -1356,9 +1365,9 @@
     </div>
     <!-- Comparison Modal -->
     <div id="regenerate-compare-modal"
-        class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        class="modal hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div id="regenerate-compare-panel"
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+            class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
             <div class="p-6 space-y-4">
                 <div>
                     <h3 class="text-xl font-bold text-soft-green-900">再作成結果の比較</h3>
@@ -1384,9 +1393,9 @@
 
     <!-- Duplicate Question Merge Modal -->
     <div id="duplicate-merge-modal"
-        class="hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[155] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        class="modal hidden fixed inset-0 bg-soft-green-950/50 backdrop-blur-sm z-[155] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div id="duplicate-merge-panel"
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+            class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300">
             <div class="p-5 md:p-6 space-y-4">
                 <div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3">
                     <div>

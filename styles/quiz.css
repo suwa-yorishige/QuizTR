@@ -1,0 +1,12 @@
+#view-quiz { min-height: 0; }
+#view-quiz > div:last-child { padding-bottom: max(6rem, calc(1.5rem + env(safe-area-inset-bottom, 0px))); }
+
+.buzzer-btn {
+    background: radial-gradient(circle at 30% 30%, #ef4444, #b91c1c);
+    box-shadow: 0 10px 25px rgba(220, 38, 38, 0.4), inset 0 5px 15px rgba(255, 255, 255, 0.4);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.buzzer-btn:active {
+    transform: scale(0.95) translateY(5px);
+    box-shadow: 0 5px 15px rgba(220, 38, 38, 0.5), inset 0 2px 5px rgba(255, 255, 255, 0.4);
+}

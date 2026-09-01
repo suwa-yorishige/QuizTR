@@ -1,0 +1,18 @@
+.card,
+.card--default {
+    background-color: #f2fbf5;
+    background-color: var(--color-bg);
+    border: 1px solid #dfece5;
+    border-color: var(--color-border);
+    border-radius: 1rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 2px rgba(21, 70, 49, 0.08);
+}
+
+.card--surface,
+.card-white {
+    background-color: #fff;
+    background-color: var(--color-surface);
+    border: 1px solid #cfe4d8;
+    border-radius: var(--radius-md);
+}

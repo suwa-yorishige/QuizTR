@@ -27,6 +27,7 @@ const app = {
 
     geminiApiKey: "",
     ttsApiKey: "",
+    theme: 'default',
 
 
     //問題一覧ページング用変数
@@ -127,9 +128,12 @@ const app = {
 
             this.geminiApiKey = localStorage.getItem('quiz_gemini_key') || "";
             this.ttsApiKey = localStorage.getItem('quiz_tts_key') || "";
+            this.theme = this.getStoredTheme();
+            this.applyTheme(this.theme);
 
             document.getElementById('setting-gemini-key').value = this.geminiApiKey;
             document.getElementById('setting-tts-key').value = this.ttsApiKey;
+            document.querySelector(`input[name="setting-theme"][value="${this.theme}"]`).checked = true;
         } catch (e) {
             console.error("Data loading error", e);
             this.studySets = [this.createEmptySet('学習セット1')];
@@ -160,9 +164,27 @@ const app = {
     saveSettings() {
         this.geminiApiKey = document.getElementById('setting-gemini-key').value.trim();
         this.ttsApiKey = document.getElementById('setting-tts-key').value.trim();
+        const selectedTheme = document.querySelector('input[name="setting-theme"]:checked')?.value;
+        this.theme = this.normalizeTheme(selectedTheme);
+        this.applyTheme(this.theme);
         localStorage.setItem('quiz_gemini_key', this.geminiApiKey);
         localStorage.setItem('quiz_tts_key', this.ttsApiKey);
-        this.showToast('APIキーを保存しました', 'success');
+        localStorage.setItem('quiz_theme', this.theme);
+        this.showToast('設定を保存しました', 'success');
+    },
+
+    normalizeTheme(theme) {
+        return ['default', 'aqua', 'dark'].includes(theme) ? theme : 'default';
+    },
+
+    getStoredTheme() {
+        return this.normalizeTheme(localStorage.getItem('quiz_theme'));
+    },
+
+    applyTheme(theme) {
+        const normalizedTheme = this.normalizeTheme(theme);
+        document.documentElement.dataset.theme = normalizedTheme === 'default' ? '' : normalizedTheme;
+        this.renderLearningSummary();
     },
 
     switchView(viewId) {
@@ -892,15 +914,15 @@ const app = {
         let html = '';
 
         html += `
-            <text x="0" y="10" font-size="10" fill="#4b7f68">${max}</text>
-            <text x="0" y="60" font-size="10" fill="#4b7f68">${Math.round(max / 2)}</text>
-            <text x="0" y="118" font-size="10" fill="#4b7f68">0</text>
+            <text x="0" y="10" font-size="10" fill="var(--color-chart-text)">${max}</text>
+            <text x="0" y="60" font-size="10" fill="var(--color-chart-text)">${Math.round(max / 2)}</text>
+            <text x="0" y="118" font-size="10" fill="var(--color-chart-text)">0</text>
         `;
 
         html += `
-            <line x1="20" y1="0" x2="300" y2="0" stroke="#d5e8dc" stroke-width="1"/>
-            <line x1="20" y1="50" x2="300" y2="50" stroke="#d5e8dc" stroke-width="1"/>
-            <line x1="20" y1="100" x2="300" y2="100" stroke="#d5e8dc" stroke-width="1"/>
+            <line x1="20" y1="0" x2="300" y2="0" stroke="var(--color-chart-grid)" stroke-width="1"/>
+            <line x1="20" y1="50" x2="300" y2="50" stroke="var(--color-chart-grid)" stroke-width="1"/>
+            <line x1="20" y1="100" x2="300" y2="100" stroke="var(--color-chart-grid)" stroke-width="1"/>
         `;
 
         values.forEach((value, i) => {
@@ -910,7 +932,7 @@ const app = {
             const d = new Date();
             d.setDate(d.getDate() - (period - 1 - i));
             const label = `${d.getMonth() + 1}/${d.getDate()} : ${value}問`;
-            const fill = value > 0 ? '#3ba471' : '#dfece5';
+            const fill = value > 0 ? 'var(--color-chart-bar)' : 'var(--color-chart-empty-bar)';
 
             html += `
                 <rect
@@ -930,7 +952,7 @@ const app = {
                 y1="120"
                 x2="300"
                 y2="120"
-                stroke="#d5e8dc"
+                stroke="var(--color-chart-grid)"
                 stroke-width="1"/>
         `;
 

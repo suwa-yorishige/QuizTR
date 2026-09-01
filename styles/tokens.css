@@ -4,6 +4,24 @@
     --color-bg: #f2fbf5;
     --color-surface: #ffffff;
     --color-border: #dfece5;
+    --color-control-border: #a7d4bf;
+    --color-focus: #3ba471;
+    --color-focus-ring: rgba(59, 164, 113, 0.2);
+    --color-chart-text: #4b7f68;
+    --color-chart-grid: #d5e8dc;
+    --color-chart-bar: #3ba471;
+    --color-chart-empty-bar: #dfece5;
+    --theme-50: #f2fbf5;
+    --theme-100: #e1f6e8;
+    --theme-200: #c3ecd4;
+    --theme-300: #95dbb4;
+    --theme-400: #5fc28f;
+    --theme-500: #3ba471;
+    --theme-600: #2a8459;
+    --theme-700: #236948;
+    --theme-800: #1f533a;
+    --theme-900: #1a4431;
+    --theme-950: #123024;
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
@@ -12,4 +30,57 @@
 
 @supports (height: 100dvh) {
     :root { --app-height: 100dvh; }
+}
+
+:root[data-theme="aqua"] {
+    --color-primary: #047f9d;
+    --color-primary-hover: #036b85;
+    --color-bg: #ecf9fc;
+    --color-surface: #ffffff;
+    --color-border: #c8e8ef;
+    --color-control-border: #82d2df;
+    --color-focus: #1595b2;
+    --color-focus-ring: rgb(21 149 178 / 0.2);
+    --color-chart-text: #28778a;
+    --color-chart-grid: #b8e4ec;
+    --color-chart-bar: #1595b2;
+    --color-chart-empty-bar: #d8f2f7;
+    --theme-50: #ecf9fc;
+    --theme-100: #d8f2f7;
+    --theme-200: #b8e4ec;
+    --theme-300: #82d2df;
+    --theme-400: #3fb5ca;
+    --theme-500: #1595b2;
+    --theme-600: #047f9d;
+    --theme-700: #036b85;
+    --theme-800: #07536a;
+    --theme-900: #083f52;
+    --theme-950: #042b39;
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-primary: #22c5c7;
+    --color-primary-hover: #5ee2df;
+    --color-bg: #101827;
+    --color-surface: #192334;
+    --color-border: #33445b;
+    --color-control-border: #47617a;
+    --color-focus: #22c5c7;
+    --color-focus-ring: rgb(34 197 199 / 0.28);
+    --color-chart-text: #b8e4e7;
+    --color-chart-grid: #3b5169;
+    --color-chart-bar: #22c5c7;
+    --color-chart-empty-bar: #2b4159;
+    --theme-50: #e6f4f5;
+    --theme-100: #c4e7e9;
+    --theme-200: #98d6da;
+    --theme-300: #68bec5;
+    --theme-400: #3da1ab;
+    --theme-500: #2d838f;
+    --theme-600: #236a77;
+    --theme-700: #1b5360;
+    --theme-800: #173e4b;
+    --theme-900: #101827;
+    --theme-950: #09111d;
 }

@@ -7,6 +7,20 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>早押しクイズ学習アプリ</title>
 
+    <script>
+        (() => {
+            const themes = ['default', 'aqua', 'dark'];
+            try {
+                const theme = localStorage.getItem('quiz_theme');
+                if (themes.includes(theme) && theme !== 'default') {
+                    document.documentElement.dataset.theme = theme;
+                }
+            } catch (error) {
+                console.warn('Theme preference could not be loaded.', error);
+            }
+        })();
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script>
@@ -52,6 +66,7 @@
     <link rel="stylesheet" href="styles/quiz.css">
     <link rel="stylesheet" href="styles/animations.css">
     <link rel="stylesheet" href="styles/responsive.css">
+    <link rel="stylesheet" href="styles/themes.css">
 
 </head>
 
@@ -978,6 +993,33 @@
                     </p>
 
                     <div class="space-y-4">
+                        <fieldset class="theme-picker bg-white p-4 rounded-xl border border-soft-green-200">
+                            <legend class="block text-sm font-bold text-soft-green-800 px-0">画面の配色</legend>
+                            <p class="text-xs text-soft-green-600 mt-1 mb-3">見やすい配色を選択できます。</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <label class="theme-option">
+                                    <input type="radio" name="setting-theme" value="default" checked>
+                                    <span class="theme-option__content theme-option__content--default">
+                                        <span class="theme-option__swatch"></span>
+                                        <span class="font-bold">緑</span>
+                                    </span>
+                                </label>
+                                <label class="theme-option">
+                                    <input type="radio" name="setting-theme" value="aqua">
+                                    <span class="theme-option__content theme-option__content--aqua">
+                                        <span class="theme-option__swatch"></span>
+                                        <span class="font-bold">水色</span>
+                                    </span>
+                                </label>
+                                <label class="theme-option">
+                                    <input type="radio" name="setting-theme" value="dark">
+                                    <span class="theme-option__content theme-option__content--dark">
+                                        <span class="theme-option__swatch"></span>
+                                        <span class="font-bold">ダーク</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </fieldset>
                         <div class="bg-white p-4 rounded-xl border border-soft-green-200">
                             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mb-1">
                                 <label class="block text-sm font-bold text-soft-green-800">Gemini APIキー</label>

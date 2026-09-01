@@ -111,7 +111,7 @@ class DictionaryManager {
         if (text.includes('\uFFFD')) throw new Error('文字化けを検出しました。UTF-8形式のCSVファイルで再試行してください。');
         
         text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-        const rows = this.app.parseCSVContent(text); 
+        const rows = CSVUtils.parse(text);
         const entries = [];
         
         rows.forEach((row, index) => { 
@@ -150,7 +150,7 @@ class DictionaryManager {
         if (this.dictionary.length === 0) return this.app.showToast('保存する辞書データがありません', 'error');
         
         const rows = [['単語', '読み方'], ...this.dictionary.map(d => [d.word, d.pronunciation])];
-        const csv = rows.map(row => row.map(v => this.app.escapeCSVValue(v)).join(',')).join('\r\n');
+        const csv = CSVUtils.export(rows);
         
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }); 
         const url = URL.createObjectURL(blob); 

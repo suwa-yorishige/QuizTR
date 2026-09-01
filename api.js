@@ -1,9 +1,10 @@
 // api.js
 const api = {
+    /** Gemini APIへプロンプトを送信し、生成されたテキストを取得する。 */
     async fetchGemini(apiKey, prompt, isJson = false) {
-        const key = apiKey || ""; 
+        const key = apiKey || "";
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`;
-        
+
         const payload = {
             contents: [{ parts: [{ text: prompt }] }]
         };
@@ -28,10 +29,11 @@ const api = {
         }
     },
 
+    /** Google Cloud Text-to-Speech APIでSSMLを音声データへ変換する。 */
     async fetchCloudTextToSpeechAPI(apiKey, ssml) {
         if (!apiKey) throw new Error("Google Cloud Text-to-Speech APIキーが設定されていません。");
         const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-        
+
         const payload = {
             input: { ssml: ssml },
             voice: { languageCode: "ja-JP", name: "ja-JP-Neural2-B" },

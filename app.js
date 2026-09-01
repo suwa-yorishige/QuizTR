@@ -42,7 +42,9 @@ const app = {
         this.questionManager = new QuestionManager(this);
         this.quizManager = new QuizManager(this);
         this.aiManager = new AIManager(this);
+        this.dataManager = new DataManager(this);
 
+        this.dataManager.bindEvents();
         this.dictionaryManager.load(); //辞書データ読み込み
         this.updateViewportHeight();
         window.addEventListener('resize', () => this.updateViewportHeight(), { passive: true });
@@ -633,36 +635,6 @@ const app = {
     switchGenreAnalysisTab(standard) { this.managerGenreStandard = standard === 'qma' ? 'qma' : 'aql'; this.renderManagerStats(); },
     toQMAGenre(aqlGenre) { return QMA_GENRE_MAP[aqlGenre || ''] || 'ノンジャンル'; },
 
-    async getTargetSetId(selectElementId, defaultSetName = '') {
-        const val = document.getElementById(selectElementId).value;
-        if (val === '_new_') {
-            if (this.studySets.length >= MAX_SETS) {
-                this.showToast(`学習セットは最大${MAX_SETS}個までです。`, 'error');
-                document.getElementById(selectElementId).value = this.studySets[0].id;
-                return null;
-            }
-            const initialSetName = String(defaultSetName || '').trim().substring(0, MAX_SET_NAME_LENGTH);
-            const name = await this.showPromptModal('セットの作成', '新しい学習セットの名前を入力してください', initialSetName, '最大30文字', MAX_SET_NAME_LENGTH);
-            if (name === null) {
-                document.getElementById(selectElementId).value = this.studySets[0].id;
-                return null;
-            }
-            const trimmedName = name.trim().substring(0, MAX_SET_NAME_LENGTH);
-            if (!trimmedName) {
-                this.showToast('セット名が無効です', 'error');
-                document.getElementById(selectElementId).value = this.studySets[0].id;
-                return null;
-            }
-            const newSet = this.createEmptySet(trimmedName);
-            this.studySets.push(newSet);
-            this.saveStudySets();
-            this.updateSetSelectors();
-            document.getElementById(selectElementId).value = newSet.id;
-            return newSet.id;
-        }
-        return val;
-    },
-
     async createNewSet() {
         if (this.studySets.length >= MAX_SETS) {
             return this.showToast(`学習セットは最大${MAX_SETS}個までです。`, 'error');
@@ -783,177 +755,9 @@ const app = {
         return await this.aiManager.generateDerivativeData(answer, contextText, difficulty);
     },
 
-    async handleFileUpload(event) {
-        const input = event.target;
-        const file = input.files[0];
-        if (!file) return;
-
-        const targetSetId = await this.getTargetSetId('csv-target-set', file.name);
-        if (!targetSetId) {
-            input.value = '';
-            return;
-        }
-        const targetSet = this.studySets.find(s => s.id === targetSetId);
-
-        if (targetSet.questions.length >= MAX_QUESTIONS_PER_SET) {
-            this.showToast(`対象セットの登録上限(${MAX_QUESTIONS_PER_SET}問)に達しています。`, 'error');
-            input.value = '';
-            return;
-        }
-
-        const encoding = document.getElementById('csv-encoding').value || 'UTF-8';
-        try {
-            const text = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
-                reader.readAsText(file, encoding);
-            });
-            await this.processCSVText(text, targetSet);
-        } catch (err) {
-            this.showToast(err.message || '予期せぬエラーが発生しました。', 'error');
-            console.error(err);
-        } finally {
-            input.value = '';
-        }
-    },
-
-    parseCSVContent(text) {
-        const delimiter = (text.indexOf(',') === -1 && text.indexOf('\t') !== -1) ? '\t' : ',';
-        const rows = [];
-        let row = [];
-        let cell = '';
-        let inQuotes = false;
-
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            if (char === '"') {
-                if (inQuotes && text[i + 1] === '"') {
-                    cell += '"';
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (char === delimiter && !inQuotes) {
-                row.push(cell);
-                cell = '';
-            } else if (char === '\n' && !inQuotes) {
-                row.push(cell);
-                if (row.some(c => c.trim() !== '')) rows.push(row);
-                row = [];
-                cell = '';
-            } else {
-                cell += char;
-            }
-        }
-        if (cell || row.length > 0) {
-            row.push(cell);
-            if (row.some(c => c.trim() !== '')) rows.push(row);
-        }
-        return rows;
-    },
-
-    /**
-     * 問題CSVテキストのパースと取り込み
-     * @param {string} rawText 
-     * @param {string} targetSet 
-     */
-    async processCSVText(rawText, targetSet) {
-        let text = rawText;
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-        if (text.includes('\uFFFD')) {
-            throw new Error('文字化けを検出しました。文字コード(UTF-8 / Shift_JIS)を変更して再試行してください。');
-        }
-        text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-        const rows = this.parseCSVContent(text);
-        let newItems = [];
-        rows.forEach(r => {
-            const q = (r[0] || '').trim();
-            const a = (r[1] || '').trim();
-            const explanation = (r[2] || '').trim();
-            const genre = (r[3] || '').trim();
-            const subgenre = (r[4] || '').trim();
-            if (q && a) {
-                newItems.push(this.createQuestionData(q, a, explanation, { genre, subgenre }));
-            }
-        });
-
-        if (newItems.length === 0) {
-            throw new Error('有効な問題データが見つかりませんでした。ファイル形式をご確認ください。');
-        }
-
-        const availableSpace = Math.min(MAX_QUESTIONS_PER_SET - targetSet.questions.length, MAX_TOTAL_QUESTIONS - this.getTotalQuestionCount());
-        if (availableSpace <= 0) throw new Error(`登録上限に達しています（セット上限${MAX_QUESTIONS_PER_SET}問、アプリ全体上限${MAX_TOTAL_QUESTIONS}問）。`);
-
-        if (newItems.length > availableSpace) {
-            const confirmed = await this.showModal('上限オーバー', `セットの登録上限を超えるため、最初の${availableSpace}問のみ追加します。取り込みますか？`);
-            if (!confirmed) return;
-            newItems = newItems.slice(0, availableSpace);
-        } else {
-            const confirmed = await this.showModal('確認', `${newItems.length}問の問題があります。「${targetSet.name}」に取り込みますか？`);
-            if (!confirmed) return;
-        }
-
-        const csvAddExplanation = document.getElementById('csv-add-explanation');
-        const shouldAddExp = csvAddExplanation ? csvAddExplanation.checked : false;
-        targetSet.questions.push(...newItems);
-        this.saveStudySets();
-        this.showToast(`${newItems.length}件の問題を取り込みました！`, 'success');
-
-        const itemsNeedsExp = newItems.filter(item => !item.explanation);
-        if (!shouldAddExp || itemsNeedsExp.length === 0) return;
-
-        if (!this.geminiApiKey) {
-            this.showToast('CSV取り込みは完了しました。Gemini APIキー未設定のため、解説自動生成はスキップしました。', 'info');
-            return;
-        }
-
-        const targetItems = itemsNeedsExp.slice(0, CSV_EXPLANATION_LIMIT);
-        const skippedCount = Math.max(0, itemsNeedsExp.length - targetItems.length);
-        const uploadBtn = document.getElementById('btn-csv-upload-trigger');
-        const loadingDiv = document.getElementById('csv-loading');
-        const loadingText = document.getElementById('csv-loading-text');
-        if (uploadBtn) uploadBtn.classList.add('hidden');
-        if (loadingDiv) { loadingDiv.classList.remove('hidden'); loadingDiv.classList.add('flex'); }
-
-        try {
-            if (loadingText) loadingText.textContent = `CSV取り込み完了。AI解説生成中... (0/${targetItems.length})`;
-            await this.aiManager.fillExplanationsWithAI(targetItems, loadingText, CSV_EXPLANATION_BATCH_SIZE, CSV_EXPLANATION_PROMPT_LIMIT);
-            this.saveStudySets();
-            this.showToast(`AI解説を${targetItems.length}件追加しました${skippedCount ? `（上限超過のため${skippedCount}件は未生成）` : ''}`, 'success');
-        } catch (e) {
-            this.saveStudySets();
-            this.showToast(e.message || 'CSV取り込みは完了しましたが、一部の解説生成に失敗しました。', 'error');
-        } finally {
-            if (uploadBtn) uploadBtn.classList.remove('hidden');
-            if (loadingDiv) { loadingDiv.classList.add('hidden'); loadingDiv.classList.remove('flex'); }
-        }
-    },
-
-
-
     parseAIJSON(text) { const clean = String(text || '').replace(/```json/gi, '').replace(/```/g, '').trim(); try { return JSON.parse(clean); } catch (e) { const m = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/); if (m) return JSON.parse(m[1]); throw e; } },
     getGenreOptionsHTML(selectedGenre = '', includeAll = false) { const genres = Object.keys(this.getAISubgenres()); let html = includeAll ? '<option value="">ジャンル: すべて</option><option value="__UNSET__">未設定</option>' : '<option value="">未設定</option>'; html += genres.map(g => `<option value="${this.escapeHTML(g)}" ${g === selectedGenre ? 'selected' : ''}>${this.escapeHTML(g)}</option>`).join(''); return html; },
     getSubgenreOptionsHTML(genre = '', selectedSubgenre = '', includeAll = false) { const prefix = includeAll ? '<option value="">サブジャンル: すべて</option>' : '<option value="">未設定</option>'; if (genre === '__UNSET__') return prefix; const options = genre ? (this.getAISubgenres()[genre] || []) : []; return prefix + options.map(x => `<option value="${this.escapeHTML(x)}" ${x === selectedSubgenre ? 'selected' : ''}>${this.escapeHTML(x)}</option>`).join(''); },
-
-    exportManagerQuestionsCSV() {
-        const setSelect = document.getElementById('manager-question-set-select');
-        const setId = setSelect && setSelect.value ? setSelect.value : this.managerSetId;
-        const target = this.studySets.find(set => set.id === setId);
-        if (!target) return this.showToast('保存対象の学習セットが見つかりません', 'error');
-        if (!target.questions.length) return this.showToast('保存する問題がありません', 'error');
-        const rows = target.questions.map(q => [q.q || '', q.a || '', q.explanation || '', q.genre || '', q.subgenre || '']);
-        const csv = rows.map(row => row.map(value => this.escapeCSVValue(value)).join(',')).join('\r\n');
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        const safeName = String(target.name || 'questions').replace(/[\\/:*?"<>|]/g, '_');
-        link.download = `${safeName}_questions.csv`;
-        document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
-        this.showToast(`「${target.name}」の${rows.length}問をCSV保存しました`, 'success');
-    },
 
     syncConfirmPointLimit() {
         const text = document.getElementById('detail-question-q').value || '';
@@ -1237,11 +1041,6 @@ const app = {
         this.renderQuestionList();
     },
 
-    escapeCSVValue(value) {
-        const str = String(value !== null && value !== undefined ? value : '');
-        return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-    },
-
     applyDictionary(text) { return this.applyPronunciations(text, null); },
     applyPronunciations(text, question = null) {
         let res = String(text !== null && text !== undefined ? text : '');
@@ -1425,47 +1224,9 @@ const app = {
     }
 };
 
-window.addEventListener('DOMContentLoaded', () => app.init());
-
-
-function switchDataTab(tab) {
-    document.querySelectorAll('.data-tab-panel').forEach(x => x.classList.add('hidden'));
-    const dataTab = document.getElementById('data-tab-' + tab);
-    if (dataTab) dataTab.classList.remove('hidden');
-    document.querySelectorAll('.data-tab-btn').forEach(x => x.classList.remove('bg-soft-green-600', 'text-white'));
-    const btnTab = document.getElementById('btn-tab-' + tab);
-    if (btnTab) btnTab.classList.add('bg-soft-green-600', 'text-white');
-}
-document.addEventListener("DOMContentLoaded", () => setTimeout(() => switchDataTab('import'), 100));
-
-
-window.exportSelectedSetBackup = function () {
-    const sel = document.getElementById('backup-set-select'); if (!sel) return;
-    const set = (app.studySets || []).find(x => x.id === sel.value); if (!set) { alert('学習セットを選択してください'); return; }
-    const data = { version: '1.0', createdAt: Date.now(), studySet: set };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = 'quiz_backup_' + (set.name || 'set') + '.json'; a.click();
-};
-window.restoreSelectedSetBackup = function (file) {
-    if (!file) { alert('バックアップファイルを選択してください'); return; }
-    const r = new FileReader();
-    r.onload = () => {
-        const d = JSON.parse(r.result); const set = d.studySet; if (!set) return alert('不正なバックアップです');
-        const existing = (app.studySets || []).find(x => x.name === set.name);
-        const backupDate = d.createdAt ? new Date(d.createdAt).toLocaleString('ja-JP') : '不明'; if (existing && !confirm(`学習セット「${set.name}」
-
-バックアップ日時:
-${backupDate}
-
-同名の学習セットが存在します。
-上書きして復元しますか？`)) return;
-        if (existing) { app.studySets = app.studySets.filter(x => x.id !== existing.id); }
-        app.studySets.push(set);
-        app.saveStudySets(); app.updateSetSelectors();
-        alert('復元完了');
-    };
-    r.readAsText(file);
-};
+window.addEventListener('DOMContentLoaded', () => {
+    app.init();
+    app.dataManager.switchTab('import');
+});
 
 

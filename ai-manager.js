@@ -182,7 +182,7 @@ ${text}
      */
     async _validateGenerationInput() {
         if (!this.app.geminiApiKey) { this.app.showToast('Gemini APIキーを設定画面で登録してください', 'error'); return null; }
-        const targetSetId = await this.app.getTargetSetId('ai-target-set');
+        const targetSetId = await this.app.dataManager.getTargetSetId('ai-target-set');
         if (!targetSetId) return null;
         const targetSet = this.app.studySets.find(s => s.id === targetSetId);
         const genre = document.getElementById('ai-genre').value;
@@ -390,7 +390,7 @@ ${text}
     async generateMemoQuestions() {
         const candidates = (this.memoNormalizedAnswers || []).map(x => ({ answer: String(x.answer || '').trim(), supplement: String(x.supplement || '').trim() })).filter(x => x.answer);
         if (!candidates.length || candidates.length > MAX_MEMO_QUESTIONS) return this.app.showToast(`補正済み候補を1〜${MAX_MEMO_QUESTIONS}件にしてください`, 'error');
-        const targetSetId = await this.app.getTargetSetId('ai-target-set'); if (!targetSetId) return;
+        const targetSetId = await this.app.dataManager.getTargetSetId('ai-target-set'); if (!targetSetId) return;
         const target = this.app.studySets.find(s => s.id === targetSetId), available = Math.min(MAX_QUESTIONS_PER_SET - target.questions.length, MAX_TOTAL_QUESTIONS - this.app.getTotalQuestionCount());
         if (candidates.length > available) return this.app.showToast(`登録可能数は残り${available}問です`, 'error');
         const loader = document.getElementById('ai-loading'); loader.classList.remove('hidden'); loader.classList.add('flex');
@@ -412,7 +412,7 @@ ${text}
      * @returns {Promise<void>}
      */
     async saveMemoQuestions() {
-        const targetSetId = await this.app.getTargetSetId('ai-target-set'); if (!targetSetId) return;
+        const targetSetId = await this.app.dataManager.getTargetSetId('ai-target-set'); if (!targetSetId) return;
         const target = this.app.studySets.find(s => s.id === targetSetId), items = (this.pendingMemoQuestions || []).filter(x => x.selected && !x.error);
         const available = Math.min(MAX_QUESTIONS_PER_SET - target.questions.length, MAX_TOTAL_QUESTIONS - this.app.getTotalQuestionCount());
         const batchKeys = new Set();

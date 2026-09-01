@@ -1,32 +1,116 @@
 // constants.js
+
+/**
+ * 問題セットの最大数を定義する定数。ユーザーが作成できる問題セットの上限を制御します。
+ */
 const MAX_SETS = 10;
-        const MAX_QUESTIONS_PER_SET = 1500;
-        const MAX_TOTAL_QUESTIONS = 10000;
-        const MAX_SET_NAME_LENGTH = 30;
-        const MAX_MEMO_QUESTIONS = 10;
-        const BULK_GENRE_CLASSIFY_LIMIT = 30; // 1回のプロンプトで安定してJSON判定しやすい上限の目安
-        const CSV_EXPLANATION_BATCH_SIZE = 5;
-        const CSV_EXPLANATION_PROMPT_LIMIT = 3;
-        const CSV_EXPLANATION_LIMIT = CSV_EXPLANATION_BATCH_SIZE * CSV_EXPLANATION_PROMPT_LIMIT;
-        const HIGH_ACCURACY_THRESHOLD = 0.8;
-        const HIGH_ACCURACY_MIN_ATTEMPTS = 3;
-        const HIGH_ACCURACY_COOLDOWN_DAYS = 7;
-        const HIGH_ACCURACY_COOLDOWN_MS = HIGH_ACCURACY_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
-        const LOW_ACCURACY_THRESHOLD = 0.5;
-        const STALE_REVIEW_DAYS = 7;
-        const STALE_REVIEW_MS = STALE_REVIEW_DAYS * 24 * 60 * 60 * 1000;
-        const QMA_GENRE_MAP = {
-            '理系': '理系学問',
-            '文学': '文系学問',
-            '言葉': '文系学問',
-            '日本史': '社会',
-            '世界史': '社会',
-            '地理': '社会',
-            '公民': '社会',
-            '芸術': '文系学問',
-            '漫画・アニメ・ゲーム': 'アニメ&ゲーム',
-            '生活': 'ライフスタイル',
-            'スポーツ': 'スポーツ',
-            '芸能': '芸能',
-            'ノンセク': 'ノンジャンル'
-        };
+
+/**
+ * 問題セット内の最大問題数を定義する定数。各問題セットに含まれる問題の上限を制御します。
+ */
+const MAX_QUESTIONS_PER_SET = 1500;
+
+/**
+ * アプリ全体で保持できる問題の最大数を定義する定数。すべての問題セットを合わせた総問題数の上限を制御します。
+ */
+const MAX_TOTAL_QUESTIONS = 10000;
+
+/**
+ * 問題セット名の最大文字数を定義する定数。ユーザーが設定できる問題セット名の長さを制御します。
+ */
+const MAX_SET_NAME_LENGTH = 30;
+
+/**
+ * ユーザーがメモとして保持できる問題の最大数を定義する定数。ユーザーが個人的に保存できる問題の上限を制御します。
+ */
+const MAX_MEMO_QUESTIONS = 10;
+
+/**
+ * 1回のプロンプトで安定してJSON判定しやすい上限の目安として、ジャンル分類を一括で行う際の問題数の制限を定義する定数。
+ */
+const BULK_GENRE_CLASSIFY_LIMIT = 30; // 1回のプロンプトで安定してJSON判定しやすい上限の目安
+
+/**
+ * CSV形式の説明文を一度に処理する際のバッチサイズを定義する定数。CSVデータの解析や生成における効率的な処理をサポートします。
+ */
+const CSV_EXPLANATION_BATCH_SIZE = 5;
+
+/**
+ * CSV形式の説明文を一度に処理する際のプロンプト制限を定義する定数。CSVデータの解析や生成における効率的な処理をサポートします。
+ */
+const CSV_EXPLANATION_PROMPT_LIMIT = 3;
+
+/**
+ * CSV形式の説明文を一度に処理する際の総制限を定義する定数。CSVデータの解析や生成における効率的な処理をサポートします。
+ */
+const CSV_EXPLANATION_LIMIT = CSV_EXPLANATION_BATCH_SIZE * CSV_EXPLANATION_PROMPT_LIMIT;
+
+/**
+ * 高精度と見なされる正答率の閾値を定義する定数。正答率がこの値を上回る場合、問題は高精度と見なされます。
+ */
+const HIGH_ACCURACY_THRESHOLD = 0.8;
+
+/**
+ * 高精度と見なされるために必要な最小試行回数を定義する定数。正答率が高くても、試行回数がこの値を下回る場合、問題は高精度と見なされません。
+ */
+const HIGH_ACCURACY_MIN_ATTEMPTS = 3;
+
+/**
+ * 高精度と見なされる問題が再度低精度と見なされるまでのクールダウン期間（日数）を定義する定数。この期間中は、問題が高精度として扱われます。
+ */
+const HIGH_ACCURACY_COOLDOWN_DAYS = 7;
+
+/**
+ * 高精度と見なされる問題が再度低精度と見なされるまでのクールダウン期間（ミリ秒単位）を定義する定数。この期間中は、問題が高精度として扱われます。
+ */
+const HIGH_ACCURACY_COOLDOWN_MS = HIGH_ACCURACY_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * 低精度と見なされる正答率の閾値を定義する定数。正答率がこの値を下回る場合、問題は低精度と見なされます。
+ */
+const LOW_ACCURACY_THRESHOLD = 0.5;
+
+/**
+ * 低精度と見なされるために必要な最小試行回数を定義する定数。正答率が低くても、試行回数がこの値を下回る場合、問題は低精度と見なされません。
+ */
+const LOW_ACCURACY_MIN_ATTEMPTS = 3;
+
+/**
+ * 低精度と見なされる問題が再度高精度と見なされるまでのクールダウン期間（日数）を定義する定数。この期間中は、問題が低精度として扱われます。
+ */
+const LOW_ACCURACY_COOLDOWN_DAYS = 7;
+
+/**
+ * 低精度と見なされる問題が再度高精度と見なされるまでのクールダウン期間（ミリ秒単位）を定義する定数。この期間中は、問題が低精度として扱われます。
+ */
+const LOW_ACCURACY_COOLDOWN_MS = LOW_ACCURACY_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * 問題が古いと見なされるまでの期間（日数）を定義する定数。この期間を過ぎた問題は、ユーザーに再確認を促すために「古い問題」としてマークされます。
+ */
+const STALE_REVIEW_DAYS = 7;
+
+/**
+ * 問題が古いと見なされるまでの期間（ミリ秒単位）を定義する定数。この期間を過ぎた問題は、ユーザーに再確認を促すために「古い問題」としてマークされます。
+ */
+const STALE_REVIEW_MS = STALE_REVIEW_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * QMAのジャンルを、QuizTRで使用するジャンルにマッピングするための定数オブジェクト。
+ * キーはQMAのジャンル名、値はQuizTRで使用するジャンル名。
+ */
+const QMA_GENRE_MAP = {
+    '理系': '理系学問',
+    '文学': '文系学問',
+    '言葉': '文系学問',
+    '日本史': '社会',
+    '世界史': '社会',
+    '地理': '社会',
+    '公民': '社会',
+    '芸術': '文系学問',
+    '漫画・アニメ・ゲーム': 'アニメ&ゲーム',
+    '生活': 'ライフスタイル',
+    'スポーツ': 'スポーツ',
+    '芸能': '芸能',
+    'ノンセク': 'ノンジャンル'
+};

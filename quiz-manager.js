@@ -486,7 +486,37 @@ class QuizManager {
         this.setDerivativeView('derivative-loading', '問題文から固有名詞を抽出中...');
 
         try {
-            const parsed = this.app.parseAIJSON(await this.app.fetchGemini(`次の早押しクイズ問題文から、別のクイズの解答にできる固有名詞を重複なしで最大6件抽出してください。元の解答「${current.a}」は除外。JSON配列のみ:[{"word":"固有名詞","reason":"短い理由"}]\n問題文:${current.q}`, true));
+                        const parsed = this.app.parseAIJSON(await this.app.fetchGemini(`次の早押しクイズ問題文から、
+別のクイズの解答にできる固有名詞を
+重複なしで最大6件抽出してください。
+
+元の解答「${current.a}」は除外してください。
+
+【重要ルール】
+
+- 外国人名は可能な限りフルネームで出力する
+- 作家・学者・芸術家・政治家・スポーツ選手も正式名称で出力する
+- 地名・組織名・作品名は一般的な正式名称で出力する
+- 日本史人物など単独表記が一般的なものは無理に拡張しない
+- 不明な場合のみ元表記を維持する
+
+例：
+ワシントン → ジョージ・ワシントン
+アインシュタイン → アルベルト・アインシュタイン
+エジソン → トーマス・エジソン
+徳川家康 → 徳川家康
+
+出力は必ずJSON配列のみ
+
+[
+    {
+        "word":"正式名称",
+        "reason":"抽出理由"
+    }
+]
+
+問題文:
+${current.q}`, true));
             this.app.derivativeCandidates = (Array.isArray(parsed) ? parsed : []).map(x => ({ word: String(x.word || '').trim(), reason: String(x.reason || '').trim(), selected: false })).filter(x => x.word && x.word !== current.a).slice(0, 6);
             if (!this.app.derivativeCandidates.length) throw new Error('候補を抽出できませんでした');
             document.getElementById('derivative-candidate-list').innerHTML = this.app.derivativeCandidates.map((x, i) => `<label class="flex gap-3 p-4 rounded-xl border border-soft-green-200 hover:bg-amber-50 cursor-pointer"><input type="checkbox" onchange="app.derivativeCandidates[${i}].selected=this.checked"><span><span class="block font-bold text-soft-green-900">${this.app.escapeHTML(x.word)}</span><span class="block text-xs text-soft-green-600 mt-1">${this.app.escapeHTML(x.reason || '候補')}</span></span></label>`).join('');

@@ -159,12 +159,6 @@ CSVは以下の列構成で作成します。
 
 ブラウザのデータ削除や別ブラウザへの移動により、保存データが失われる場合があります。重要な問題や辞書はCSVでバックアップすることをおすすめします。
 
-### OneDriveバックアップ
-
-OneDrive連携を有効にするには、Microsoft Entra IDでSPAアプリを登録し、Microsoft Graphの`Files.ReadWrite.AppFolder`権限を付与します。SPAのリダイレクトURIには、設定画面に表示される「現在のRedirect URI」を登録してください。client secretは静的HTMLへ記載しないでください。
-
-設定画面のOneDrive連携欄へApplication (client) IDとアカウントの種類を入力して保存し、データ管理の「バックアップ」タブでMicrosoftアカウントへログインします。複数アカウントがある場合はログイン時に使用するアカウントを選択できます。バックアップ保存欄で選択した1学習セットをOneDriveへ保存し、復元時はOneDriveの一覧からセットを選択します。保存先はアプリ専用のOneDrive App Folderで、ファイル名は`studyset_<セットID>.json`です。辞書、統計、APIキー、自動同期は対象外です。
-
 ## 登録上限
 
 実装上、以下の上限が設定されています。

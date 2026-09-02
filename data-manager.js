@@ -19,12 +19,6 @@ class DataManager {
         document.getElementById('backup-restore-button').addEventListener('click', () => {
             this.restoreSetBackup(document.getElementById('backup-file').files[0]);
         });
-        document.getElementById('onedrive-signin-button').addEventListener('click', () => this.signInToOneDrive());
-        document.getElementById('onedrive-signout-button').addEventListener('click', () => this.signOutFromOneDrive());
-        document.getElementById('onedrive-save-button').addEventListener('click', () => this.uploadSelectedSetToOneDrive());
-        document.getElementById('onedrive-load-button').addEventListener('click', () => this.openOneDriveRestoreDialog());
-        document.getElementById('onedrive-restore-cancel-button').addEventListener('click', () => this.closeOneDriveRestoreDialog());
-        document.getElementById('onedrive-restore-confirm-button').addEventListener('click', () => this.restoreSelectedOneDriveSet());
     }
 
     /** 指定したデータ管理タブを表示し、選択状態を更新する。 */
@@ -259,73 +253,6 @@ class DataManager {
         this.app.setManager.updateSetSelectors();
         this.app.showToast('復元完了', 'success');
         return true;
-    }
-
-    async signInToOneDrive() {
-        try {
-            await this.app.oneDriveManager.signIn();
-            this.updateOneDriveStatus();
-            this.app.showToast('Microsoftアカウントにログインしました', 'success');
-        } catch (error) {
-            this.app.showToast(error.message, 'error');
-        }
-    }
-
-    async signOutFromOneDrive() {
-        try {
-            await this.app.oneDriveManager.signOut();
-            this.updateOneDriveStatus();
-            this.app.showToast('OneDriveからログアウトしました', 'success');
-        } catch (error) {
-            this.app.showToast(error.message, 'error');
-        }
-    }
-
-    async uploadSelectedSetToOneDrive() {
-        const set = this.getSelectedBackupSet();
-        if (!set) return this.app.showToast('学習セットを選択してください', 'error');
-        try {
-            await this.app.oneDriveManager.uploadStudySet(this.createBackupPayload(set));
-            this.app.showToast('OneDriveへ保存しました', 'success');
-        } catch (error) {
-            this.app.showToast(error.message, 'error');
-        }
-    }
-
-    async openOneDriveRestoreDialog() {
-        try {
-            const files = await this.app.oneDriveManager.getStudySetList();
-            const list = document.getElementById('onedrive-file-list');
-            list.innerHTML = files.length ? files.map(file => `<label class="flex items-center gap-2 border rounded-lg p-3 cursor-pointer"><input type="radio" name="onedrive-file" value="${Utils.escapeHTML(file.id)}"><span>${Utils.escapeHTML(file.fileName)}<small class="block text-gray-500">${new Date(file.modifiedDate).toLocaleString('ja-JP')}</small></span></label>`).join('') : '<p class="text-sm text-gray-500">保存済みの学習セットはありません。</p>';
-            document.getElementById('onedrive-restore-confirm-button').disabled = files.length === 0;
-            document.getElementById('onedrive-restore-modal').classList.remove('hidden');
-        } catch (error) {
-            this.app.showToast(error.message, 'error');
-        }
-    }
-
-    async restoreSelectedOneDriveSet() {
-        const selected = document.querySelector('input[name="onedrive-file"]:checked');
-        if (!selected) return this.app.showToast('復元する学習セットを選択してください', 'error');
-        try {
-            const data = await this.app.oneDriveManager.downloadStudySet(selected.value);
-            this.closeOneDriveRestoreDialog();
-            await this.restoreBackupData(data);
-        } catch (error) {
-            this.app.showToast(error.message, 'error');
-        }
-    }
-
-    closeOneDriveRestoreDialog() {
-        document.getElementById('onedrive-restore-modal').classList.add('hidden');
-    }
-
-    updateOneDriveStatus() {
-        const manager = this.app.oneDriveManager;
-        const status = document.getElementById('onedrive-status');
-        if (status) status.textContent = manager.account ? `接続中: ${manager.account.username || manager.account.name || ''}` : '未接続';
-        document.getElementById('onedrive-signin-button').classList.toggle('hidden', Boolean(manager.account));
-        document.getElementById('onedrive-signout-button').classList.toggle('hidden', !manager.account);
     }
 
     /** Blobを指定ファイル名でブラウザからダウンロードする。 */

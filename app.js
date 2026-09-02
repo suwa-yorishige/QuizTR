@@ -38,7 +38,6 @@ const app = {
     bulkEditTotalPages: 1,
 
     init() {
-        this.migrateOneDriveConfig();
         //外部モジュールのロード
         this.uiManager = new UIManager(this);
         this.learningDataManager = new LearningDataManager(this);
@@ -49,13 +48,9 @@ const app = {
         this.questionManager = new QuestionManager(this);
         this.quizManager = new QuizManager(this);
         this.aiManager = new AIManager(this);
-        this.oneDriveManager = new OneDriveManager(this);
         this.dataManager = new DataManager(this);
 
         this.dataManager.bindEvents();
-        this.oneDriveManager.initialize()
-            .then(() => this.dataManager.updateOneDriveStatus())
-            .catch(error => console.warn('OneDrive initialization skipped:', error.message));
         this.dictionaryManager.load(); //辞書データ読み込み
         this.updateViewportHeight();
         window.addEventListener('resize', () => this.updateViewportHeight(), { passive: true });
@@ -138,9 +133,6 @@ const app = {
 
             this.geminiApiKey = localStorage.getItem('quiz_gemini_key') || "";
             this.ttsApiKey = localStorage.getItem('quiz_tts_key') || "";
-            document.getElementById('setting-onedrive-client-id').value = localStorage.getItem('quiz_onedrive_clientid') || '';
-            document.getElementById('setting-onedrive-authority').value = localStorage.getItem('quiz_onedrive_authority') || 'common';
-            document.getElementById('onedrive-redirect-uri').value = window.location.origin + window.location.pathname;
             this.theme = this.getStoredTheme();
             this.applyTheme(this.theme);
 
@@ -177,43 +169,13 @@ const app = {
     saveSettings() {
         this.geminiApiKey = document.getElementById('setting-gemini-key').value.trim();
         this.ttsApiKey = document.getElementById('setting-tts-key').value.trim();
-        const oneDriveClientId = document.getElementById('setting-onedrive-client-id').value.trim();
-        const oneDriveAuthority = document.getElementById('setting-onedrive-authority').value;
         const selectedTheme = document.querySelector('input[name="setting-theme"]:checked')?.value;
         this.theme = this.normalizeTheme(selectedTheme);
         this.applyTheme(this.theme);
         localStorage.setItem('quiz_gemini_key', this.geminiApiKey);
         localStorage.setItem('quiz_tts_key', this.ttsApiKey);
         localStorage.setItem('quiz_theme', this.theme);
-        localStorage.setItem('quiz_onedrive_clientid', oneDriveClientId);
-        localStorage.setItem('quiz_onedrive_authority', ['consumers', 'organizations', 'common'].includes(oneDriveAuthority) ? oneDriveAuthority : 'common');
-        this.oneDriveManager.reloadConfiguration();
-        this.oneDriveManager.initialize()
-            .then(() => this.dataManager.updateOneDriveStatus())
-            .catch(error => this.showToast(error.message, 'error'));
         this.showToast('設定を保存しました', 'success');
-    },
-
-    async copyOneDriveRedirectUri() {
-        const redirectUri = window.location.origin + window.location.pathname;
-        try {
-            await navigator.clipboard.writeText(redirectUri);
-            this.showToast('Redirect URIをコピーしました', 'success');
-        } catch (error) {
-            const input = document.getElementById('onedrive-redirect-uri');
-            input.focus();
-            input.select();
-            this.showToast('Redirect URIを選択しました。コピーしてください', 'info');
-        }
-    },
-
-    migrateOneDriveConfig() {
-        if (localStorage.getItem('quiz_onedrive_clientid')) return;
-        const legacyConfig = window.ONE_DRIVE_CONFIG;
-        if (legacyConfig?.clientId && legacyConfig.clientId !== 'YOUR_CLIENT_ID') {
-            localStorage.setItem('quiz_onedrive_clientid', legacyConfig.clientId);
-            localStorage.setItem('quiz_onedrive_authority', legacyConfig.authority || 'common');
-        }
     },
 
     normalizeTheme(theme) {

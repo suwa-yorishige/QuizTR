@@ -486,7 +486,7 @@ class QuizManager {
         this.setDerivativeView('derivative-loading', '問題文から固有名詞を抽出中...');
 
         try {
-                        const parsed = this.app.parseAIJSON(await this.app.fetchGemini(`次の早押しクイズ問題文から、
+                        const parsed = this.app.aiManager.parseAIJSON(await this.app.fetchGemini(`次の早押しクイズ問題文から、
 別のクイズの解答にできる固有名詞を
 重複なしで最大6件抽出してください。
 
@@ -584,7 +584,7 @@ ${current.q}`, true));
         const targetSet = this.app.studySets.find(s => s.id === this.app.activeSetId);
         const source = targetSet && targetSet.questions && this.app.currentQuestionIndex >= 0 ? targetSet.questions[this.app.currentQuestionIndex] : null;
         this.setDerivativeView('derivative-loading', '選択した候補の問題を作成中...');
-        const results = await this.app.mapWithConcurrency(selected, 2, async x => {
+        const results = await Utils.mapWithConcurrency(selected, 2, async x => {
             try { return await this.app.generateDerivativeData(x.word, source && source.q ? source.q : '', '中級'); }
             catch (e) {
                 return {
@@ -621,8 +621,8 @@ ${current.q}`, true));
      */
     addDerivativeQuestions() {
         const target = this.app.studySets.find(s => s.id === document.getElementById('derivative-target-set').value), items = (this.app.pendingDerivativeQuestions || []).filter(x => x.selected && !x.error); if (!target || !items.length) return this.app.showToast('追加する問題を選択してください', 'error');
-        const available = Math.min(MAX_QUESTIONS_PER_SET - target.questions.length, MAX_TOTAL_QUESTIONS - this.app.getTotalQuestionCount()), existing = new Set(target.questions.map(q => this.app.normalizeAnswerForDuplicateCheck(q.a))); const saved = [];
-        items.slice(0, available).forEach(x => { const k = this.app.normalizeAnswerForDuplicateCheck(x.a); if (!existing.has(k)) { existing.add(k); target.questions.push(this.app.createQuestionData(x.q, x.a, x.explanation, { genre: x.genre, subgenre: x.subgenre })); saved.push(x); } });
+        const available = Math.min(MAX_QUESTIONS_PER_SET - target.questions.length, MAX_TOTAL_QUESTIONS - this.app.getTotalQuestionCount()), existing = new Set(target.questions.map(q => Utils.normalizeAnswerForDuplicateCheck(q.a))); const saved = [];
+        items.slice(0, available).forEach(x => { const k = Utils.normalizeAnswerForDuplicateCheck(x.a); if (!existing.has(k)) { existing.add(k); target.questions.push(this.app.createQuestionData(x.q, x.a, x.explanation, { genre: x.genre, subgenre: x.subgenre })); saved.push(x); } });
         this.app.saveStudySets(); this.app.updateSetSelectors(); this.closeDerivativeModal(); this.app.pendingDerivativeQuestions = []; this.app.showToast(`${saved.length}問のデリバティブ問題を追加しました`, 'success');
     }
 

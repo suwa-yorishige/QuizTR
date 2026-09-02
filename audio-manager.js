@@ -44,7 +44,7 @@
  *    - this.app.showToast()
  *    - this.app.studySets
  *    - this.app.getAccuracyRatio()
- *    - this.app.mapWithConcurrency()
+ *    - Utils.mapWithConcurrency()
  *
  * 注意:
  * - exportedAudioBlob
@@ -215,7 +215,7 @@ class AudioManager {
             const targetSampleRate = 24000;
             decodeCtx = new (window.AudioContext || window.webkitAudioContext)({sampleRate: targetSampleRate});
             let completed = 0;
-            const buffers = await this.app.mapWithConcurrency(selected, 3, async (q, i) => {
+            const buffers = await Utils.mapWithConcurrency(selected, 3, async (q, i) => {
                 const ssml = this.buildQuestionSSML(q, i === selected.length - 1, includeExp);
                 const b64 = await this.app.fetchCloudTextToSpeechAPI(ssml);
                 const buffer = this.base64ToAudioBuffer(b64, decodeCtx);

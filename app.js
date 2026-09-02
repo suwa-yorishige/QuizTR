@@ -1,6 +1,7 @@
 // app.modular.js
 
 const app = {
+    escapeHTML: Utils.escapeHTML,
     studySets: [],
     activeSetId: null,
     managerSetId: null,
@@ -363,17 +364,10 @@ const app = {
         return q;
     },
 
-    escapeHTML(str) {
-        str = String(str !== null && str !== undefined ? str : '');
-        return str.replace(/[&<>'"]/g, tag => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-        }[tag]));
-    },
-
     updateSetSelectors() {
         const sets = this.studySets;
         const createOptions = (includeNew) => {
-            let html = sets.map(s => `<option value="${s.id}">${this.escapeHTML(s.name)}</option>`).join('');
+            let html = sets.map(s => `<option value="${s.id}">${Utils.escapeHTML(s.name)}</option>`).join('');
             if (includeNew) html += `<option value="_new_" class="font-bold text-soft-green-600">＋ 新しいセットを作成</option>`;
             return html;
         };
@@ -396,196 +390,6 @@ const app = {
         if (aiSelect) aiSelect.innerHTML = createOptions(true);
     },
 
-    getAISubgenres() {
-        return {
-            "理系": [
-                "数学",
-                "情報科学",
-                "物理学",
-                "化学",
-                "医学",
-                "生物種",
-                "生物学",
-                "地球科学",
-                "天文学",
-                "技術工学",
-                "理系クロスオーバー",
-                "理系その他"
-            ],
-            "文学": [
-                "神話-日本神話",
-                "神話-ギリシャ・ローマ神話",
-                "神話-その他神話",
-                "詩",
-                "絵本・童話",
-                "古文・漢文",
-                "日本-散文-戦前",
-                "日本-散文-戦後",
-                "世界-アジア文学",
-                "世界-英米文学",
-                "世界-ドイツ文学",
-                "世界-ロマンス諸語文学",
-                "世界-ロシア文学",
-                "世界-その他地域の文学",
-                "文学クロスオーバー",
-                "文学その他"
-            ],
-            "言葉": [
-                "四字熟語・故事成語",
-                "ことわざ・慣用句",
-                "日常語彙・言い回し",
-                "流行語・新語・俗語",
-                "漢字",
-                "英語",
-                "外国語-英語以外",
-                "言語学用語・文法",
-                "言葉クロスオーバー",
-                "言葉その他"
-            ],
-            "日本史": [
-                "先史～古墳時代",
-                "飛鳥・奈良時代",
-                "平安時代",
-                "鎌倉時代",
-                "室町時代",
-                "江戸時代",
-                "明治・大正時代",
-                "昭和-戦前戦中",
-                "戦後日本史",
-                "日本史クロスオーバー",
-                "日本史その他"
-            ],
-            "世界史": [
-                "ヨーロッパ史-ルネサンス以前",
-                "ヨーロッパ史-フランス革命以前",
-                "ヨーロッパ史-WWI以前",
-                "ヨーロッパ史-第一次大戦以後",
-                "中国史-隋まで",
-                "中国史-唐～明",
-                "中国史-清以降",
-                "アジア史-WWI以前",
-                "アジア史-第一次大戦以後",
-                "イスラム世界史",
-                "南北アメリカ史",
-                "その他地域の歴史",
-                "世界史クロスオーバー",
-                "世界史その他"
-            ],
-            "地理": [
-                "交通",
-                "北海道地方",
-                "東北地方",
-                "関東地方",
-                "中部地方",
-                "近畿地方",
-                "中国地方",
-                "四国地方",
-                "九州以南",
-                "北米",
-                "中南米",
-                "アジア",
-                "オセアニア",
-                "ヨーロッパ",
-                "アフリカ",
-                "海・極地方",
-                "地理学",
-                "地理クロスオーバー",
-                "地理その他"
-            ],
-            "公民": [
-                "倫理(哲学・思想・心理学)",
-                "社会",
-                "法律・法学・犯罪",
-                "日本の政治・制度",
-                "世界の政治・制度",
-                "運動・事件",
-                "経済・経済学",
-                "宗教",
-                "疑似科学・オカルト",
-                "教育",
-                "公民クロスオーバー",
-                "公民その他"
-            ],
-            "芸術": [
-                "日本-絵画",
-                "日本-彫刻",
-                "世界-絵画",
-                "世界-彫刻",
-                "建築",
-                "工芸・民芸",
-                "デザイン・写真・映像",
-                "クラシック音楽",
-                "童謡・合唱曲",
-                "伝統音楽・民族音楽",
-                "楽器・音楽用語",
-                "舞踊",
-                "古典芸能-舞台-日本",
-                "古典芸能-しゃべくり-日本",
-                "芸術クロスオーバー",
-                "芸術その他"
-            ],
-            "漫画・アニメ・ゲーム": [
-                "アニメ",
-                "漫画",
-                "ライトノベル",
-                "テレビゲーム",
-                "特撮",
-                "玩具・グッズ",
-                "漫アゲクロスオーバー",
-                "漫アゲその他"
-            ],
-            "生活": [
-                "嗜好品",
-                "食材",
-                "料理・調理",
-                "服飾・ファッション",
-                "暦・行事・しきたり",
-                "家庭の医学",
-                "企業・商品",
-                "インターネット",
-                "娯楽・趣味",
-                "生活至近",
-                "生活クロスオーバー",
-                "生活その他"
-            ],
-            "スポーツ": [
-                "野球・ソフトボール",
-                "サッカー・フットサル",
-                "球技-除野球・サッカー",
-                "陸上競技",
-                "体操",
-                "ウォータースポーツ",
-                "格闘技・武道",
-                "冬季競技",
-                "公営ギャンブル",
-                "レース競技",
-                "スポーツイベント",
-                "スポーツクロスオーバー",
-                "スポーツその他"
-            ],
-            "芸能": [
-                "芸能一般用語",
-                "テレビ番組・ラジオ番組・CM",
-                "邦画",
-                "海外映画",
-                "現代演劇",
-                "お笑い",
-                "俳優",
-                "タレント・文化人",
-                "邦楽-昭和以前",
-                "邦楽-平成（～2009）",
-                "邦楽-平成・令和（2010～）",
-                "洋楽・海外音楽",
-                "芸能クロスオーバー",
-                "芸能その他"
-            ],
-            "ノンセク": [
-                "ジャンル複合",
-                "ジャンル不明"
-            ]
-        };
-    },
-
     handleAIGenreChange() {
         const aiGenre = document.getElementById('ai-genre');
         const genre = aiGenre && aiGenre.value ? aiGenre.value : '';
@@ -601,8 +405,8 @@ const app = {
         }
         topicContainer.classList.add('hidden');
         subgenreContainer.classList.remove('hidden');
-        const options = this.getAISubgenres()[genre] || [];
-        subgenreSelect.innerHTML = '<option value=""></option>' + options.map(s => `<option value="${this.escapeHTML(s)}">${this.escapeHTML(s)}</option>`).join('');
+        const options = AI_SUBGENRES[genre] || [];
+        subgenreSelect.innerHTML = '<option value=""></option>' + options.map(s => `<option value="${Utils.escapeHTML(s)}">${Utils.escapeHTML(s)}</option>`).join('');
     },
 
     changeActiveSet(id) {
@@ -777,9 +581,8 @@ const app = {
         return await this.aiManager.generateDerivativeData(answer, contextText, difficulty);
     },
 
-    parseAIJSON(text) { const clean = String(text || '').replace(/```json/gi, '').replace(/```/g, '').trim(); try { return JSON.parse(clean); } catch (e) { const m = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/); if (m) return JSON.parse(m[1]); throw e; } },
-    getGenreOptionsHTML(selectedGenre = '', includeAll = false) { const genres = Object.keys(this.getAISubgenres()); let html = includeAll ? '<option value="">ジャンル: すべて</option><option value="__UNSET__">未設定</option>' : '<option value="">未設定</option>'; html += genres.map(g => `<option value="${this.escapeHTML(g)}" ${g === selectedGenre ? 'selected' : ''}>${this.escapeHTML(g)}</option>`).join(''); return html; },
-    getSubgenreOptionsHTML(genre = '', selectedSubgenre = '', includeAll = false) { const prefix = includeAll ? '<option value="">サブジャンル: すべて</option>' : '<option value="">未設定</option>'; if (genre === '__UNSET__') return prefix; const options = genre ? (this.getAISubgenres()[genre] || []) : []; return prefix + options.map(x => `<option value="${this.escapeHTML(x)}" ${x === selectedSubgenre ? 'selected' : ''}>${this.escapeHTML(x)}</option>`).join(''); },
+    getGenreOptionsHTML(selectedGenre = '', includeAll = false) { const genres = Object.keys(AI_SUBGENRES); let html = includeAll ? '<option value="">ジャンル: すべて</option><option value="__UNSET__">未設定</option>' : '<option value="">未設定</option>'; html += genres.map(g => `<option value="${Utils.escapeHTML(g)}" ${g === selectedGenre ? 'selected' : ''}>${Utils.escapeHTML(g)}</option>`).join(''); return html; },
+    getSubgenreOptionsHTML(genre = '', selectedSubgenre = '', includeAll = false) { const prefix = includeAll ? '<option value="">サブジャンル: すべて</option>' : '<option value="">未設定</option>'; if (genre === '__UNSET__') return prefix; const options = genre ? (AI_SUBGENRES[genre] || []) : []; return prefix + options.map(x => `<option value="${Utils.escapeHTML(x)}" ${x === selectedSubgenre ? 'selected' : ''}>${Utils.escapeHTML(x)}</option>`).join(''); },
 
     syncConfirmPointLimit() {
         const text = document.getElementById('detail-question-q').value || '';
@@ -1036,7 +839,7 @@ const app = {
             const map = new Map();
             set.questions.forEach(q => {
                 const rawGenre = String(q.genre || '').trim();
-                const definitions = this.getAISubgenres();
+                const definitions = AI_SUBGENRES;
                 let aql = definitions[rawGenre] ? rawGenre : '';
                 if (!aql && rawGenre) {
                     const genreMatch = Object.entries(definitions).find(([, subgenres]) => subgenres.includes(rawGenre));
@@ -1056,7 +859,7 @@ const app = {
                 if ((q.total || 0) === 0) r.unanswered++;
             });
             const label = this.managerGenreStandard === 'qma' ? 'QMA基準' : 'AQL基準';
-            const rows = [...map.entries()].sort((a, b) => b[1].total - a[1].total).map(([name, r]) => `<tr class="border-t border-soft-green-100"><td class="px-3 py-2 font-semibold">${this.escapeHTML(name)}</td><td class="px-3 py-2 text-right">${r.total}</td><td class="px-3 py-2 text-right">${r.attempted ? Math.round(r.correct / r.attempted * 100) + '%' : '--%'}</td><td class="px-3 py-2 text-right">${r.unanswered}</td></tr>`).join('');
+            const rows = [...map.entries()].sort((a, b) => b[1].total - a[1].total).map(([name, r]) => `<tr class="border-t border-soft-green-100"><td class="px-3 py-2 font-semibold">${Utils.escapeHTML(name)}</td><td class="px-3 py-2 text-right">${r.total}</td><td class="px-3 py-2 text-right">${r.attempted ? Math.round(r.correct / r.attempted * 100) + '%' : '--%'}</td><td class="px-3 py-2 text-right">${r.unanswered}</td></tr>`).join('');
             genreBox.innerHTML = `<table class="w-full text-sm"><thead class="bg-soft-green-100 text-soft-green-800"><tr><th class="px-3 py-2 text-left">ジャンル（${label}）</th><th class="px-3 py-2 text-right">登録問題数</th><th class="px-3 py-2 text-right">平均正解率</th><th class="px-3 py-2 text-right">未回答数</th></tr></thead><tbody>${rows}</tbody></table>`;
         }
         this.questionManager.updateQuestionFilterOptions();
@@ -1080,35 +883,15 @@ const app = {
         return res;
     },
 
-    normalizeAnswerForDuplicateCheck(text) {
-        return String(text || '').normalize('NFKC').toLowerCase()
-            .replace(/[\s　・･「」『』【】()（）\[\]［］]/g, '')
-            .replace(/[.,，。・:：;；!?！？'"“”‘’]/g, '');
-    },
-    makeTextBigrams(text) {
-        const normalized = String(text || '').normalize('NFKC').toLowerCase()
-            .replace(/[\s　、。,.，・:：;；!?！？「」『』【】()（）\[\]［］]/g, '');
-        const grams = new Set();
-        if (normalized.length < 2) { if (normalized) grams.add(normalized); return grams; }
-        for (let i = 0; i < normalized.length - 1; i++) grams.add(normalized.slice(i, i + 2));
-        return grams;
-    },
-    textSimilarity(a, b) {
-        const ga = this.makeTextBigrams(a), gb = this.makeTextBigrams(b);
-        if (!ga.size || !gb.size) return 0;
-        let common = 0;
-        ga.forEach(x => { if (gb.has(x)) common++; });
-        return common / Math.max(ga.size, gb.size);
-    },
     isSimilarQuestionCandidate(item, accepted, existingQuestions) {
         const angleText = [item.angle, ...(Array.isArray(item.keywords) ? item.keywords : [])].join(' ');
-        if (accepted.some(x => this.textSimilarity(angleText, [x.angle, ...(x.keywords || [])].join(' ')) >= 0.68)) return true;
-        if (accepted.some(x => this.textSimilarity(item.q, x.q) >= 0.72)) return true;
-        if (existingQuestions.some(x => this.textSimilarity(item.q, x.q) >= 0.78)) return true;
+        if (accepted.some(x => Utils.textSimilarity(angleText, [x.angle, ...(x.keywords || [])].join(' ')) >= 0.68)) return true;
+        if (accepted.some(x => Utils.textSimilarity(item.q, x.q) >= 0.72)) return true;
+        if (existingQuestions.some(x => Utils.textSimilarity(item.q, x.q) >= 0.78)) return true;
         return false;
     },
     async generateQuestionPlansWithAI({ count, genre, subgenre, topic, difficulty, excludedAnswers, excludedAngles }) {
-        const defs = this.getAISubgenres();
+        const defs = AI_SUBGENRES;
         const genreCandidates = Object.entries(defs).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
         const requested = Math.max(count, Math.ceil(count * 1.3));
         const prompt = `早押しクイズの問題設計案を${requested}件作成してください。この段階では問題文や解説は作成しません。\n` +
@@ -1119,7 +902,7 @@ const app = {
             `条件: ジャンル=${genre || '候補から最適なものを選択'}、サブジャンル=${subgenre || '選択したジャンル配下から選択'}、テーマ=${topic || '指定なし'}、難易度=${difficulty}\n` +
             `ジャンル候補:\n${genreCandidates}\n` +
             `出力はJSON配列のみ。形式:[{"answer":"解答","aliases":["別名"],"angle":"他案と重ならない出題観点","keywords":["識別語"],"genre":"ジャンル","subgenre":"サブジャンル"}]`;
-        const parsed = this.parseAIJSON(await this.fetchGemini(prompt, true));
+        const parsed = this.aiManager.parseAIJSON(await this.fetchGemini(prompt, true));
         return Array.isArray(parsed) ? parsed : [];
     },
     async generateQuestionBatchFromPlans(plans, difficulty, priorSummaries) {
@@ -1130,7 +913,7 @@ const app = {
             `設計案(JSON):${JSON.stringify(plans)}\n` +
             `explanationは、${this.getAIExplanationInstruction()}\n` +
             `出力はJSON配列のみ。形式:[{"q":"問題文","a":"解答","explanation":"解説","genre":"ジャンル","subgenre":"サブジャンル","angle":"出題観点","keywords":["識別語"]}]`;
-        const parsed = this.parseAIJSON(await this.fetchGemini(prompt, true));
+        const parsed = this.aiManager.parseAIJSON(await this.fetchGemini(prompt, true));
         return Array.isArray(parsed) ? parsed : [];
     },
     openPronunciationModalFromQuiz() {
@@ -1153,7 +936,7 @@ const app = {
     addPronunciationCandidate() { this.aiManager.pronunciationCandidates.push({ word: '', pronunciation: '', selected: true, scope: 'question' }); this.renderPronunciationCandidates(); },
     testSelectedPronunciations() { const x = this.aiManager.pronunciationCandidates.filter(x => x.selected && x.pronunciation); if (!x.length) return this.showToast('候補を選択してください', 'error'); const u = new SpeechSynthesisUtterance(x.map(x => x.pronunciation).join('、')); u.lang = 'ja-JP'; this.synth.cancel(); this.synth.speak(u); },
     savePronunciationSettings() { const r = this.getQuestionByIdAcrossSets(document.getElementById('pronunciation-question-id').value), globals = new Set(this.dictionary.map(x => x.word)), selected = this.aiManager.pronunciationCandidates.filter(x => x.selected && x.word.trim() && x.pronunciation.trim() && !globals.has(x.word.trim())); if (!selected.length) return this.showToast('登録候補を選択してください', 'error'); const local = r.q.pronunciations || []; selected.forEach(x => { const e = { word: x.word.trim(), pronunciation: x.pronunciation.trim() }; if (x.scope === 'global') { this.dictionary.push(e); const i = local.findIndex(y => y.word === e.word); if (i >= 0) local.splice(i, 1); } else { const i = local.findIndex(y => y.word === e.word); if (i >= 0) local[i] = e; else local.push(e); } }); r.q.pronunciations = local; r.set.questions[r.index] = r.q; this.saveDictionary(); this.dictionaryManager.render(); this.saveStudySets(); this.renderDetailPronunciations(r.q); this.closePronunciationModal(); this.showToast(`${selected.length}件登録しました`, 'success'); },
-    renderDetailPronunciations(q) { const box = document.getElementById('detail-pronunciation-list'); if (!box) return; const x = q && q.pronunciations ? q.pronunciations : []; box.innerHTML = x.length ? x.map((d, i) => `<div class="flex justify-between bg-white border rounded-lg px-3 py-2"><span class="text-sm">${this.escapeHTML(d.word)} → ${this.escapeHTML(d.pronunciation)}</span><button onclick="app.removeLocalPronunciation(${i})" class="text-red-600 text-xs">削除</button></div>`).join('') : '<p class="text-xs text-soft-green-500">この問題固有の読み方は未設定です。</p>'; },
+    renderDetailPronunciations(q) { const box = document.getElementById('detail-pronunciation-list'); if (!box) return; const x = q && q.pronunciations ? q.pronunciations : []; box.innerHTML = x.length ? x.map((d, i) => `<div class="flex justify-between bg-white border rounded-lg px-3 py-2"><span class="text-sm">${Utils.escapeHTML(d.word)} → ${Utils.escapeHTML(d.pronunciation)}</span><button onclick="app.removeLocalPronunciation(${i})" class="text-red-600 text-xs">削除</button></div>`).join('') : '<p class="text-xs text-soft-green-500">この問題固有の読み方は未設定です。</p>'; },
     removeLocalPronunciation(i) { const r = this.getQuestionByIdAcrossSets(document.getElementById('detail-question-id').value); r.q.pronunciations.splice(i, 1); r.set.questions[r.index] = r.q; this.saveStudySets(); this.renderDetailPronunciations(r.q); },
     switchAIGeneratorTab(tab) {
         const memo = tab === 'memo';
@@ -1190,7 +973,7 @@ const app = {
                 const m = cleaned.match(/^(.+?)\s+([^\s]{1,20})$/);
                 if (m) { answer = m[1].trim(); supplement = m[2].trim(); }
             }
-            const key = this.normalizeAnswerForDuplicateCheck(answer) + '|' + this.normalizeAnswerForDuplicateCheck(supplement);
+            const key = Utils.normalizeAnswerForDuplicateCheck(answer) + '|' + Utils.normalizeAnswerForDuplicateCheck(supplement);
             if (answer && key && !seen.has(key)) { seen.add(key); items.push({ raw: cleaned, answer, supplement }); }
         });
         return items;
@@ -1199,20 +982,6 @@ const app = {
         const count = this.parseMemoCandidates().length, el = document.getElementById('ai-memo-count');
         if (el) { el.textContent = `有効候補数: ${count} / 10`; el.classList.toggle('text-red-600', count > 10); }
         const btn = document.getElementById('btn-normalize-memo'); if (btn) btn.disabled = count === 0 || count > 10;
-    },
-
-    async mapWithConcurrency(items, limit, worker) {
-        const results = new Array(items.length);
-        let nextIndex = 0;
-        const run = async () => {
-            while (true) {
-                const index = nextIndex++;
-                if (index >= items.length) return;
-                results[index] = await worker(items[index], index);
-            }
-        };
-        await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run));
-        return results;
     },
 
     startQuiz(mode = 'voice') {

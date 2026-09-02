@@ -582,12 +582,12 @@ class QuestionManager {
         btn.textContent = '判定中...';
 
         try {
-            const candidates = Object.entries(this.app.getAISubgenres()).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
+            const candidates = Object.entries(AI_SUBGENRES).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
             const prompt = `以下のクイズ問題を候補のジャンルとサブジャンルから分類してください。JSONのみ返してください。\n形式:{"genre":"ジャンル","subgenre":"サブジャンル"}\n候補:\n${candidates}\nQ:${q}\nA:${a}`;
-            const parsed = this.app.parseAIJSON(await this.app.fetchGemini(prompt, true));
+            const parsed = this.app.aiManager.parseAIJSON(await this.app.fetchGemini(prompt, true));
             const genre = String(parsed.genre || '');
             const sub = String(parsed.subgenre || '');
-            const defs = this.app.getAISubgenres();
+            const defs = AI_SUBGENRES;
 
             if (!defs[genre]) throw new Error('候補内のジャンルを判定できませんでした');
             document.getElementById('detail-question-genre').value = genre;
@@ -628,13 +628,13 @@ class QuestionManager {
         if (status) status.textContent = `${batch.length}問を判定中...`;
 
         try {
-            const candidates = Object.entries(this.app.getAISubgenres()).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
+            const candidates = Object.entries(AI_SUBGENRES).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
             const items = batch.map(item => `[${item.idx}] Q:${item.q.q}\nA:${item.q.a}`).join('\n\n');
             const prompt = `以下のクイズ問題を、候補のジャンルとサブジャンルから分類してください。\n出力は必ずJSON配列のみとし、説明文やMarkdownは不要です。\n形式:[{"idx":0,"genre":"ジャンル","subgenre":"サブジャンル"}]\nidxは入力の番号をそのまま返してください。genreは候補ジャンルから、subgenreはそのgenreの候補サブジャンルから選んでください。判断が難しい場合も最も近い候補を1つ選んでください。\n\n候補:\n${candidates}\n\n問題:\n${items}`;
-            const parsed = this.app.parseAIJSON(await this.app.fetchGemini(prompt, true));
+            const parsed = this.app.aiManager.parseAIJSON(await this.app.fetchGemini(prompt, true));
 
             if (!Array.isArray(parsed)) throw new Error('JSON配列として解析できませんでした');
-            const defs = this.app.getAISubgenres();
+            const defs = AI_SUBGENRES;
             let updated = 0, skipped = 0;
 
             parsed.forEach(item => {

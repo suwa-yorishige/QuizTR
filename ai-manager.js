@@ -33,6 +33,25 @@ class AIManager {
     }
 
     /**
+     * JSON文字列をパースする。コードブロックや余計な文字列を除去してからパースする。
+     * @param {string} text 
+     * @returns {any}
+     */
+    parseAIJSON(text) {
+        const clean = String(text || '')
+            .replace(/```json/gi, '')
+            .replace(/```/g, '')
+            .trim();
+        try {
+            return JSON.parse(clean);
+        } catch (error) {
+            const match = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+            if (match) return JSON.parse(match[1]);
+            throw error;
+        }
+    }
+
+    /**
      * AI解説の指示文を取得する
      * @returns {string}
      */
@@ -142,7 +161,7 @@ ${text}
      * @return {Array} 設計案の配列 [{answer, aliases, angle, keywords, genre, subgenre}]
      */
     async generateQuestionPlansWithAI({ count, genre, subgenre, topic, difficulty, excludedAnswers, excludedAngles }) {
-        const defs = this.app.getAISubgenres();
+        const defs = AI_SUBGENRES;
         const genreCandidates = Object.entries(defs).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
         const requested = Math.max(count, Math.ceil(count * 1.3));
         const prompt = `早押しクイズの問題設計案を${requested}件作成してください。この段階では問題文や解説は作成しません。\n` +
@@ -153,7 +172,7 @@ ${text}
             `条件: ジャンル=${genre || '候補から最適なものを選択'}、サブジャンル=${subgenre || '選択したジャンル配下から選択'}、テーマ=${topic || '指定なし'}、難易度=${difficulty}\n` +
             `ジャンル候補:\n${genreCandidates}\n` +
             `出力はJSON配列のみ。形式:[{"answer":"解答","aliases":["別名"],"angle":"他案と重ならない出題観点","keywords":["識別語"],"genre":"ジャンル","subgenre":"サブジャンル"}]`;
-        const parsed = this.app.parseAIJSON(await this.fetchGemini(prompt, true));
+        const parsed = this.parseAIJSON(await this.fetchGemini(prompt, true));
         return Array.isArray(parsed) ? parsed : [];
     }
 
@@ -172,7 +191,7 @@ ${text}
             `設計案(JSON):${JSON.stringify(plans)}\n` +
             `explanationは、${this.getAIExplanationInstruction()}\n` +
             `出力はJSON配列のみ。形式:[{"q":"問題文","a":"解答","explanation":"解説","genre":"ジャンル","subgenre":"サブジャンル","angle":"出題観点","keywords":["識別語"]}]`;
-        const parsed = this.app.parseAIJSON(await this.fetchGemini(prompt, true));
+        const parsed = this.parseAIJSON(await this.fetchGemini(prompt, true));
         return Array.isArray(parsed) ? parsed : [];
     }
 
@@ -203,8 +222,8 @@ ${text}
      */
     _initializeGenerationState(targetSet) {
         const existingQuestions = [...targetSet.questions];
-        const usedAnswers = new Set(existingQuestions.map(q => this.app.normalizeAnswerForDuplicateCheck(q.a)).filter(Boolean));
-        return { existingQuestions, usedAnswers, accepted: [], acceptedAngles: [], defs: this.app.getAISubgenres() };
+        const usedAnswers = new Set(existingQuestions.map(q => Utils.normalizeAnswerForDuplicateCheck(q.a)).filter(Boolean));
+        return { existingQuestions, usedAnswers, accepted: [], acceptedAngles: [], defs: AI_SUBGENRES };
     }
 
     /**
@@ -233,13 +252,13 @@ ${text}
         const planKeys = new Set(), plans = [];
         for (const raw of plansRaw) {
             const answer = String(raw.answer || raw.a || '').trim();
-            const key = this.app.normalizeAnswerForDuplicateCheck(answer);
+            const key = Utils.normalizeAnswerForDuplicateCheck(answer);
             const aliases = (Array.isArray(raw.aliases) ? raw.aliases.map(x => String(x).trim()).filter(Boolean) : []);
-            const aliasKeys = aliases.map(x => this.app.normalizeAnswerForDuplicateCheck(x));
+            const aliasKeys = aliases.map(x => Utils.normalizeAnswerForDuplicateCheck(x));
             if (!answer || !key || usedAnswers.has(key) || aliasKeys.some(k => usedAnswers.has(k)) || planKeys.has(key)) continue;
             const angle = String(raw.angle || '').trim();
             const keywords = (Array.isArray(raw.keywords) ? raw.keywords.map(String) : []);
-            if (plans.some(p => this.app.textSimilarity([angle, ...keywords].join(' '), [p.angle, ...(p.keywords || [])].join(' ')) >= 0.68)) continue;
+            if (plans.some(p => Utils.textSimilarity([angle, ...keywords].join(' '), [p.angle, ...(p.keywords || [])].join(' ')) >= 0.68)) continue;
             const assignedGenre = defs[raw.genre] ? raw.genre : (genre || 'ノンセク');
             let assignedSubgenre = String(raw.subgenre || subgenre || '').trim();
             if (!(defs[assignedGenre] || []).includes(assignedSubgenre)) assignedSubgenre = (defs[assignedGenre] || [])[0] || '';
@@ -265,7 +284,7 @@ ${text}
         for (let i = 0; i < plans.length; i += 5) batches.push(plans.slice(i, i + 5));
         const priorSummaries = accepted.map(x => ({ answer: x.a, angle: x.angle, keywords: x.keywords }));
         let completedBatches = 0;
-        const batchResults = await this.app.mapWithConcurrency(batches, 2, async batch => {
+        const batchResults = await Utils.mapWithConcurrency(batches, 2, async batch => {
             const result = await this.generateQuestionBatchFromPlans(batch, difficulty, priorSummaries);
             completedBatches++;
             if (loadingUI.loadingTitle) loadingUI.loadingTitle.textContent = `問題文を生成中... (${completedBatches}/${batches.length}バッチ)`;
@@ -274,13 +293,13 @@ ${text}
         let acceptedCount = 0;
         for (const { batch, result } of batchResults) {
             for (const item of result) {
-                const plan = batch.find(p => this.app.normalizeAnswerForDuplicateCheck(p.answer) === this.app.normalizeAnswerForDuplicateCheck(item.a));
+                const plan = batch.find(p => Utils.normalizeAnswerForDuplicateCheck(p.answer) === Utils.normalizeAnswerForDuplicateCheck(item.a));
                 if (!plan || !item.q || !item.a) continue;
-                const key = this.app.normalizeAnswerForDuplicateCheck(item.a);
+                const key = Utils.normalizeAnswerForDuplicateCheck(item.a);
                 if (usedAnswers.has(key)) continue;
                 const candidate = { q: String(item.q).trim(), a: plan.answer, explanation: String(item.explanation || '').trim(), genre: plan.genre, subgenre: plan.subgenre, angle: plan.angle, keywords: plan.keywords };
                 if (this.app.isSimilarQuestionCandidate(candidate, accepted, existingQuestions)) continue;
-                usedAnswers.add(key); plan.aliases.forEach(a => usedAnswers.add(this.app.normalizeAnswerForDuplicateCheck(a)));
+                usedAnswers.add(key); plan.aliases.forEach(a => usedAnswers.add(Utils.normalizeAnswerForDuplicateCheck(a)));
                 accepted.push(candidate); acceptedAngles.push(candidate.angle);
                 acceptedCount++;
             }
@@ -297,10 +316,10 @@ ${text}
      * @param {Object} loadingUI
      */
     _finalizeGeneration(targetSet, accepted, difficulty, requestedCount, loadingUI) {
-        const finalExisting = new Set(targetSet.questions.map(q => this.app.normalizeAnswerForDuplicateCheck(q.a)));
+        const finalExisting = new Set(targetSet.questions.map(q => Utils.normalizeAnswerForDuplicateCheck(q.a)));
         const finalItems = [];
         for (const item of accepted) {
-            const key = this.app.normalizeAnswerForDuplicateCheck(item.a);
+            const key = Utils.normalizeAnswerForDuplicateCheck(item.a);
             if (!key || finalExisting.has(key)) continue;
             finalExisting.add(key); finalItems.push(item);
         }
@@ -352,10 +371,10 @@ ${text}
      * @returns 
      */
     async generateDerivativeData(answer, contextText = '', difficulty = '中級') {
-        const genreCandidates = Object.entries(this.app.getAISubgenres()).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
+        const genreCandidates = Object.entries(AI_SUBGENRES).map(([g, subs]) => `${g}: ${subs.join('、')}`).join('\n');
         const prompt = `「${answer}」が唯一の解答となる早押しクイズ問題を1問作成してください。前半は広い手掛かり、後半ほど特定しやすくしてください。すべての手掛かりを内部でファクトチェックし、確実な事実だけを使用してください。解答自体を問題文に書かないでください。難易度:${difficulty}。explanationは、${this.getAIExplanationInstruction()}\n候補からgenreと、その配下のsubgenreを1つずつ選んでください。\n${genreCandidates}\n出力JSON:{"q":"問題文","a":"${answer}","explanation":"解説","genre":"ジャンル","subgenre":"サブジャンル"}\n参考情報:${contextText}`;
-        const data = this.app.parseAIJSON(await this.fetchGemini(prompt, true));
-        const defs = this.app.getAISubgenres(), genre = String(data.genre || '').trim(), subgenre = String(data.subgenre || '').trim();
+        const data = this.parseAIJSON(await this.fetchGemini(prompt, true));
+        const defs = AI_SUBGENRES, genre = String(data.genre || '').trim(), subgenre = String(data.subgenre || '').trim();
         if (!data.q || !defs[genre] || !defs[genre].includes(subgenre)) throw new Error(`「${answer}」の生成結果が不正です`);
         return { q: String(data.q).trim(), a: answer, explanation: String(data.explanation || '').trim(), genre, subgenre, selected: true };
     }
@@ -372,10 +391,10 @@ ${text}
         const loader = document.getElementById('ai-loading'); loader.classList.remove('hidden'); loader.classList.add('flex');
         try {
             const prompt = `次のメモをクイズ作成用に補正してください。answerは解答候補、supplementは同姓同名や同名対象を区別し、問題の趣旨を決める補足事項です。タイプミス、誤変換、聞き取りミスを直してください。人物名は補足事項が示す対象に合う正式なフルネームにし、作品・施設・組織・出来事も正式名称にしてください。補足事項も誤記が明らかな場合は補正してください。別人・別対象に取り違えないでください。判断不能なら原文を維持してください。入力順を維持し、JSON配列のみ返してください。形式:[{"input":"原文","answer":"補正した解答","supplement":"補正した補足事項","note":"短い理由"}]\n入力:${JSON.stringify(inputs)}`;
-            const parsed = this.app.parseAIJSON(await this.fetchGemini(prompt, true));
+            const parsed = this.parseAIJSON(await this.fetchGemini(prompt, true));
             this.memoNormalizedAnswers = inputs.map((input, i) => { const x = (Array.isArray(parsed) ? parsed : [])[i] || {}; return { input: input.raw, answer: String(x.answer || input.answer).trim(), supplement: String(x.supplement || input.supplement || '').trim(), note: String(x.note || '').trim() }; });
             const list = document.getElementById('ai-memo-normalized-list');
-            list.innerHTML = this.memoNormalizedAnswers.map((x, i) => `<div class="bg-white border border-soft-green-200 rounded-xl p-3 space-y-2"><p class="text-xs text-soft-green-500">入力: ${this.app.escapeHTML(x.input)}${x.note ? ' / ' + this.app.escapeHTML(x.note) : ''}</p><div><label class="text-xs font-bold text-soft-green-700">解答候補</label><input class="w-full px-3 py-2 border rounded-lg text-sm font-semibold" value="${this.app.escapeHTML(x.answer)}" oninput="app.aiManager.memoNormalizedAnswers[${i}].answer=this.value"></div><div><label class="text-xs font-bold text-soft-green-700">補足事項</label><input class="w-full px-3 py-2 border rounded-lg text-sm" value="${this.app.escapeHTML(x.supplement)}" oninput="app.aiManager.memoNormalizedAnswers[${i}].supplement=this.value"></div></div>`).join('');
+            list.innerHTML = this.memoNormalizedAnswers.map((x, i) => `<div class="bg-white border border-soft-green-200 rounded-xl p-3 space-y-2"><p class="text-xs text-soft-green-500">入力: ${Utils.escapeHTML(x.input)}${x.note ? ' / ' + Utils.escapeHTML(x.note) : ''}</p><div><label class="text-xs font-bold text-soft-green-700">解答候補</label><input class="w-full px-3 py-2 border rounded-lg text-sm font-semibold" value="${Utils.escapeHTML(x.answer)}" oninput="app.aiManager.memoNormalizedAnswers[${i}].answer=this.value"></div><div><label class="text-xs font-bold text-soft-green-700">補足事項</label><input class="w-full px-3 py-2 border rounded-lg text-sm" value="${Utils.escapeHTML(x.supplement)}" oninput="app.aiManager.memoNormalizedAnswers[${i}].supplement=this.value"></div></div>`).join('');
             document.getElementById('btn-generate-memo').textContent = `${this.memoNormalizedAnswers.length}問を一括作成`;
             document.getElementById('ai-memo-normalized').classList.remove('hidden');
             document.getElementById('ai-memo-preview').classList.add('hidden');
@@ -397,9 +416,9 @@ ${text}
         try {
             // 同名でも補足事項が異なれば別候補として生成する。既存解答との重複は保存時に問題文も含めて確認する。
             const seen = new Set(), unique = [];
-            candidates.forEach(x => { const k = this.app.normalizeAnswerForDuplicateCheck(x.answer) + '|' + this.app.normalizeAnswerForDuplicateCheck(x.supplement); if (k && !seen.has(k)) { seen.add(k); unique.push(x); } });
+            candidates.forEach(x => { const k = Utils.normalizeAnswerForDuplicateCheck(x.answer) + '|' + Utils.normalizeAnswerForDuplicateCheck(x.supplement); if (k && !seen.has(k)) { seen.add(k); unique.push(x); } });
             const difficulty = document.getElementById('ai-memo-difficulty').value;
-            const results = await this.app.mapWithConcurrency(unique, 2, async x => { try { const context = x.supplement ? `補足事項「${x.supplement}」で示される人物・対象だけを扱い、同姓同名・同名の別対象と混同しないこと。問題文の手掛かりはこの補足事項の趣旨に合わせること。` : 'メモ取り込みで指定された解答候補'; const data = await this.generateDerivativeData(x.answer, context, difficulty); data.supplement = x.supplement; return data; } catch (e) { return { a: x.answer, supplement: x.supplement, error: e.message, selected: false }; } });
+            const results = await Utils.mapWithConcurrency(unique, 2, async x => { try { const context = x.supplement ? `補足事項「${x.supplement}」で示される人物・対象だけを扱い、同姓同名・同名の別対象と混同しないこと。問題文の手掛かりはこの補足事項の趣旨に合わせること。` : 'メモ取り込みで指定された解答候補'; const data = await this.generateDerivativeData(x.answer, context, difficulty); data.supplement = x.supplement; return data; } catch (e) { return { a: x.answer, supplement: x.supplement, error: e.message, selected: false }; } });
             this.pendingMemoQuestions = results;
             document.getElementById('ai-memo-preview-list').innerHTML = results.map((x, i) => x.error ? `<div class="border border-red-200 bg-red-50 rounded-xl p-3"><p class="font-bold text-red-700">${this.app.escapeHTML(x.a)}${x.supplement ? '（' + this.app.escapeHTML(x.supplement) + '）' : ''}</p><p class="text-xs text-red-600">${this.app.escapeHTML(x.error)}</p></div>` : `<label class="block border border-soft-green-200 bg-white rounded-xl p-4"><div class="flex gap-3"><input type="checkbox" checked onchange="app.aiManager.pendingMemoQuestions[${i}].selected=this.checked"><div><p class="font-bold text-amber-800">${this.app.escapeHTML(x.a)}${x.supplement ? ' <span class="text-xs text-soft-green-600">（' + this.app.escapeHTML(x.supplement) + '）</span>' : ''}</p><p class="text-sm mt-2">${this.app.escapeHTML(x.q)}</p></div></div></label>`).join('');
             document.getElementById('ai-memo-preview').classList.remove('hidden');
@@ -417,8 +436,8 @@ ${text}
         const available = Math.min(MAX_QUESTIONS_PER_SET - target.questions.length, MAX_TOTAL_QUESTIONS - this.app.getTotalQuestionCount());
         const batchKeys = new Set();
         const saved = []; items.slice(0, available).forEach(x => {
-            const k = this.app.normalizeAnswerForDuplicateCheck(x.a) + '|' + this.app.normalizeAnswerForDuplicateCheck(x.supplement || '');
-            const exactQuestionExists = target.questions.some(q => this.app.normalizeAnswerForDuplicateCheck(q.a) === this.app.normalizeAnswerForDuplicateCheck(x.a) && this.app.textSimilarity(q.q, x.q) >= 0.78);
+            const k = Utils.normalizeAnswerForDuplicateCheck(x.a) + '|' + Utils.normalizeAnswerForDuplicateCheck(x.supplement || '');
+            const exactQuestionExists = target.questions.some(q => Utils.normalizeAnswerForDuplicateCheck(q.a) === Utils.normalizeAnswerForDuplicateCheck(x.a) && Utils.textSimilarity(q.q, x.q) >= 0.78);
             if (!batchKeys.has(k) && !exactQuestionExists) { batchKeys.add(k); target.questions.push(this.app.createQuestionData(x.q, x.a, x.explanation, { genre: x.genre, subgenre: x.subgenre, difficulty: document.getElementById('ai-memo-difficulty').value })); saved.push(x); }
         });
         this.app.saveStudySets(); this.app.updateSetSelectors(); this.app.resetMemoImport(false); this.app.showToast(`${saved.length}問を保存しました`, 'success');
@@ -490,7 +509,7 @@ ${text}
         const l = document.getElementById('pronunciation-loading'), b = document.getElementById('pronunciation-ai-btn'); 
         l.classList.remove('hidden'); l.classList.add('flex'); b.disabled = true; 
         try { 
-            const parsed = this.app.parseAIJSON(await this.fetchGemini(`問題文と解答から音声で誤読されやすい固有名詞を抽出し、文脈に合う読みをひらがなで示してください。入力に実在する完全一致文字列のみ。JSON配列のみ:[{"word":"対象","pronunciation":"よみ"}]\n問題文:${q.q}\n解答:${q.a}`, true)); 
+            const parsed = this.parseAIJSON(await this.fetchGemini(`問題文と解答から音声で誤読されやすい固有名詞を抽出し、文脈に合う読みをひらがなで示してください。入力に実在する完全一致文字列のみ。JSON配列のみ:[{"word":"対象","pronunciation":"よみ"}]\n問題文:${q.q}\n解答:${q.a}`, true));
             const globals = new Set(this.app.dictionary.map(x => x.word)); 
             let added = 0; 
             (Array.isArray(parsed) ? parsed : []).forEach(x => { 

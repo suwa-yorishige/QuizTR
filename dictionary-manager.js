@@ -213,8 +213,8 @@ class DictionaryManager {
             this.dictionary.forEach((d, i) => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-soft-green-50">
-                        <td class="px-4 py-3 border-t border-soft-green-100">${this.app.escapeHTML(d.word)}</td>
-                        <td class="px-4 py-3 border-t border-soft-green-100">${this.app.escapeHTML(d.pronunciation)}</td>
+                        <td class="px-4 py-3 border-t border-soft-green-100">${Utils.escapeHTML(d.word)}</td>
+                        <td class="px-4 py-3 border-t border-soft-green-100">${Utils.escapeHTML(d.pronunciation)}</td>
                         <td class="px-4 py-3 border-t border-soft-green-100 text-right">
                             <button onclick="app.dictionaryManager.removeEntry(${i})" class="text-red-500 hover:text-red-700 text-sm font-bold">削除</button>
                         </td>

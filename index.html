@@ -24,6 +24,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script>
+        window.ONE_DRIVE_CONFIG = window.ONE_DRIVE_CONFIG || {
+            clientId: 'YOUR_CLIENT_ID'
+        };
+    </script>
+    <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+
+    <script>
         // Tailwind CSSのカスタム設定
         tailwind.config = {
             theme: {
@@ -330,6 +337,23 @@
                                 class="px-4 py-2 bg-amber-500 text-white rounded-lg w-full">JSONから復元</button>
                             <p class="text-xs text-gray-500 mt-2">同名の学習セットが存在する場合は上書き確認を行います。</p>
                         </div>
+                    </div>
+                    <div class="border-t border-soft-green-100 mt-4 pt-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                            <div>
+                                <h4 class="font-bold">OneDrive連携</h4>
+                                <p id="onedrive-status" class="text-xs text-gray-500 mt-1">未接続</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="onedrive-signin-button" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Microsoftログイン</button>
+                                <button id="onedrive-signout-button" class="hidden px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">ログアウト</button>
+                            </div>
+                        </div>
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <button id="onedrive-save-button" class="px-4 py-2 bg-soft-green-600 text-white rounded-lg">OneDriveへ保存</button>
+                            <button id="onedrive-load-button" class="px-4 py-2 bg-blue-500 text-white rounded-lg">OneDriveから復元</button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">バックアップ保存欄で選択した学習セットを手動保存します。</p>
                     </div>
                     <div class="hidden">
                         <button onclick="importQuizBackup(document.getElementById('backup-file').files[0],false)"
@@ -1058,6 +1082,42 @@
                                 class="form-input text-sm font-mono">
                         </div>
 
+                        <div class="bg-white p-4 rounded-xl border border-soft-green-200 space-y-3">
+                            <div>
+                                <h3 class="text-sm font-bold text-soft-green-800">OneDrive連携</h3>
+                                <p class="text-xs text-soft-green-600 mt-1">Client IDを設定すると、学習セットをOneDriveへ手動保存・復元できます。</p>
+                            </div>
+                            <div>
+                                <label for="setting-onedrive-client-id" class="block text-sm font-semibold text-soft-green-800 mb-1">Application (client) ID</label>
+                                <input type="text" id="setting-onedrive-client-id" placeholder="Application (client) ID" class="form-input text-sm font-mono">
+                            </div>
+                            <div>
+                                <label for="setting-onedrive-authority" class="block text-sm font-semibold text-soft-green-800 mb-1">アカウントの種類</label>
+                                <select id="setting-onedrive-authority" class="form-select bg-white text-sm">
+                                    <option value="consumers">Microsoft個人アカウント</option>
+                                    <option value="organizations">組織アカウント</option>
+                                    <option value="common">個人・組織アカウント</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="onedrive-redirect-uri" class="block text-sm font-semibold text-soft-green-800 mb-1">現在のRedirect URI</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="onedrive-redirect-uri" readonly class="form-input text-sm bg-soft-green-50">
+                                    <button type="button" onclick="app.copyOneDriveRedirectUri()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg whitespace-nowrap">コピー</button>
+                                </div>
+                            </div>
+                            <div class="text-xs text-soft-green-700 bg-soft-green-50 border border-soft-green-100 rounded-lg p-3">
+                                <p class="font-bold mb-1">OneDrive連携手順</p>
+                                <ol class="list-decimal list-inside space-y-1">
+                                    <li>Azure Portalで「アプリの登録」を作成</li>
+                                    <li>プラットフォームにSPAを追加し、上のRedirect URIを登録</li>
+                                    <li>API PermissionsにMicrosoft GraphのDelegated権限「Files.ReadWrite.AppFolder」を追加</li>
+                                    <li>Application (client) IDを上へ入力して保存</li>
+                                    <li>データ管理のバックアップ画面からMicrosoftログインを実行</li>
+                                </ol>
+                            </div>
+                        </div>
+
                         <div class="flex justify-end pt-2">
                             <button onclick="app.saveSettings()"
                                 class="btn-primary px-8 py-3 rounded-xl shadow-md w-full sm:w-auto">
@@ -1200,6 +1260,18 @@
             </div>
         </div>
     </main>
+
+    <div id="onedrive-restore-modal" class="hidden modal fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[135] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-6">
+            <h3 class="text-xl font-bold text-soft-green-900 mb-2">OneDriveの学習セット</h3>
+            <p class="text-sm text-gray-600 mb-4">復元するセットを選択してください。</p>
+            <div id="onedrive-file-list" class="space-y-2 mb-5"></div>
+            <div class="flex gap-3 justify-end">
+                <button id="onedrive-restore-cancel-button" class="px-4 py-2 bg-soft-green-100 text-soft-green-800 rounded-xl font-bold">キャンセル</button>
+                <button id="onedrive-restore-confirm-button" class="px-4 py-2 bg-soft-green-600 text-white rounded-xl font-bold">復元する</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Custom Modal -->
     <div id="custom-modal"
@@ -1497,6 +1569,7 @@
     <script src="ai-manager.js"></script>
     <script src="set-manager.js"></script>
     <script src="api.js"></script>
+    <script src="onedrive-manager.js"></script>
     <script src="data-manager.js"></script>
     <script src="app.js"></script>
 

@@ -19,6 +19,12 @@ class DataManager {
         document.getElementById('backup-restore-button').addEventListener('click', () => {
             this.restoreSetBackup(document.getElementById('backup-file').files[0]);
         });
+        document.getElementById('onedrive-signin-button').addEventListener('click', () => this.signInToOneDrive());
+        document.getElementById('onedrive-signout-button').addEventListener('click', () => this.signOutFromOneDrive());
+        document.getElementById('onedrive-save-button').addEventListener('click', () => this.uploadSelectedSetToOneDrive());
+        document.getElementById('onedrive-load-button').addEventListener('click', () => this.openOneDriveRestoreDialog());
+        document.getElementById('onedrive-restore-cancel-button').addEventListener('click', () => this.closeOneDriveRestoreDialog());
+        document.getElementById('onedrive-restore-confirm-button').addEventListener('click', () => this.restoreSelectedOneDriveSet());
     }
 
     /** 指定したデータ管理タブを表示し、選択状態を更新する。 */
@@ -203,12 +209,26 @@ class DataManager {
 
     /** 選択された学習セットをJSONバックアップとして保存する。 */
     exportSetBackup() {
-        const selectElement = document.getElementById('backup-set-select');
-        const set = this.app.studySets.find(item => item.id === selectElement.value);
+        const set = this.getSelectedBackupSet();
         if (!set) return this.app.showToast('学習セットを選択してください', 'error');
-        const data = { version: '1.0', createdAt: Date.now(), studySet: set };
+        const data = this.createBackupPayload(set);
         this.download(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `quiz_backup_${this.safeFileName(set.name || 'set')}.json`);
         this.app.showToast('バックアップを保存しました', 'success');
+    }
+
+    getSelectedBackupSet() {
+        const selectElement = document.getElementById('backup-set-select');
+        return selectElement ? this.app.studySets.find(item => item.id === selectElement.value) : null;
+    }
+
+    createBackupPayload(set) {
+        return { version: '1.0', createdAt: Date.now(), studySet: set };
+    }
+
+    validateBackupPayload(data) {
+        const set = data && data.studySet;
+        if (!set || !set.id || !set.name || !Array.isArray(set.questions)) throw new Error('バックアップファイルが不正です');
+        return data;
     }
 
     /** JSONバックアップを読み込み、確認後に学習セットとして復元する。 */
@@ -217,23 +237,95 @@ class DataManager {
         const reader = new FileReader();
         reader.onload = async () => {
             try {
-                const data = JSON.parse(reader.result);
-                const set = data.studySet;
-                if (!set || !set.id || !set.name || !Array.isArray(set.questions)) throw new Error('不正なバックアップです');
-                const existing = this.app.studySets.find(item => item.name === set.name);
-                const backupDate = data.createdAt ? new Date(data.createdAt).toLocaleString('ja-JP') : '不明';
-                if (existing && !await this.app.showModal('バックアップの復元', `学習セット「${set.name}」\n\nバックアップ日時:\n${backupDate}\n\n同名の学習セットが存在します。\n上書きして復元しますか？`, '復元する')) return;
-                if (existing) this.app.studySets = this.app.studySets.filter(item => item.id !== existing.id);
-                this.app.studySets.push(set);
-                this.app.saveStudySets();
-                this.app.updateSetSelectors();
-                this.app.showToast('復元完了', 'success');
+                const data = this.validateBackupPayload(JSON.parse(reader.result));
+                await this.restoreBackupData(data);
             } catch (error) {
                 this.app.showToast(error.message || 'バックアップの復元に失敗しました', 'error');
             }
         };
         reader.onerror = () => this.app.showToast('ファイルの読み込みに失敗しました', 'error');
         reader.readAsText(file);
+    }
+
+    async restoreBackupData(data) {
+        const set = this.validateBackupPayload(data).studySet;
+        const existing = this.app.studySets.find(item => item.name === set.name);
+        const backupDate = data.createdAt ? new Date(data.createdAt).toLocaleString('ja-JP') : '不明';
+        if (existing && !await this.app.showModal('バックアップの復元', `学習セット「${set.name}」\n\nバックアップ日時:\n${backupDate}\n\n同名の学習セットが存在します。\n上書きして復元しますか？`, '復元する')) return false;
+        if (existing) this.app.studySets = this.app.studySets.filter(item => item.id !== existing.id);
+        this.app.studySets.push(set);
+        this.app.learningDataManager.normalizeLearningData();
+        this.app.saveStudySets();
+        this.app.setManager.updateSetSelectors();
+        this.app.showToast('復元完了', 'success');
+        return true;
+    }
+
+    async signInToOneDrive() {
+        try {
+            await this.app.oneDriveManager.signIn();
+            this.updateOneDriveStatus();
+            this.app.showToast('Microsoftアカウントにログインしました', 'success');
+        } catch (error) {
+            this.app.showToast(error.message, 'error');
+        }
+    }
+
+    async signOutFromOneDrive() {
+        try {
+            await this.app.oneDriveManager.signOut();
+            this.updateOneDriveStatus();
+            this.app.showToast('OneDriveからログアウトしました', 'success');
+        } catch (error) {
+            this.app.showToast(error.message, 'error');
+        }
+    }
+
+    async uploadSelectedSetToOneDrive() {
+        const set = this.getSelectedBackupSet();
+        if (!set) return this.app.showToast('学習セットを選択してください', 'error');
+        try {
+            await this.app.oneDriveManager.uploadStudySet(this.createBackupPayload(set));
+            this.app.showToast('OneDriveへ保存しました', 'success');
+        } catch (error) {
+            this.app.showToast(error.message, 'error');
+        }
+    }
+
+    async openOneDriveRestoreDialog() {
+        try {
+            const files = await this.app.oneDriveManager.getStudySetList();
+            const list = document.getElementById('onedrive-file-list');
+            list.innerHTML = files.length ? files.map(file => `<label class="flex items-center gap-2 border rounded-lg p-3 cursor-pointer"><input type="radio" name="onedrive-file" value="${Utils.escapeHTML(file.id)}"><span>${Utils.escapeHTML(file.fileName)}<small class="block text-gray-500">${new Date(file.modifiedDate).toLocaleString('ja-JP')}</small></span></label>`).join('') : '<p class="text-sm text-gray-500">保存済みの学習セットはありません。</p>';
+            document.getElementById('onedrive-restore-confirm-button').disabled = files.length === 0;
+            document.getElementById('onedrive-restore-modal').classList.remove('hidden');
+        } catch (error) {
+            this.app.showToast(error.message, 'error');
+        }
+    }
+
+    async restoreSelectedOneDriveSet() {
+        const selected = document.querySelector('input[name="onedrive-file"]:checked');
+        if (!selected) return this.app.showToast('復元する学習セットを選択してください', 'error');
+        try {
+            const data = await this.app.oneDriveManager.downloadStudySet(selected.value);
+            this.closeOneDriveRestoreDialog();
+            await this.restoreBackupData(data);
+        } catch (error) {
+            this.app.showToast(error.message, 'error');
+        }
+    }
+
+    closeOneDriveRestoreDialog() {
+        document.getElementById('onedrive-restore-modal').classList.add('hidden');
+    }
+
+    updateOneDriveStatus() {
+        const manager = this.app.oneDriveManager;
+        const status = document.getElementById('onedrive-status');
+        if (status) status.textContent = manager.account ? `接続中: ${manager.account.username || manager.account.name || ''}` : '未接続';
+        document.getElementById('onedrive-signin-button').classList.toggle('hidden', Boolean(manager.account));
+        document.getElementById('onedrive-signout-button').classList.toggle('hidden', !manager.account);
     }
 
     /** Blobを指定ファイル名でブラウザからダウンロードする。 */

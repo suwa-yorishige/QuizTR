@@ -9,6 +9,7 @@ class LearningDataManager {
      */
     normalizeLearningData() {
         this.app.studySets.forEach(set => {
+            set.favorite = !!set.favorite;
             set.cycleSeenQuestionIds = Array.isArray(set.cycleSeenQuestionIds) ? set.cycleSeenQuestionIds : [];
             set.cycleStartedAt = set.cycleStartedAt || null;
             set.questions = set.questions.map(question => this.normalizeQuestionData(question));

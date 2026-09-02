@@ -425,10 +425,27 @@
                             <select id="manager-active-set" onchange="app.changeManagerSet(this.value)"
                                 class="form-select flex-1 bg-white font-semibold text-soft-green-900"></select>
                             <div class="flex gap-2">
+                                <button onclick="app.setManager.moveCurrentSetUp()" title="上へ" aria-label="上へ"
+                                    class="btn-secondary px-3 py-2 rounded-xl text-sm">▲</button>
+                                <button onclick="app.setManager.moveCurrentSetDown()" title="下へ" aria-label="下へ"
+                                    class="btn-secondary px-3 py-2 rounded-xl text-sm">▼</button>
+                                <button id="manager-favorite-set" onclick="app.setManager.toggleFavoriteSet()"
+                                    class="btn-secondary px-3 py-2 rounded-xl text-sm whitespace-nowrap">★ ピン留め</button>
                                 <button onclick="app.setManager.createNewSet()"
                                     class="btn-primary flex-1 sm:flex-none px-4 py-2 rounded-xl shadow-sm text-sm">新規作成</button>
                                 <button onclick="app.setManager.deleteManagerSet()"
                                     class="btn-danger flex-1 sm:flex-none px-4 py-2 rounded-xl shadow-sm text-sm">削除</button>
+                            </div>
+                        </div>
+                        <div class="card-white p-4 mb-4">
+                            <h4 class="text-sm font-bold text-soft-green-800 mb-3">学習セット統計</h4>
+                            <div id="manager-set-statistics" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <div><p class="text-xs text-soft-green-600">問題数</p><p id="manager-set-stat-total" class="font-bold text-soft-green-900">0</p></div>
+                                <div><p class="text-xs text-soft-green-600">未回答</p><p id="manager-set-stat-unanswered" class="font-bold text-soft-green-900">0</p></div>
+                                <div><p class="text-xs text-soft-green-600">平均正解率</p><p id="manager-set-stat-accuracy" class="font-bold text-soft-green-900">--%</p></div>
+                                <div><p class="text-xs text-soft-green-600">習熟度平均</p><p id="manager-set-stat-mastery" class="font-bold text-soft-green-900">--点</p></div>
+                                <div><p class="text-xs text-soft-green-600">解説未設定</p><p id="manager-set-stat-no-explanation" class="font-bold text-soft-green-900">0</p></div>
+                                <div><p class="text-xs text-soft-green-600">ジャンル未設定</p><p id="manager-set-stat-no-genre" class="font-bold text-soft-green-900">0</p></div>
                             </div>
                         </div>
                         <div

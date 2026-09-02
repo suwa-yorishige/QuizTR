@@ -5,12 +5,20 @@ class SetManager {
     }
 
     createEmptySet(name) {
-        return { id: `set-${Date.now()}${Math.random().toString(36).substring(2)}`, name, questions: [] };
+        return { id: `set-${Date.now()}${Math.random().toString(36).substring(2)}`, name, questions: [], favorite: false };
+    }
+
+    getDisplayOrderedSets() {
+        return this.app.studySets
+            .map((set, index) => ({ set, index }))
+            .sort((left, right) => Number(right.set.favorite) - Number(left.set.favorite) || left.index - right.index)
+            .map(({ set }) => set);
     }
 
     updateSetSelectors() {
+        const sets = this.getDisplayOrderedSets();
         const createOptions = includeNew => {
-            let html = this.app.studySets.map(set => `<option value="${set.id}">${Utils.escapeHTML(set.name)}</option>`).join('');
+            let html = sets.map(set => `<option value="${set.id}">${set.favorite ? '★ ' : ''}${Utils.escapeHTML(set.name)}</option>`).join('');
             if (includeNew) html += '<option value="_new_" class="font-bold text-soft-green-600">＋ 新しいセットを作成</option>';
             return html;
         };
@@ -30,6 +38,38 @@ class SetManager {
         });
     }
 
+    moveSet(fromIndex, toIndex) {
+        const orderedSets = this.getDisplayOrderedSets();
+        if (fromIndex < 0 || toIndex < 0 || fromIndex >= orderedSets.length || toIndex >= orderedSets.length) return;
+        if (orderedSets[fromIndex].favorite !== orderedSets[toIndex].favorite) return;
+        const [set] = orderedSets.splice(fromIndex, 1);
+        orderedSets.splice(toIndex, 0, set);
+        this.app.studySets = orderedSets;
+        this.app.saveStudySets();
+        this.updateSetSelectors();
+        this.changeManagerSet(set.id);
+    }
+
+    moveCurrentSetUp() {
+        const index = this.getDisplayOrderedSets().findIndex(set => set.id === this.app.managerSetId);
+        this.moveSet(index, index - 1);
+    }
+
+    moveCurrentSetDown() {
+        const index = this.getDisplayOrderedSets().findIndex(set => set.id === this.app.managerSetId);
+        this.moveSet(index, index + 1);
+    }
+
+    toggleFavoriteSet() {
+        const set = this.app.studySets.find(item => item.id === this.app.managerSetId);
+        if (!set) return;
+        set.favorite = !set.favorite;
+        this.app.saveStudySets();
+        this.updateSetSelectors();
+        this.changeManagerSet(set.id);
+        this.app.uiManager.showToast(set.favorite ? 'セットをピン留めしました' : 'セットのピン留めを解除しました', 'success');
+    }
+
     changeActiveSet(id) {
         this.app.activeSetId = id;
         this.app.statsManager.updateStats();
@@ -39,7 +79,11 @@ class SetManager {
         this.app.managerSetId = id;
         this.app.questionListPage = 1;
         const set = this.app.studySets.find(item => item.id === id);
-        if (set) document.getElementById('manager-set-name').value = set.name;
+        if (set) {
+            document.getElementById('manager-set-name').value = set.name;
+            const favoriteButton = document.getElementById('manager-favorite-set');
+            if (favoriteButton) favoriteButton.textContent = set.favorite ? '★ ピン解除' : '★ ピン留め';
+        }
         const questionSelect = document.getElementById('manager-question-set-select');
         if (questionSelect) questionSelect.value = id;
         this.app.statsManager.renderManagerStats();

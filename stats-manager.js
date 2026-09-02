@@ -157,10 +157,23 @@ class StatsManager {
         const noExplanation = set.questions.filter(question => !(question.explanation || '').trim()).length;
         const noGenre = set.questions.filter(question => !(question.genre || '').trim()).length;
         [['manager-summary-unanswered', unanswered], ['manager-summary-no-explanation', noExplanation], ['manager-summary-no-genre', noGenre]].forEach(([id, value]) => { const element = document.getElementById(id); if (element) element.textContent = value; });
+        this.renderManagerSetStatistics(set);
         this.renderDistribution(total, unanswered, set.questions);
         this.renderGenreSummary(set.questions);
         this.app.questionManager.updateQuestionFilterOptions();
         this.app.questionManager.renderQuestionList();
+    }
+
+    renderManagerSetStatistics(set = this.app.studySets.find(item => item.id === this.app.managerSetId)) {
+        const box = document.getElementById('manager-set-statistics');
+        if (!box || !set) return;
+        const questions = set.questions || [];
+        const attempted = questions.reduce((sum, question) => sum + (question.total || 0), 0);
+        const correct = questions.reduce((sum, question) => sum + (question.correct || 0), 0);
+        const averageAccuracy = attempted ? `${Math.round(correct / attempted * 100)}%` : '--%';
+        const averageMastery = questions.length ? `${Math.round(questions.reduce((sum, question) => sum + this.getMasteryMetrics(question).score, 0) / questions.length)}点` : '--点';
+        const values = [['manager-set-stat-total', questions.length], ['manager-set-stat-unanswered', questions.filter(question => !(question.total || 0)).length], ['manager-set-stat-accuracy', averageAccuracy], ['manager-set-stat-mastery', averageMastery], ['manager-set-stat-no-explanation', questions.filter(question => !(question.explanation || '').trim()).length], ['manager-set-stat-no-genre', questions.filter(question => !(question.genre || '').trim()).length]];
+        values.forEach(([id, value]) => { const element = document.getElementById(id); if (element) element.textContent = value; });
     }
 
     /**

@@ -609,7 +609,7 @@ ${current.q}`, true));
               </label>`
             ).join('');
         const select = document.getElementById('derivative-target-set');
-        select.innerHTML = this.app.studySets.map(x => `<option value="${x.id}">${this.app.escapeHTML(x.name)}</option>`).join('');
+        select.innerHTML = this.app.getDisplayOrderedSets().map(x => `<option value="${x.id}">${x.favorite ? '★ ' : ''}${this.app.escapeHTML(x.name)}</option>`).join('');
         select.value = this.app.activeSetId;
         document.getElementById('derivative-step-text').textContent = '内容を確認し、追加する問題を選択してください';
         this.setDerivativeView('derivative-preview');

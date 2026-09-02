@@ -179,7 +179,7 @@ class QuestionManager {
 
         const moveSelect = document.getElementById('detail-question-move-set');
         if (moveSelect) {
-            moveSelect.innerHTML = this.app.studySets.map(set => `<option value="${set.id}">${this.app.escapeHTML(set.name)}</option>`).join('');
+            moveSelect.innerHTML = this.app.getDisplayOrderedSets().map(set => `<option value="${set.id}">${set.favorite ? '★ ' : ''}${this.app.escapeHTML(set.name)}</option>`).join('');
             moveSelect.value = r.set.id;
         }
 
@@ -322,7 +322,7 @@ class QuestionManager {
             const fallbackId = this.app.studySets && this.app.studySets.length ? this.app.studySets[0].id : null;
             this.app.bulkEditSetId = this.app.managerSetId || fallbackId || null;
         }
-        sourceSelect.innerHTML = this.app.studySets.map(set => `<option value="${set.id}">${this.app.escapeHTML(set.name)}</option>`).join('');
+        sourceSelect.innerHTML = this.app.getDisplayOrderedSets().map(set => `<option value="${set.id}">${set.favorite ? '★ ' : ''}${this.app.escapeHTML(set.name)}</option>`).join('');
         sourceSelect.value = this.app.bulkEditSetId || '';
 
         const targetSelect = document.getElementById('manager-bulk-move-target');

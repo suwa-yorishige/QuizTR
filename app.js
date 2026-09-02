@@ -39,6 +39,10 @@ const app = {
 
     init() {
         //外部モジュールのロード
+        this.uiManager = new UIManager(this);
+        this.learningDataManager = new LearningDataManager(this);
+        this.statsManager = new StatsManager(this);
+        this.setManager = new SetManager(this);
         this.dictionaryManager = new DictionaryManager(this);
         this.audioManager = new AudioManager(this);
         this.questionManager = new QuestionManager(this);
@@ -53,12 +57,12 @@ const app = {
         window.visualViewport.addEventListener('resize', () => this.updateViewportHeight(), { passive: true });
         window.visualViewport.addEventListener('scroll', () => this.updateViewportHeight(), { passive: true });
         this.loadData();
-        this.normalizeLearningData();
+        this.learningDataManager.normalizeLearningData();
         this.saveStudySets();
-        this.updateSetSelectors();
+        this.setManager.updateSetSelectors();
         this.handleAIGenreChange();
         this.dictionaryManager.render();
-        this.updateStats();
+        this.statsManager.updateStats();
 
         this.synth.onvoiceschanged = () => {
             this.voices = this.synth.getVoices();
@@ -109,11 +113,11 @@ const app = {
                             questions: questions.slice(0, MAX_QUESTIONS_PER_SET)
                         }];
                     } else {
-                        this.studySets = [this.createEmptySet('学習セット1')];
+                        this.studySets = [this.setManager.createEmptySet('学習セット1')];
                     }
                     localStorage.removeItem('quiz_questions');
                 } else {
-                    this.studySets = [this.createEmptySet('学習セット1')];
+                    this.studySets = [this.setManager.createEmptySet('学習セット1')];
                 }
             }
 
@@ -137,7 +141,7 @@ const app = {
             document.querySelector(`input[name="setting-theme"][value="${this.theme}"]`).checked = true;
         } catch (e) {
             console.error("Data loading error", e);
-            this.studySets = [this.createEmptySet('学習セット1')];
+            this.studySets = [this.setManager.createEmptySet('学習セット1')];
             if (this.studySets.length > 0) {
                 this.activeSetId = this.studySets[0].id;
                 this.managerSetId = this.studySets[0].id;
@@ -148,9 +152,9 @@ const app = {
     saveStudySets() {
         try {
             localStorage.setItem('quiz_study_sets', JSON.stringify(this.studySets));
-            this.updateStats();
+            this.statsManager.updateStats();
             if (!document.getElementById('view-manager').classList.contains('hidden')) {
-                this.renderManagerStats();
+                this.statsManager.renderManagerStats();
             }
         } catch (e) {
             this.showToast('保存容量の上限に達しました。一部の問題を削除してください。', 'error');
@@ -185,28 +189,7 @@ const app = {
     applyTheme(theme) {
         const normalizedTheme = this.normalizeTheme(theme);
         document.documentElement.dataset.theme = normalizedTheme === 'default' ? '' : normalizedTheme;
-        this.renderLearningSummary();
-    },
-
-    switchView(viewId) {
-        if (viewId === 'csv-import') { setTimeout(() => { const b = document.getElementById('manager-question-set-select'); const a = document.getElementById('csv-export-set'); const c = document.getElementById('backup-set-select'); if (a && b) a.innerHTML = b.innerHTML; if (c && b) c.innerHTML = b.innerHTML; }, 50); }
-        this.synth.cancel();
-        this.stopTextReveal();
-        if (this.audioElement) {
-            this.audioElement.pause();
-        }
-
-        ['dashboard', 'csv-import', 'manager', 'dictionary', 'ai-generator', 'audio-export', 'settings', 'quiz'].forEach(id => {
-            document.getElementById(`view-${id}`).classList.add('hidden');
-        });
-        document.getElementById(`view-${viewId}`).classList.remove('hidden');
-
-        if (viewId === 'manager') {
-            this.renderManagerStats();
-            this.questionManager.renderQuestionList();
-            this.questionManager.renderBulkEditList();
-            this.switchManagerTab(this.managerTab || 'overview');
-        }
+        this.statsManager.renderLearningSummary();
     },
 
     showToast(message, type = 'info') {
@@ -339,31 +322,6 @@ const app = {
         });
     },
 
-    normalizeQuestionData(q) {
-        const id = q.id || q.questionId || ('q-' + Date.now() + Math.random().toString(36).substring(2));
-        q.id = id; q.questionId = q.questionId || id;
-        q.genre = String(q.genre || '');
-        q.subgenre = String(q.subgenre || '');
-        q.difficulty = String(q.difficulty || '');
-        q.correct = Number.isFinite(Number(q.correct)) ? Number(q.correct) : 0;
-        q.total = Number.isFinite(Number(q.total)) ? Number(q.total) : 0;
-        q.accuracy = q.total > 0 ? q.correct / q.total : 0;
-        q.lastAnsweredAt = q.lastAnsweredAt ? Number(q.lastAnsweredAt) : null;
-        q.lastResult = (q.lastResult === true || q.lastResult === false) ? q.lastResult : null;
-        q.confirmPoint = Math.max(0, Math.min(String(q.q || '').length, Number(q.confirmPoint) || 0));
-        q.buzzRecords = Array.isArray(q.buzzRecords) ? q.buzzRecords.slice(-100) : [];
-        q.streak = Number.isFinite(Number(q.streak)) ? Number(q.streak) : 0;
-        if (!Number.isFinite(Number(q.level))) {
-            const acc = q.total > 0 ? q.correct / q.total : 0;
-            if (q.total === 0) q.level = 0;
-            else if (q.total >= 6 && acc >= 0.9) q.level = 4;
-            else if (q.total >= 4 && acc >= 0.75) q.level = 3;
-            else if (acc >= 0.5) q.level = 2;
-            else q.level = 1;
-        } else q.level = Math.max(0, Math.min(5, Number(q.level)));
-        return q;
-    },
-
     updateSetSelectors() {
         const sets = this.studySets;
         const createOptions = (includeNew) => {
@@ -460,24 +418,6 @@ const app = {
     switchDistributionTab(metric) { this.managerDistributionMetric = metric === 'mastery' ? 'mastery' : 'accuracy'; this.renderManagerStats(); },
     switchGenreAnalysisTab(standard) { this.managerGenreStandard = standard === 'qma' ? 'qma' : 'aql'; this.renderManagerStats(); },
     toQMAGenre(aqlGenre) { return QMA_GENRE_MAP[aqlGenre || ''] || 'ノンジャンル'; },
-
-    async createNewSet() {
-        if (this.studySets.length >= MAX_SETS) {
-            return this.showToast(`学習セットは最大${MAX_SETS}個までです。`, 'error');
-        }
-        const name = await this.showPromptModal('学習セットの新規作成', '新しい学習セットの名前を入力してください', '', '最大30文字', MAX_SET_NAME_LENGTH);
-        if (name === null) return;
-        const trimmedName = name.trim().substring(0, MAX_SET_NAME_LENGTH);
-        if (!trimmedName) return this.showToast('セット名が無効です', 'error');
-
-        const newSet = this.createEmptySet(trimmedName);
-        this.studySets.push(newSet);
-        this.saveStudySets();
-        this.updateSetSelectors();
-        this.changeManagerSet(newSet.id);
-        this.updateSetSelectors();
-        this.showToast('新しいセットを作成しました', 'success');
-    },
 
     async deleteManagerSet() {
         const set = this.studySets.find(s => s.id === this.managerSetId);
@@ -1014,6 +954,45 @@ const app = {
         return this.quizManager.recordResult(isCorrect);
     }
 };
+
+// 既存のManagerおよびインラインイベントとの互換性を保つFacade委譲。
+Object.assign(app, {
+    createEmptySet(...args) { return this.setManager.createEmptySet(...args); },
+    createNewSet(...args) { return this.setManager.createNewSet(...args); },
+    deleteManagerSet(...args) { return this.setManager.deleteManagerSet(...args); },
+    renameManagerSet(...args) { return this.setManager.renameManagerSet(...args); },
+    changeActiveSet(...args) { return this.setManager.changeActiveSet(...args); },
+    changeManagerSet(...args) { return this.setManager.changeManagerSet(...args); },
+    changeQuestionListSet(...args) { return this.setManager.changeQuestionListSet(...args); },
+    updateSetSelectors(...args) { return this.setManager.updateSetSelectors(...args); },
+
+    switchView(...args) { return this.uiManager.switchView(...args); },
+    showToast(...args) { return this.uiManager.showToast(...args); },
+    showModal(...args) { return this.uiManager.showModal(...args); },
+    showPromptModal(...args) { return this.uiManager.showPromptModal(...args); },
+    switchManagerTab(...args) { return this.uiManager.switchManagerTab(...args); },
+    switchDistributionTab(...args) { return this.uiManager.switchDistributionTab(...args); },
+    switchGenreAnalysisTab(...args) { return this.uiManager.switchGenreAnalysisTab(...args); },
+    switchAIGeneratorTab(...args) { return this.uiManager.switchAIGeneratorTab(...args); },
+
+    normalizeLearningData(...args) { return this.learningDataManager.normalizeLearningData(...args); },
+    normalizeQuestionData(...args) { return this.learningDataManager.normalizeQuestionData(...args); },
+    getQuestionId(...args) { return this.learningDataManager.getQuestionId(...args); },
+    getCycleSeenSet(...args) { return this.learningDataManager.getCycleSeenSet(...args); },
+    resetQuestionCycle(...args) { return this.learningDataManager.resetQuestionCycle(...args); },
+    isCycleCompleted(...args) { return this.learningDataManager.isCycleCompleted(...args); },
+    markQuestionSeenInCycle(...args) { return this.learningDataManager.markQuestionSeenInCycle(...args); },
+
+    updateStats(...args) { return this.statsManager.updateStats(...args); },
+    renderLearningSummary(...args) { return this.statsManager.renderLearningSummary(...args); },
+    renderManagerStats(...args) { return this.statsManager.renderManagerStats(...args); },
+    getAccuracyRatio(...args) { return this.statsManager.getAccuracyRatio(...args); },
+    getMasteryMetrics(...args) { return this.statsManager.getMasteryMetrics(...args); },
+    isHighAccuracyQuestion(...args) { return this.statsManager.isHighAccuracyQuestion(...args); },
+    isHighAccuracyCooldown(...args) { return this.statsManager.isHighAccuracyCooldown(...args); },
+    isLowAccuracyQuestion(...args) { return this.statsManager.isLowAccuracyQuestion(...args); },
+    isStaleQuestion(...args) { return this.statsManager.isStaleQuestion(...args); }
+});
 
 window.addEventListener('DOMContentLoaded', () => {
     app.init();

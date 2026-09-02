@@ -425,9 +425,9 @@
                             <select id="manager-active-set" onchange="app.changeManagerSet(this.value)"
                                 class="form-select flex-1 bg-white font-semibold text-soft-green-900"></select>
                             <div class="flex gap-2">
-                                <button onclick="app.createNewSet()"
+                                <button onclick="app.setManager.createNewSet()"
                                     class="btn-primary flex-1 sm:flex-none px-4 py-2 rounded-xl shadow-sm text-sm">新規作成</button>
-                                <button onclick="app.deleteManagerSet()"
+                                <button onclick="app.setManager.deleteManagerSet()"
                                     class="btn-danger flex-1 sm:flex-none px-4 py-2 rounded-xl shadow-sm text-sm">削除</button>
                             </div>
                         </div>
@@ -436,7 +436,7 @@
                             <label class="text-sm font-semibold text-soft-green-800 whitespace-nowrap">名称変更</label>
                             <input type="text" id="manager-set-name" maxlength="30" placeholder="最大全角30文字"
                                 class="form-input flex-1 text-sm">
-                            <button onclick="app.renameManagerSet()"
+                            <button onclick="app.setManager.renameManagerSet()"
                                 class="btn-secondary w-full sm:w-auto px-4 py-2 rounded-lg text-sm">変更を保存</button>
                         </div>
                     </div>
@@ -1470,11 +1470,15 @@
     <script src="genre-definitions.js"></script>
     <script src="utils.js"></script>
     <script src="csv-utils.js"></script>
+    <script src="ui-manager.js"></script>
+    <script src="learning-data-manager.js"></script>
+    <script src="stats-manager.js"></script>
     <script src="dictionary-manager.js"></script>
     <script src="audio-manager.js"></script>
     <script src="question-manager.js"></script>
     <script src="quiz-manager.js"></script>
     <script src="ai-manager.js"></script>
+    <script src="set-manager.js"></script>
     <script src="api.js"></script>
     <script src="data-manager.js"></script>
     <script src="app.js"></script>

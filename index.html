@@ -685,7 +685,7 @@
         <div id="view-audio-export"
             class="app-view hidden fade-in">
             <div class="w-full max-w-2xl space-y-6">
-                <div class="flex items-center gap-2 mb-4 text-soft-green-800">
+                <div class="flex items-center gap-2 mb-4 text-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path fill-rule="evenodd"
@@ -695,19 +695,19 @@
                     <h2 class="text-2xl font-bold">音声作成</h2>
                 </div>
 
-                <p class="text-sm text-soft-green-700 bg-soft-green-50 p-4 rounded-xl border border-soft-green-100">
+                <p class="text-sm text-secondary bg-soft-green-50 p-4 rounded-xl border border-soft-green-100">
                     設定されたAPIを使用して、問題と解答を自然な音声で読み上げるMP3ファイルを作成します。<br>
                     生成形式: <span class="font-bold">「問題」→(1秒)→問題文→(1秒)→解答→(1秒)→解説→(2秒)→...</span>
                 </p>
 
                 <div class="card p-6 space-y-4">
                     <div>
-                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">出力対象の学習セット</label>
+                        <label class="block text-sm font-semibold text-primary mb-2">出力対象の学習セット</label>
                         <select id="audio-export-target-set"
                             class="form-select bg-white mb-4"></select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">出力する問題数</label>
+                        <label class="block text-sm font-semibold text-primary mb-2">出力する問題数</label>
                         <select id="audio-export-count"
                             class="form-select bg-white">
                             <option value="10">10問</option>
@@ -721,23 +721,23 @@
                             <option value="90">90問</option>
                             <option value="100">100問</option>
                         </select>
-                        <p class="text-xs text-soft-green-600 mt-2">※選択した優先順で抽出し、同順位内はランダムに並べます。</p>
+                        <p class="text-xs text-secondary mt-2">※選択した優先順で抽出し、同順位内はランダムに並べます。</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-soft-green-800 mb-2">読み上げ対象の優先順</label>
+                        <label class="block text-sm font-semibold text-primary mb-2">読み上げ対象の優先順</label>
                         <select id="audio-export-priority"
                             class="form-select bg-white">
                             <option value="unanswered">未回答の問題を優先して出力する</option>
                             <option value="low-accuracy">正解率の低い問題を優先して出力する</option>
                         </select>
-                        <p class="text-xs text-soft-green-600 mt-2">※正解率の低い問題は、回答済みかつ正解率50%未満です。消化後は未回答の問題を第2優先にします。</p>
+                        <p class="text-xs text-secondary mt-2">※正解率の低い問題は、回答済みかつ正解率50%未満です。消化後は未回答の問題を第2優先にします。</p>
                     </div>
 
                     <div class="flex items-center mt-2 bg-white p-3 rounded-lg border border-soft-green-200">
                         <input type="checkbox" id="audio-export-explanation" checked
                             class="w-5 h-5 text-soft-green-600 border-soft-green-300 rounded focus:ring-soft-green-500 cursor-pointer">
                         <label for="audio-export-explanation"
-                            class="ml-2 text-sm font-semibold text-soft-green-800 cursor-pointer">解答の後に解説を読み上げる</label>
+                            class="ml-2 text-sm font-semibold text-primary cursor-pointer">解答の後に解説を読み上げる</label>
                     </div>
 
                     <button onclick="app.audioManager.startAudioExport()" id="btn-start-export"
@@ -757,20 +757,20 @@
                                 class="bg-soft-green-600 h-3 rounded-full transition-all duration-300"
                                 style="width: 0%"></div>
                         </div>
-                        <p id="audio-export-status" class="text-sm font-semibold text-soft-green-800">準備中...</p>
-                        <p class="text-xs text-soft-green-600">※音声は最大3件ずつ並列生成します。問題数や文章量により時間がかかる場合があります。</p>
+                        <p id="audio-export-status" class="text-sm font-semibold text-primary">準備中...</p>
+                        <p class="text-xs text-secondary">※音声は最大3件ずつ並列生成します。問題数や文章量により時間がかかる場合があります。</p>
                     </div>
 
                     <div id="audio-export-result"
                         class="hidden flex flex-col gap-3 mt-4 border-t border-soft-green-200 pt-4">
-                        <p class="text-sm font-bold text-soft-green-800 text-center mb-2">作成完了！</p>
+                        <p class="text-sm font-bold text-primary text-center mb-2">作成完了！</p>
                         <div class="flex flex-col sm:flex-row gap-2">
                             <button id="btn-play-audio" onclick="app.audioManager.playExportedAudio()"
                                 class="btn-secondary flex-1 py-3 rounded-xl gap-2">
                                 ブラウザで再生
                             </button>
                             <button id="btn-stop-audio" onclick="app.audioManager.stopExportedAudio()"
-                                class="hidden flex-1 py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors justify-center items-center gap-2">
+                                class="hidden flex-1 py-3 bg-red-100 hover:bg-red-200 text-danger rounded-xl font-bold transition-colors justify-center items-center gap-2">
                                 停止
                             </button>
                             <button id="btn-download-audio" onclick="app.audioManager.downloadExportedAudio()"
@@ -1093,7 +1093,7 @@
             </div>
 
             <div
-                class="flex-1 flex flex-col items-center justify-start md:justify-center p-4 md:p-6 w-full max-w-3xl mx-auto pb-24">
+                class="flex-1 flex flex-col items-center justify-start md:justify-center p-4 md:p-6 pt-16 md:pt-20 w-full max-w-3xl mx-auto pb-24">
                 <div id="quiz-state-playing"
                     class="w-full flex flex-col items-center justify-center space-y-8 md:space-y-12 my-auto h-full">
                     <div id="quiz-voice-indicator" class="text-center text-soft-green-200">
@@ -1216,14 +1216,14 @@
             <div class="p-5 md:p-6 space-y-4">
                 <div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3">
                     <div>
-                        <h3 class="text-xl font-bold text-soft-green-900">問題の詳細・編集</h3>
-                        <p class="text-xs text-soft-green-600 mt-1" id="question-detail-meta">--</p>
+                        <h3 class="text-xl font-bold text-primary">問題の詳細・編集</h3>
+                        <p class="text-xs text-secondary mt-1" id="question-detail-meta">--</p>
                     </div><button onclick="app.questionManager.closeQuestionDetail()"
-                        class="text-soft-green-500 hover:text-soft-green-800 font-bold text-xl leading-none">×</button>
+                        class="text-secondary hover:text-primary font-bold text-xl leading-none">×</button>
                 </div><input type="hidden" id="detail-question-id">
                 <div>
                     <div class="flex items-center justify-between gap-2 mb-1"><label
-                            class="block text-sm font-bold text-soft-green-800">問題文</label><button
+                            class="block text-sm font-bold text-primary">問題文</label><button
                             id="detail-ai-regenerate-btn" onclick="app.openRegeneratePolicyModal()"
                             class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-bold transition-colors text-xs">問題再作成</button>
                     </div><textarea id="detail-question-q" rows="4" oninput="app.syncConfirmPointLimit()"
@@ -1238,28 +1238,28 @@
                         </div>
                         <p class="text-xs text-amber-700 mt-2">この文字まで読めば解答を一意に判断できる目安です。未設定時は問題文末を使用します。</p>
                         <p id="detail-confirm-point-preview"
-                            class="text-sm text-amber-950 mt-2 bg-white rounded-lg p-2 border border-amber-100 whitespace-pre-wrap">
+                            class="text-sm text-primary mt-2 bg-white rounded-lg p-2 border border-amber-100 whitespace-pre-wrap">
                         </p>
                     </div>
                 </div>
                 <div>
                     <div class="flex items-center justify-between gap-2 mb-1"><label
-                            class="block text-sm font-bold text-soft-green-800">解答</label><button
+                            class="block text-sm font-bold text-primary">解答</label><button
                             id="detail-ai-answer-btn" onclick="app.regenerateAnswerForQuestion()"
                             class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg font-bold transition-colors text-xs">解答再作成</button>
                     </div><input type="text" id="detail-question-a"
                         class="form-input text-sm">
-                    <p class="text-xs text-soft-green-600 mt-1">現在の事実に基づく解答候補をAIで作成します。反映後に内容を確認して保存してください。</p>
+                    <p class="text-xs text-secondary mt-1">現在の事実に基づく解答候補をAIで作成します。反映後に内容を確認して保存してください。</p>
                 </div>
-                <div><label class="block text-sm font-bold text-soft-green-800 mb-1">移動先の学習セット</label><select
+                <div><label class="block text-sm font-bold text-primary mb-1">移動先の学習セット</label><select
                         id="detail-question-move-set"
                         class="form-select bg-white text-sm font-semibold text-soft-green-900"></select>
-                    <p class="text-xs text-soft-green-600 mt-1">別の学習セットを選択し、「保存する」を押すと移動が確定します。</p>
+                    <p class="text-xs text-secondary mt-1">別の学習セットを選択し、「保存する」を押すと移動が確定します。</p>
                 </div>
                 <div class="bg-soft-green-50 border border-soft-green-200 rounded-xl p-4 space-y-3">
                     <div class="flex items-center justify-between gap-2">
-                        <div><label class="block text-sm font-bold text-soft-green-800">この問題の読み上げ設定</label>
-                            <p class="text-xs text-soft-green-600 mt-1">問題固有の読み方を設定できます。</p>
+                        <div><label class="block text-sm font-bold text-primary">この問題の読み上げ設定</label>
+                            <p class="text-xs text-secondary mt-1">問題固有の読み方を設定できます。</p>
                         </div><button type="button" onclick="app.openPronunciationModalFromDetail()"
                             class="px-3 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold text-xs whitespace-nowrap">読み方を一括設定</button>
                     </div>
@@ -1267,16 +1267,16 @@
                 </div>
                 <div>
                     <div class="flex items-center justify-between gap-2 mb-2"><label
-                            class="block text-sm font-bold text-soft-green-800">ジャンル設定</label><button
+                            class="block text-sm font-bold text-primary">ジャンル設定</label><button
                             id="detail-ai-genre-btn" onclick="app.questionManager.classifyQuestionGenreForDetail()"
                             class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">ジャンルの自動判定</button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-semibold text-soft-green-700 mb-1">ジャンル</label><select
+                        <div><label class="block text-xs font-semibold text-secondary mb-1">ジャンル</label><select
                                 id="detail-question-genre" onchange="app.handleQuestionDetailGenreChange()"
                                 class="form-select bg-white text-sm"></select>
                         </div>
-                        <div><label class="block text-xs font-semibold text-soft-green-700 mb-1">サブジャンル</label><select
+                        <div><label class="block text-xs font-semibold text-secondary mb-1">サブジャンル</label><select
                                 id="detail-question-subgenre"
                                 class="form-select bg-white text-sm"></select>
                         </div>
@@ -1284,7 +1284,7 @@
                 </div>
                 <div>
                     <div class="flex items-center justify-between gap-2 mb-1"><label
-                            class="block text-sm font-bold text-soft-green-800">解説</label><button
+                            class="block text-sm font-bold text-primary">解説</label><button
                             id="detail-ai-explanation-btn"
                             onclick="app.questionManager.generateExplanationForQuestion()"
                             class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">AI解説を再セット</button>
@@ -1293,9 +1293,9 @@
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3 justify-between pt-2"><button
                         onclick="app.questionManager.deleteQuestionFromDetail()"
-                        class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl font-bold transition-colors text-sm">この問題を削除</button>
+                        class="px-4 py-2 bg-red-100 hover:bg-red-200 text-danger rounded-xl font-bold transition-colors text-sm">この問題を削除</button>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <button onclick="app.questionManager.closeQuestionDetail()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-xl font-bold transition-colors text-sm">キャンセル</button>
+                        <button onclick="app.questionManager.closeQuestionDetail()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-primary rounded-xl font-bold transition-colors text-sm">キャンセル</button>
                         <button onclick="app.questionManager.saveQuestionDetail()" class="px-5 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold transition-colors shadow-md text-sm">保存する</button>
                     </div>
                 </div>

@@ -1,4 +1,7 @@
 :root {
+    --text-primary: #1a4431;
+    --text-secondary: #236948;
+    --text-danger: #dc2626;
     --color-primary: #2f8f5e;
     --color-primary-hover: #267b52;
     --color-bg: #f2fbf5;
@@ -60,6 +63,9 @@
 
 :root[data-theme="dark"] {
     color-scheme: dark;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-danger: #fca5a5;
     --color-primary: #22c5c7;
     --color-primary-hover: #5ee2df;
     --color-bg: #101827;

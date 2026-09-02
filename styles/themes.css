@@ -3,6 +3,12 @@
     --tw-ring-color: var(--theme-400);
 }
 
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-danger { color: var(--text-danger); }
+.hover\:text-primary:hover { color: var(--text-primary); }
+.hover\:text-danger:hover { color: var(--text-danger); }
+
 :root[data-theme="aqua"] .bg-soft-green-50,
 :root[data-theme="dark"] .bg-soft-green-50 { background-color: var(--theme-50); }
 :root[data-theme="aqua"] .bg-soft-green-100,

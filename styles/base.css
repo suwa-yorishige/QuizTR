@@ -9,6 +9,7 @@ body {
     background-color: #f2fbf5;
     background-color: var(--color-bg);
     color: #1a4431;
+    color: var(--text-primary);
     height: var(--app-height);
     min-height: 100svh;
     overscroll-behavior: none;

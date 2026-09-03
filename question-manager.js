@@ -191,6 +191,7 @@ class QuestionManager {
         ss.value = r.q.subgenre || '';
 
         this.app.renderDetailPronunciations(r.q);
+        this.app.switchQuestionDetailTab('basic');
         const modal = document.getElementById('question-detail-modal');
         const panel = document.getElementById('question-detail-panel');
         modal.classList.remove('hidden');

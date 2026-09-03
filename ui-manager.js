@@ -160,4 +160,18 @@ class UIManager {
         normal.className = `flex-1 px-4 py-2 rounded-xl font-bold text-sm ${!memo ? 'bg-soft-green-600 text-white shadow-sm' : 'text-soft-green-800 hover:bg-soft-green-100'}`;
         memoButton.className = `flex-1 px-4 py-2 rounded-xl font-bold text-sm ${memo ? 'bg-soft-green-600 text-white shadow-sm' : 'text-soft-green-800 hover:bg-soft-green-100'}`;
     }
+
+    /** 問題詳細編集モーダルのタブを切り替える */
+    switchQuestionDetailTab(tab) {
+        const advanced = tab === 'advanced';
+        document.getElementById('detail-tab-panel-basic').classList.toggle('hidden', advanced);
+        document.getElementById('detail-tab-panel-advanced').classList.toggle('hidden', !advanced);
+        const buttons = {
+            basic: document.getElementById('detail-tab-basic'),
+            advanced: document.getElementById('detail-tab-advanced')
+        };
+        Object.entries(buttons).forEach(([key, button]) => {
+            if (button) button.setAttribute('aria-selected', String((key === 'advanced') === advanced));
+        });
+    }
 }

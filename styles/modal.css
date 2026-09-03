@@ -8,4 +8,19 @@
 .modal__body { min-height: 0; }
 .modal__footer { display: flex; justify-content: flex-end; gap: 0.75rem; }
 
+#question-detail-panel { display: flex; flex-direction: column; overflow: hidden; }
+.detail-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-top: 1.25rem; padding-bottom: 1.25rem; }
+.detail-tab-header { display: flex; gap: 0.25rem; padding: 0 1.25rem; border-bottom: 1px solid var(--color-border); }
+.detail-tab-header button { flex: 1; min-height: 2.75rem; border-bottom: 3px solid transparent; color: var(--text-secondary); font-weight: 700; font-size: 0.875rem; }
+.detail-tab-header button:hover { background-color: var(--theme-50); color: var(--text-primary); }
+.detail-tab-header button[aria-selected="true"] { border-bottom-color: var(--color-primary); color: var(--color-primary); }
+.detail-footer { position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; border-top: 1px solid var(--color-border); background-color: var(--color-surface); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
+.detail-footer > div { display: flex; gap: 0.75rem; }
+
+@media (max-width: 480px) {
+    .detail-footer { gap: 0.5rem; }
+    .detail-footer > div { gap: 0.5rem; }
+    .detail-footer button { padding-left: 0.75rem; padding-right: 0.75rem; }
+}
+
 #custom-modal, #question-detail-modal { padding-top: max(1rem, env(safe-area-inset-top, 0px)); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }

@@ -1228,37 +1228,32 @@
     <!-- Question Detail Modal -->
     <div id="question-detail-modal"
         class="modal hidden fixed inset-0 bg-soft-green-950/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300"
+        <div class="modal__panel bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] transform scale-95 transition-transform duration-300"
             id="question-detail-panel">
-            <div class="p-5 md:p-6 space-y-4">
+            <div class="detail-header p-5 md:p-6 pb-3">
                 <div class="flex items-start justify-between gap-3 border-b border-soft-green-100 pb-3">
                     <div>
                         <h3 class="text-xl font-bold text-primary">問題の詳細・編集</h3>
                         <p class="text-xs text-secondary mt-1" id="question-detail-meta">--</p>
                     </div><button onclick="app.questionManager.closeQuestionDetail()"
                         class="text-secondary hover:text-primary font-bold text-xl leading-none">×</button>
-                </div><input type="hidden" id="detail-question-id">
-                <div>
+                </div>
+            </div>
+            <div class="detail-tab-header" role="tablist" aria-label="問題詳細の編集項目">
+                <button id="detail-tab-basic" type="button" role="tab" aria-controls="detail-tab-panel-basic"
+                    aria-selected="true" onclick="app.switchQuestionDetailTab('basic')">基本情報</button>
+                <button id="detail-tab-advanced" type="button" role="tab" aria-controls="detail-tab-panel-advanced"
+                    aria-selected="false" onclick="app.switchQuestionDetailTab('advanced')">詳細設定</button>
+            </div>
+            <input type="hidden" id="detail-question-id">
+            <div class="detail-body px-5 md:px-6">
+                <div id="detail-tab-panel-basic" class="detail-tab-panel space-y-4" role="tabpanel" aria-labelledby="detail-tab-basic">
                     <div class="flex items-center justify-between gap-2 mb-1"><label
                             class="block text-sm font-bold text-primary">問題文</label><button
                             id="detail-ai-regenerate-btn" onclick="app.openRegeneratePolicyModal()"
                             class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-bold transition-colors text-xs">問題再作成</button>
                     </div><textarea id="detail-question-q" rows="4" oninput="app.syncConfirmPointLimit()"
                         class="form-textarea text-sm"></textarea>
-                    <div class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <label class="text-sm font-bold text-amber-900 whitespace-nowrap">確定ポイント</label>
-                            <input id="detail-confirm-point" type="number" min="1" inputmode="numeric"
-                                oninput="app.renderConfirmPointPreview()"
-                                class="w-28 px-3 py-2 rounded-lg border border-amber-300 text-sm">
-                            <span id="detail-confirm-point-limit" class="text-xs text-amber-700"></span>
-                        </div>
-                        <p class="text-xs text-amber-700 mt-2">この文字まで読めば解答を一意に判断できる目安です。未設定時は問題文末を使用します。</p>
-                        <p id="detail-confirm-point-preview"
-                            class="text-sm text-primary mt-2 bg-white rounded-lg p-2 border border-amber-100 whitespace-pre-wrap">
-                        </p>
-                    </div>
-                </div>
                 <div>
                     <div class="flex items-center justify-between gap-2 mb-1"><label
                             class="block text-sm font-bold text-primary">解答</label><button
@@ -1267,20 +1262,6 @@
                     </div><input type="text" id="detail-question-a"
                         class="form-input text-sm">
                     <p class="text-xs text-secondary mt-1">現在の事実に基づく解答候補をAIで作成します。反映後に内容を確認して保存してください。</p>
-                </div>
-                <div><label class="block text-sm font-bold text-primary mb-1">移動先の学習セット</label><select
-                        id="detail-question-move-set"
-                        class="form-select bg-white text-sm font-semibold text-soft-green-900"></select>
-                    <p class="text-xs text-secondary mt-1">別の学習セットを選択し、「保存する」を押すと移動が確定します。</p>
-                </div>
-                <div class="bg-soft-green-50 border border-soft-green-200 rounded-xl p-4 space-y-3">
-                    <div class="flex items-center justify-between gap-2">
-                        <div><label class="block text-sm font-bold text-primary">この問題の読み上げ設定</label>
-                            <p class="text-xs text-secondary mt-1">問題固有の読み方を設定できます。</p>
-                        </div><button type="button" onclick="app.openPronunciationModalFromDetail()"
-                            class="px-3 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold text-xs whitespace-nowrap">読み方を一括設定</button>
-                    </div>
-                    <div id="detail-pronunciation-list" class="space-y-2"></div>
                 </div>
                 <div>
                     <div class="flex items-center justify-between gap-2 mb-2"><label
@@ -1308,14 +1289,44 @@
                     </div><textarea id="detail-question-explanation" rows="4"
                         class="form-textarea text-sm"></textarea>
                 </div>
-                <div class="flex flex-col sm:flex-row gap-3 justify-between pt-2"><button
-                        onclick="app.questionManager.deleteQuestionFromDetail()"
-                        class="px-4 py-2 bg-red-100 hover:bg-red-200 text-danger rounded-xl font-bold transition-colors text-sm">この問題を削除</button>
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <button onclick="app.questionManager.closeQuestionDetail()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-primary rounded-xl font-bold transition-colors text-sm">キャンセル</button>
-                        <button onclick="app.questionManager.saveQuestionDetail()" class="px-5 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold transition-colors shadow-md text-sm">保存する</button>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <label class="text-sm font-bold text-amber-900 whitespace-nowrap">確定ポイント</label>
+                        <input id="detail-confirm-point" type="number" min="1" inputmode="numeric"
+                            oninput="app.renderConfirmPointPreview()"
+                            class="w-28 px-3 py-2 rounded-lg border border-amber-300 text-sm">
+                        <span id="detail-confirm-point-limit" class="text-xs text-amber-700"></span>
+                    </div>
+                    <p class="text-xs text-amber-700 mt-2">この文字まで読めば解答を一意に判断できる目安です。未設定時は問題文末を使用します。</p>
+                    <p id="detail-confirm-point-preview" class="text-sm text-primary mt-2 bg-white rounded-lg p-2 border border-amber-100 whitespace-pre-wrap"></p>
+                </div>
+                </div>
+                <div id="detail-tab-panel-advanced" class="detail-tab-panel hidden space-y-4" role="tabpanel" aria-labelledby="detail-tab-advanced">
+                    <div><label class="block text-sm font-bold text-primary mb-1">移動先の学習セット</label><select
+                            id="detail-question-move-set"
+                            class="form-select bg-white text-sm font-semibold text-soft-green-900"></select>
+                        <p class="text-xs text-secondary mt-1">別の学習セットを選択し、「保存する」を押すと移動が確定します。</p>
+                    </div>
+                    <div class="bg-soft-green-50 border border-soft-green-200 rounded-xl p-4 space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div><label class="block text-sm font-bold text-primary">この問題の読み上げ設定</label>
+                                <p class="text-xs text-secondary mt-1">問題固有の読み方を設定できます。</p>
+                            </div><button type="button" onclick="app.openPronunciationModalFromDetail()"
+                                class="px-3 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-lg font-bold text-xs whitespace-nowrap">読み方を一括設定</button>
+                        </div>
+                        <div id="detail-pronunciation-list" class="space-y-2"></div>
                     </div>
                 </div>
+            </div>
+            <div class="detail-footer p-4 md:px-6">
+                <button
+                        onclick="app.questionManager.deleteQuestionFromDetail()"
+                        class="px-4 py-2 bg-red-100 hover:bg-red-200 text-danger rounded-xl font-bold transition-colors text-sm">この問題を削除</button>
+                    <div class="flex gap-3 flex-1 min-w-0">
+                        <button onclick="app.questionManager.closeQuestionDetail()" class="px-4 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-primary rounded-xl font-bold transition-colors text-sm">キャンセル</button>
+                        <button onclick="app.questionManager.saveQuestionDetail()" class="save-btn flex-1 px-5 py-2 bg-soft-green-600 hover:bg-soft-green-700 text-white rounded-xl font-bold transition-colors shadow-md text-sm">保存する</button>
+                    </div>
+            </div>
             </div>
         </div>
     </div>

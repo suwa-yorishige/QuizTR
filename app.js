@@ -979,6 +979,7 @@ Object.assign(app, {
     switchDistributionTab(...args) { return this.uiManager.switchDistributionTab(...args); },
     switchGenreAnalysisTab(...args) { return this.uiManager.switchGenreAnalysisTab(...args); },
     switchAIGeneratorTab(...args) { return this.uiManager.switchAIGeneratorTab(...args); },
+    switchQuestionDetailTab(...args) { return this.uiManager.switchQuestionDetailTab(...args); },
 
     normalizeLearningData(...args) { return this.learningDataManager.normalizeLearningData(...args); },
     normalizeQuestionData(...args) { return this.learningDataManager.normalizeQuestionData(...args); },

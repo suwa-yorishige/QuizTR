@@ -341,11 +341,13 @@ const app = {
         const csvSelect = document.getElementById('csv-target-set');
         if (csvSelect) csvSelect.innerHTML = createOptions(true);
 
-        const audioSelect = document.getElementById('audio-export-target-set');
-        if (audioSelect) audioSelect.innerHTML = createOptions(false);
-
         const aiSelect = document.getElementById('ai-target-set');
         if (aiSelect) aiSelect.innerHTML = createOptions(true);
+    },
+
+    getSelectedAudioSets() {
+        const checked = [...document.querySelectorAll('#audio-export-target-sets input:checked')];
+        return this.studySets.filter(set => checked.some(input => input.value === set.id));
     },
 
     handleAIGenreChange() {
@@ -973,6 +975,7 @@ Object.assign(app, {
     changeManagerSet(...args) { return this.setManager.changeManagerSet(...args); },
     changeQuestionListSet(...args) { return this.setManager.changeQuestionListSet(...args); },
     updateSetSelectors(...args) { return this.setManager.updateSetSelectors(...args); },
+    renderAudioExportSetSelector(...args) { return this.setManager.renderAudioExportSetSelector(...args); },
 
     switchView(...args) { return this.uiManager.switchView(...args); },
     showToast(...args) { return this.uiManager.showToast(...args); },

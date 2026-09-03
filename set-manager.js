@@ -27,7 +27,6 @@ class SetManager {
             ['manager-active-set', this.app.managerSetId, false],
             ['manager-question-set-select', this.app.managerSetId, false],
             ['csv-target-set', null, true],
-            ['audio-export-target-set', null, false],
             ['ai-target-set', null, true]
         ];
         selectors.forEach(([id, value, includeNew]) => {
@@ -36,6 +35,39 @@ class SetManager {
             select.innerHTML = createOptions(includeNew);
             if (value) select.value = value;
         });
+        this.renderAudioExportSetSelector();
+    }
+
+    renderAudioExportSetSelector() {
+        const container = document.getElementById('audio-export-target-sets');
+        if (!container) return;
+        const selectedIds = new Set([...container.querySelectorAll('input:checked')].map(input => input.value));
+        if (!selectedIds.size && this.app.studySets.length) selectedIds.add(this.app.studySets[0].id);
+        container.innerHTML = this.getDisplayOrderedSets().map(set => `
+            <label class="flex items-center gap-3 p-3 rounded-lg border border-soft-green-200 bg-white hover:bg-soft-green-50 cursor-pointer">
+                <input type="checkbox" value="${Utils.escapeHTML(set.id)}"${selectedIds.has(set.id) ? ' checked' : ''}
+                    class="audio-export-target-checkbox w-5 h-5 text-soft-green-600 border-soft-green-300 rounded focus:ring-soft-green-500 cursor-pointer">
+                <span class="text-sm font-semibold text-primary">${set.favorite ? '★ ' : ''}${Utils.escapeHTML(set.name)}（${set.questions.length}問）</span>
+            </label>
+        `).join('');
+        container.querySelectorAll('input').forEach(checkbox => {
+            checkbox.addEventListener('change', event => {
+                if (container.querySelectorAll('input:checked').length > 5) {
+                    event.target.checked = false;
+                    this.app.showToast('学習セットは最大5件まで選択できます', 'error');
+                }
+                this.updateAudioExportSelectionSummary();
+            });
+        });
+        this.updateAudioExportSelectionSummary();
+    }
+
+    updateAudioExportSelectionSummary() {
+        const selectedSets = this.app.getSelectedAudioSets();
+        const setCount = document.getElementById('audio-export-selected-set-count');
+        const questionCount = document.getElementById('audio-export-selected-question-count');
+        if (setCount) setCount.textContent = selectedSets.length;
+        if (questionCount) questionCount.textContent = selectedSets.reduce((total, set) => total + set.questions.length, 0);
     }
 
     moveSet(fromIndex, toIndex) {

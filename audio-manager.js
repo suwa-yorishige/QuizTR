@@ -178,29 +178,19 @@ class AudioManager {
 
     async startAudioExport() {
         if (!this.app.ttsApiKey) return this.app.showToast('設定画面でGoogle Cloud Text-to-Speech APIキーを登録してください', 'error');
-        const targetSetId = document.getElementById('audio-export-target-set').value;
-        const targetSet = this.app.studySets.find(s => s.id === targetSetId);
-        const questions = targetSet ? targetSet.questions : [];
-        if (!questions.length) return this.app.showToast('対象のセットに問題が登録されていません', 'error');
+        const selectedSets = this.app.getSelectedAudioSets();
+        if (!selectedSets.length) return this.app.showToast('学習セットを選択してください', 'error');
+        const totalQuestionCount = selectedSets.reduce((sum, set) => sum + set.questions.length, 0);
+        if (!totalQuestionCount) return this.app.showToast('対象のセットに問題が登録されていません', 'error');
         const count = parseInt(document.getElementById('audio-export-count').value, 10);
         const includeExp = document.getElementById('audio-export-explanation').checked;
         const prioritySelect = document.getElementById('audio-export-priority');
         const priorityMode = prioritySelect && prioritySelect.value ? prioritySelect.value : 'unanswered';
-        const shuffled = [...questions];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        const unanswered = shuffled.filter(q => (Number(q.total) || 0) === 0);
-        const lowAccuracy = shuffled.filter(q => (Number(q.total) || 0) > 0 && ((Number(q.correct) || 0) / Number(q.total)) < 0.5);
-        const remaining = shuffled.filter(q => !unanswered.includes(q) && !lowAccuracy.includes(q));
-        if (priorityMode === 'low-accuracy') {
-            remaining.sort((a, b) => this.app.getAccuracyRatio(a) - this.app.getAccuracyRatio(b));
-        }
-        const prioritized = priorityMode === 'low-accuracy'
-            ? [...lowAccuracy.sort((a, b) => this.app.getAccuracyRatio(a) - this.app.getAccuracyRatio(b)), ...unanswered, ...remaining]
-            : [...unanswered, ...lowAccuracy.sort((a, b) => this.app.getAccuracyRatio(a) - this.app.getAccuracyRatio(b)), ...remaining];
-        const selected = prioritized.slice(0, Math.min(count, prioritized.length));
+        const allocations = this.allocateQuestionsByRatio(selectedSets, Math.min(count, totalQuestionCount));
+        const selected = allocations.flatMap(allocation =>
+            this.prioritizeQuestions(allocation.set.questions, priorityMode).slice(0, allocation.count)
+        );
+        this.shuffle(selected);
         const startBtn = document.getElementById('btn-start-export');
         const progContainer = document.getElementById('audio-export-progress-container');
         const progBar = document.getElementById('audio-export-progress-bar');
@@ -247,6 +237,41 @@ class AudioManager {
             this.app.showToast(e.message, 'error');
             progContainer.classList.add('hidden'); progContainer.classList.remove('flex'); startBtn.classList.remove('hidden');
         }
+    }
+
+    shuffle(items) {
+        for (let index = items.length - 1; index > 0; index--) {
+            const randomIndex = Math.floor(Math.random() * (index + 1));
+            [items[index], items[randomIndex]] = [items[randomIndex], items[index]];
+        }
+        return items;
+    }
+
+    prioritizeQuestions(questions, priorityMode) {
+        const shuffled = this.shuffle([...questions]);
+        const unanswered = shuffled.filter(q => (Number(q.total) || 0) === 0);
+        const lowAccuracy = shuffled.filter(q => (Number(q.total) || 0) > 0 && this.app.getAccuracyRatio(q) < 0.5);
+        const remaining = shuffled.filter(q => !unanswered.includes(q) && !lowAccuracy.includes(q));
+        const sortByAccuracy = items => items.sort((a, b) => this.app.getAccuracyRatio(a) - this.app.getAccuracyRatio(b));
+        if (priorityMode === 'low-accuracy') {
+            return [...sortByAccuracy(lowAccuracy), ...unanswered, ...sortByAccuracy(remaining)];
+        }
+        return [...unanswered, ...sortByAccuracy(lowAccuracy), ...remaining];
+    }
+
+    allocateQuestionsByRatio(selectedSets, totalCount) {
+        const totalQuestions = selectedSets.reduce((sum, set) => sum + set.questions.length, 0);
+        if (!totalQuestions || totalCount <= 0) return selectedSets.map(set => ({ set, count: 0, questions: [] }));
+        const targetCount = Math.min(totalCount, totalQuestions);
+        const allocations = selectedSets.map(set => {
+            const exact = set.questions.length / totalQuestions * targetCount;
+            const count = Math.floor(exact);
+            return { set, count, remainder: exact - count };
+        });
+        let remaining = targetCount - allocations.reduce((sum, allocation) => sum + allocation.count, 0);
+        const remainderOrder = [...allocations].sort((a, b) => b.remainder - a.remainder);
+        for (let index = 0; index < remaining; index++) remainderOrder[index % remainderOrder.length].count++;
+        return allocations.map(({ set, count }) => ({ set, count, questions: set.questions.slice(0, count) }));
     }
 
     playExportedAudio() {

@@ -720,8 +720,12 @@
                 <div class="card p-6 space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-primary mb-2">出力対象の学習セット</label>
-                        <select id="audio-export-target-set"
-                            class="form-select bg-white mb-4"></select>
+                        <div id="audio-export-target-sets" class="space-y-2"></div>
+                        <p class="text-xs text-secondary mt-2">最大5件まで選択可能</p>
+                        <div class="text-xs text-secondary mt-2 flex gap-4">
+                            <span>選択中：<span id="audio-export-selected-set-count">0</span>セット</span>
+                            <span>合計問題数：<span id="audio-export-selected-question-count">0</span>問</span>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-primary mb-2">出力する問題数</label>

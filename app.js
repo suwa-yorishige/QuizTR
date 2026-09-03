@@ -559,10 +559,13 @@ const app = {
         const valid = q.buzzRecords.filter(r => r && r.correct === true && Number.isFinite(Number(r.charIndex)));
         const timing = valid.length ? valid.reduce((sum, r) => sum + this.getBuzzPositionScore(q, r), 0) / valid.length : 0;
         const rawScore = Math.round((accuracyConfidence * 75) + (timing * 25));
-        const score = correct >= 2 ? rawScore : Math.min(rawScore, 80);
+        const score = correct >= 2 ? rawScore : Math.min(rawScore, 70);
         const ratios = valid.map(r => Number(r.charIndex) / this.getEffectiveConfirmPoint(q));
         const avgRatio = ratios.length ? ratios.reduce((a, b) => a + b, 0) / ratios.length : null;
-        return { score, accuracy, timing, avgRatio, avgRatioText: avgRatio === null ? '--' : `${Math.round(avgRatio * 100)}%` };
+        const diffs = valid.map(r => this.getEffectiveConfirmPoint(q) - Number(r.charIndex));
+        const avgDiff = diffs.length ? diffs.reduce((a, b) => a + b, 0) / diffs.length : null;
+        const avgDiffText = avgDiff === null ? '--' : `${avgDiff > 0 ? '+' : ''}${Math.round(avgDiff)}文字`;
+        return { score, accuracy, timing, avgRatio, avgRatioText: avgRatio === null ? '--' : `${Math.round(avgRatio * 100)}%`, avgDiff, avgDiffText };
     },
     handleQuestionDetailGenreChange() { const g = document.getElementById('detail-question-genre').value || ''; const ss = document.getElementById('detail-question-subgenre'); if (ss) ss.innerHTML = this.getSubgenreOptionsHTML(g, '', false); },
 

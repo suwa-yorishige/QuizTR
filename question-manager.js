@@ -95,9 +95,10 @@ class QuestionManager {
         this.app.questionListPage = Math.max(1, Math.min(this.app.questionListPage || 1, totalPages));
         const start = (this.app.questionListPage - 1) * size;
 
-        list.innerHTML = filtered.slice(start, start + size).map((q, i) =>
-            `<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1 min-w-0"><div class="text-xs text-soft-green-500 font-semibold">#${start + i + 1} ・ ${this.app.escapeHTML(q.genre || '未設定')}${q.subgenre ? ' / ' + this.app.escapeHTML(q.subgenre) : ''}</div><p class="text-sm font-bold text-soft-green-900 truncate whitespace-nowrap overflow-hidden" title="${this.app.escapeHTML(q.q)}">${this.app.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.app.escapeHTML(q.a)}</span> / 正解率: ${q.total > 0 ? Math.round((q.correct / q.total) * 100) + '%' : '--%'} / 習熟度: ${this.app.getMasteryMetrics(q).score}点 / 確定比: ${this.app.getMasteryMetrics(q).avgRatioText}</p></div><button onclick="app.questionManager.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`
-        ).join('');
+        list.innerHTML = filtered.slice(start, start + size).map((q, i) => {
+            const mastery = this.app.getMasteryMetrics(q);
+            return `<div class="p-3 hover:bg-soft-green-50"><div class="flex flex-col sm:flex-row sm:items-start gap-3"><div class="flex-1 min-w-0"><div class="text-xs text-soft-green-500 font-semibold">#${start + i + 1} ・ ${this.app.escapeHTML(q.genre || '未設定')}${q.subgenre ? ' / ' + this.app.escapeHTML(q.subgenre) : ''}</div><p class="text-sm font-bold text-soft-green-900 truncate whitespace-nowrap overflow-hidden" title="${this.app.escapeHTML(q.q)}">${this.app.escapeHTML(q.q)}</p><p class="text-xs text-soft-green-700 mt-1">解答: <span class="font-semibold">${this.app.escapeHTML(q.a)}</span> / 正解率: ${q.total > 0 ? Math.round((q.correct / q.total) * 100) + '%' : '--%'} / 習熟度: ${mastery.score}点 / 確定比: ${mastery.avgRatioText} / 平均差分: ${mastery.avgDiffText}</p></div><button onclick="app.questionManager.openQuestionDetail('${q.id}')" class="px-3 py-2 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs whitespace-nowrap">詳細</button></div></div>`;
+        }).join('');
 
         if (pager) {
             pager.classList.remove('hidden');

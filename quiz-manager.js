@@ -262,6 +262,8 @@ class QuizManager {
         if (stateThinking) stateThinking.classList.add('hidden');
         if (answerContainer) answerContainer.classList.add('hidden');
         if (btnShowAnswer) btnShowAnswer.classList.remove('hidden');
+        const buzzAnalysis = document.getElementById('quiz-buzz-analysis');
+        if (buzzAnalysis) buzzAnalysis.classList.add('hidden');
 
         const accuracyText = q.total > 0 ? Math.round((q.correct / q.total) * 100) : '--';
         const quizCurrentAccuracy = document.getElementById('quiz-current-accuracy');
@@ -380,6 +382,22 @@ class QuizManager {
 
         const targetSet = this.app.studySets.find(s => s.id === this.app.activeSetId);
         const q = targetSet && targetSet.questions && this.app.currentQuestionIndex >= 0 ? targetSet.questions[this.app.currentQuestionIndex] : null;
+        const buzzAnalysis = document.getElementById('quiz-buzz-analysis');
+        const buzzRecord = this.app.pendingBuzzRecord;
+        if (buzzAnalysis && q && buzzRecord && Number.isFinite(Number(buzzRecord.charIndex))) {
+            const confirmPoint = this.app.getEffectiveConfirmPoint(q);
+            const buzzCharIndex = Number(buzzRecord.charIndex);
+            const diff = confirmPoint - buzzCharIndex;
+            const resultClass = diff > 0 ? 'bg-green-900' : diff < 0 ? 'bg-amber-900' : 'bg-blue-900';
+            const resultText = diff > 0
+                ? `✅ ${diff}文字早く押しました`
+                : diff < 0
+                    ? `⚠ ${Math.abs(diff)}文字遅く押しました`
+                    : '🎯 確定ポイントぴったり';
+            buzzAnalysis.className = `mt-4 p-4 rounded-xl text-left text-white ${resultClass}`;
+            buzzAnalysis.innerHTML = `<p class="font-bold mb-3">🎯 早押し分析</p><div class="grid grid-cols-2 gap-2 text-sm"><span>確定ポイント</span><strong>${confirmPoint}文字目</strong><span>あなたの押下</span><strong>${buzzCharIndex}文字目</strong></div><p class="mt-3 font-semibold">${resultText}</p>`;
+            buzzAnalysis.classList.remove('hidden');
+        }
         if (this.app.quizMode === 'voice' && q) {
             const utterance = new SpeechSynthesisUtterance(this.app.applyPronunciations(q.a, q));
             utterance.lang = 'ja-JP';

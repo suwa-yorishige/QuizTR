@@ -1296,16 +1296,25 @@
                     </div><textarea id="detail-question-explanation" rows="4"
                         class="form-textarea text-sm"></textarea>
                 </div>
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <label class="text-sm font-bold text-amber-900 whitespace-nowrap">確定ポイント</label>
-                        <input id="detail-confirm-point" type="number" min="1" inputmode="numeric"
-                            oninput="app.renderConfirmPointPreview()"
-                            class="w-28 px-3 py-2 rounded-lg border border-amber-300 text-sm">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <label class="text-sm font-bold text-amber-900" for="detail-confirm-point">確定ポイント</label>
                         <span id="detail-confirm-point-limit" class="text-xs text-amber-700"></span>
                     </div>
-                    <p class="text-xs text-amber-700 mt-2">この文字まで読めば解答を一意に判断できる目安です。未設定時は問題文末を使用します。</p>
-                    <p id="detail-confirm-point-preview" class="text-sm text-primary mt-2 bg-white rounded-lg p-2 border border-amber-100 whitespace-pre-wrap"></p>
+                    <div class="confirm-point-editor bg-amber-50 border border-amber-200 rounded-xl p-3">
+                        <div id="detail-confirm-point-preview" class="confirm-preview" aria-live="polite"><span id="detail-confirm-point-before" class="confirm-preview-before"></span><span class="confirm-preview-marker">｜</span><span id="detail-confirm-point-after" class="confirm-preview-after"></span></div>
+                        <div class="confirm-point-controls">
+                            <button type="button" onclick="app.adjustConfirmPoint(-1)" class="confirm-point-stepper" aria-label="確定ポイントを1文字戻す">－</button>
+                            <input id="detail-confirm-point" type="number" min="1" inputmode="numeric"
+                                oninput="app.renderConfirmPointPreview()"
+                                class="confirm-point-input px-3 py-2 rounded-lg border border-amber-300 text-sm">
+                            <button type="button" onclick="app.adjustConfirmPoint(1)" class="confirm-point-stepper" aria-label="確定ポイントを1文字進める">＋</button>
+                        </div>
+                        <div id="detail-confirm-point-position" class="text-xs font-bold text-amber-800 text-center"></div>
+                        <input id="detail-confirm-point-slider" type="range" min="1" max="1" value="1"
+                            oninput="app.updateConfirmPointFromSlider(this.value)"
+                            class="confirm-point-slider" aria-label="確定ポイントの位置">
+                    </div>
                 </div>
                 </div>
                 <div id="detail-tab-panel-advanced" class="detail-tab-panel hidden space-y-4" role="tabpanel" aria-labelledby="detail-tab-advanced">

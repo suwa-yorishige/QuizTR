@@ -529,17 +529,42 @@ const app = {
     syncConfirmPointLimit() {
         const text = document.getElementById('detail-question-q').value || '';
         const input = document.getElementById('detail-confirm-point');
+        const slider = document.getElementById('detail-confirm-point-slider');
         const limit = document.getElementById('detail-confirm-point-limit');
-        if (input) { input.max = Math.max(1, text.length); if (Number(input.value) > text.length) input.value = text.length || 1; }
+        const max = Math.max(1, text.length);
+        if (input) { input.max = max; if (Number(input.value) > max || Number(input.value) < 1) input.value = max; }
+        if (slider) { slider.max = max; slider.value = input ? input.value : max; }
         if (limit) limit.textContent = `/ 全${text.length}文字`;
         this.renderConfirmPointPreview();
     },
     renderConfirmPointPreview() {
         const text = document.getElementById('detail-question-q').value || '';
         const confirmPointInput = document.getElementById('detail-confirm-point');
-        const point = Math.max(0, Math.min(text.length, Number(confirmPointInput && confirmPointInput.value ? confirmPointInput.value : text.length) || text.length));
-        const el = document.getElementById('detail-confirm-point-preview');
-        if (el) el.textContent = text ? `${text.slice(0, point)}｜${text.slice(point)}` : '問題文を入力してください';
+        const slider = document.getElementById('detail-confirm-point-slider');
+        const max = Math.max(1, text.length);
+        const rawPoint = Number(confirmPointInput && confirmPointInput.value ? confirmPointInput.value : max);
+        const point = Math.max(1, Math.min(max, Number.isFinite(rawPoint) ? Math.round(rawPoint) : max));
+        if (confirmPointInput) { confirmPointInput.max = max; confirmPointInput.value = point; }
+        if (slider) { slider.max = max; slider.value = point; }
+        const before = document.getElementById('detail-confirm-point-before');
+        const after = document.getElementById('detail-confirm-point-after');
+        const position = document.getElementById('detail-confirm-point-position');
+        if (before) before.textContent = text ? text.slice(0, point) : '問題文を入力してください';
+        if (after) after.textContent = text ? text.slice(point) : '';
+        if (position) position.textContent = `${point} / ${text.length}文字（${text.length ? Math.round((point / text.length) * 100) : 0}%）`;
+    },
+    updateConfirmPointFromSlider(value) {
+        const input = document.getElementById('detail-confirm-point');
+        if (input) input.value = value;
+        this.renderConfirmPointPreview();
+    },
+    adjustConfirmPoint(delta) {
+        const input = document.getElementById('detail-confirm-point');
+        if (!input) return;
+        const textLength = (document.getElementById('detail-question-q').value || '').length;
+        const max = Math.max(1, textLength);
+        input.value = Math.max(1, Math.min(max, (Number(input.value) || max) + delta));
+        this.renderConfirmPointPreview();
     },
     getEffectiveConfirmPoint(q) {
         const safeQ = q || {};

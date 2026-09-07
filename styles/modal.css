@@ -17,6 +17,17 @@
 .detail-footer { position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; border-top: 1px solid var(--color-border); background-color: var(--color-surface); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
 .detail-footer > div { display: flex; gap: 0.75rem; }
 
+.confirm-point-editor { display: flex; flex-direction: column; gap: 0.5rem; }
+.confirm-point-controls { display: flex; align-items: center; gap: 0.5rem; }
+.confirm-point-stepper { min-width: 2.75rem; min-height: 2.75rem; border: 1px solid #f59e0b; border-radius: var(--radius-sm); background: #fff7ed; color: #b45309; font-size: 1.25rem; font-weight: 700; line-height: 1; }
+.confirm-point-stepper:hover { background: #ffedd5; }
+.confirm-point-input { flex: 1; min-width: 0; text-align: center; background: var(--color-surface); color: var(--text-primary); }
+.confirm-point-slider { display: block; width: 100%; accent-color: #f59e0b; }
+.confirm-preview { overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap; color: var(--text-primary); line-height: 1.6; }
+.confirm-preview-before, .confirm-preview-after { display: inline; }
+.confirm-preview-marker { color: #f59e0b; font-size: 1.1em; font-weight: 700; }
+.confirm-preview-after { color: var(--text-secondary); opacity: 0.75; }
+
 @media (max-width: 480px) {
     .detail-footer { gap: 0.5rem; }
     .detail-footer > div { gap: 0.5rem; }

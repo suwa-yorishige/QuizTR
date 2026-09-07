@@ -159,8 +159,55 @@ class QuizManager {
     }
 
     /**
+     * 問題の出題カテゴリを判定
+     * @param {Object} q - 問題データ
+     * @param {number} now - 現在時刻（ミリ秒）
+     * @returns {'unlearned'|'weak'|'review'|'normal'} 出題カテゴリ
+     */
+    getQuestionCategory(q, now) {
+        if ((q.total || 0) === 0) return 'unlearned';
+
+        const accuracy = q.accuracy !== null && q.accuracy !== undefined
+            ? q.accuracy
+            : q.correct / q.total;
+        const mastery = this.app.getMasteryMetrics(q).score;
+
+        if (accuracy < 0.5 || q.lastResult === false || mastery < 60) return 'weak';
+        if (this.isReviewDue(q, now)) return 'review';
+        return 'normal';
+    }
+
+    /**
+     * 出題カテゴリを割合に基づいて選択
+     * 候補がないカテゴリは除外し、残ったカテゴリの割合を再配分する
+     * @param {Array} candidates - カテゴリ付き候補問題の配列
+     * @returns {'unlearned'|'weak'|'review'|'normal'} 選択カテゴリ
+     */
+    chooseQuestionCategory(candidates) {
+        const count = candidates.length;
+        const weights = count >= 1000
+            ? { unlearned: 0.6, weak: 0.25, review: 0.15 }
+            : count >= 700
+                ? { unlearned: 0.5, weak: 0.3, review: 0.2 }
+                : { unlearned: 0.4, weak: 0.35, review: 0.25 };
+        const available = Object.keys(weights).filter(category =>
+            candidates.some(candidate => candidate.category === category)
+        );
+
+        if (!available.length) return 'normal';
+
+        const totalWeight = available.reduce((sum, category) => sum + weights[category], 0);
+        let randomValue = Math.random() * totalWeight;
+        for (const category of available) {
+            randomValue -= weights[category];
+            if (randomValue <= 0) return category;
+        }
+        return available[available.length - 1];
+    }
+
+    /**
      * 次に出題する問題のインデックスを選択
-     * 除外問題を除いた全問題をスコアリングし、重み付けランダム選択で決定
+        * 問題数に応じてカテゴリを選択し、そのカテゴリ内をスコアリングして決定
      * @param {Array} questions - 問題の配列
      * @param {Set} excludedQuestionIds - セッション内で既出題の問題ID（除外対象）
      * @param {Object} targetSet - 対象の学習セット
@@ -172,14 +219,35 @@ class QuizManager {
         const all = questions
             .map((q, index) => ({
                 q,
-                index,
-                score: this.scoreQuestion(q, now)
+                index
             }))
             .filter(c => !excludedQuestionIds.has(this.app.getQuestionId(c.q)));
 
         if (!all.length) return -1;
 
-        return this.pickWeightedQuestion(all);
+        if (questions.length < 300) {
+            all.forEach(candidate => candidate.score = this.scoreQuestion(candidate.q, now));
+            return this.pickWeightedQuestion(all);
+        }
+
+        all.forEach(candidate => {
+            candidate.category = this.getQuestionCategory(candidate.q, now);
+        });
+        const selectedCategory = this.chooseQuestionCategory(all);
+        const categoryCandidates = all
+            .filter(candidate => candidate.category === selectedCategory)
+            .map(candidate => ({
+                ...candidate,
+                score: this.scoreQuestion(candidate.q, now)
+            }));
+
+        if (categoryCandidates.length) return this.pickWeightedQuestion(categoryCandidates);
+
+        const fallbackCandidates = all.map(candidate => ({
+            ...candidate,
+            score: this.scoreQuestion(candidate.q, now)
+        }));
+        return this.pickWeightedQuestion(fallbackCandidates);
     }
 
     /**

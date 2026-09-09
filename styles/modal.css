@@ -28,6 +28,12 @@
 .confirm-preview-marker { color: #f59e0b; font-size: 1.1em; font-weight: 700; }
 .confirm-preview-after { color: var(--text-secondary); opacity: 0.75; }
 
+:root[data-theme="dark"] .confirm-point-editor { background: #1f2937; border-color: #374151; }
+:root[data-theme="dark"] .confirm-preview { color: #f9fafb; }
+:root[data-theme="dark"] .confirm-preview-before { color: #f9fafb; }
+:root[data-theme="dark"] .confirm-preview-after { color: #9ca3af; }
+:root[data-theme="dark"] .confirm-preview-marker { color: #f59e0b; }
+
 @media (max-width: 480px) {
     .detail-footer { gap: 0.5rem; }
     .detail-footer > div { gap: 0.5rem; }

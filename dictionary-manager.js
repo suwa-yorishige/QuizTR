@@ -190,10 +190,22 @@ class DictionaryManager {
      * 指定されたインデックスの辞書エントリを削除する
      * @param {number} i 
      */
-    removeEntry(i) {
+    async removeEntry(i) {
+        const entry = this.dictionary[i];
+        if (!entry) return;
+
+        const confirmed = await this.app.showModal(
+            '辞書エントリの削除',
+            `「${entry.word}」を削除しますか？`,
+            '削除する',
+            'bg-red-600 hover:bg-red-700'
+        );
+        if (!confirmed) return;
+
         this.dictionary.splice(i, 1);
         this.save();
         this.render();
+        this.app.showToast('削除しました', 'success');
     }
 
     /**

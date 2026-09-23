@@ -133,3 +133,18 @@
 .theme-option__content--default .theme-option__swatch { background-color: #2a8459; }
 .theme-option__content--aqua .theme-option__swatch { background-color: #047f9d; }
 .theme-option__content--dark .theme-option__swatch { background-color: #101827; }
+
+html[data-theme="dark"] #regenerate-compare-modal .bg-gray-50 {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+html[data-theme="dark"] #regenerate-compare-modal .bg-amber-50 {
+    background-color: #3f2d0f;
+    border-color: #92400e;
+}
+
+html[data-theme="dark"] #regenerate-before-text,
+html[data-theme="dark"] #regenerate-after-text {
+    color: #f3f4f6;
+}

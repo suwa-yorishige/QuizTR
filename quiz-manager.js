@@ -309,6 +309,9 @@ class QuizManager {
 
         this.app.currentQuestionIndex = selectedIndex;
         const q = this.app.normalizeQuestionData(questions[this.app.currentQuestionIndex]);
+        const confirmPointParts = this.app.splitQuestionAtConfirmPoint(q);
+        const useConfirmPoint = !!this.app.quizConfirmPointMode;
+        this.currentQuestionPositionLimit = useConfirmPoint ? confirmPointParts.point : String(q.q || '').length;
         this.app.quizSessionSeenQuestionIds.add(this.app.getQuestionId(q));
         this.app.markQuestionSeenInCycle(targetSet, q);
         this.app.saveStudySets();
@@ -357,21 +360,38 @@ class QuizManager {
         if (this.app.quizMode === 'text') {
             if (voiceIndicator) voiceIndicator.classList.add('hidden');
             if (textContainer) textContainer.classList.remove('hidden');
-            this.startTextReveal(q.q);
+            this.startTextReveal(q.q, useConfirmPoint ? confirmPointParts.visibleCharacters : null);
         } else {
             if (voiceIndicator) voiceIndicator.classList.remove('hidden');
             if (textContainer) textContainer.classList.add('hidden');
 
-            const utterance = new SpeechSynthesisUtterance(this.app.applyPronunciations(q.q, q));
+            const pronouncedQuestion = useConfirmPoint
+                ? this.app.applyPronunciationsAtPosition(q.q, confirmPointParts.point, q)
+                : { text: this.app.applyPronunciations(q.q, q), position: String(q.q || '').length };
+            const speechText = useConfirmPoint
+                ? pronouncedQuestion.text.slice(0, pronouncedQuestion.position)
+                : pronouncedQuestion.text;
+            const utterance = new SpeechSynthesisUtterance(speechText);
             this.app.currentVoiceCharIndex = 0;
             this.app.currentVoiceStartedAt = performance.now();
-            this.app.currentVoiceEstimatedMs = Math.max(1000, Array.from(String(q.q || '')).length * 120 / 0.9);
+            this.app.currentVoiceEstimatedMs = Math.max(1000, Array.from(speechText).length * 120 / 0.9);
 
             utterance.onboundary = (event) => {
                 if (Number.isFinite(event.charIndex)) {
-                    this.app.currentVoiceCharIndex = Math.max(this.app.currentVoiceCharIndex, event.charIndex);
+                    const position = useConfirmPoint
+                        ? Math.min(
+                            confirmPointParts.point,
+                            Math.round((event.charIndex / Math.max(1, speechText.length)) * confirmPointParts.point)
+                        )
+                        : event.charIndex;
+                    this.app.currentVoiceCharIndex = Math.max(this.app.currentVoiceCharIndex, position);
                 }
             };
+            if (useConfirmPoint) {
+                utterance.onend = () => {
+                    this.app.currentVoiceCharIndex = confirmPointParts.point;
+                };
+            }
 
             utterance.lang = 'ja-JP';
             utterance.rate = 0.9;
@@ -396,15 +416,19 @@ class QuizManager {
             let source = 'exact';
 
             if (this.app.quizMode === 'text') {
-                charIndex = Math.max(1, Math.min(len, this.currentTextRevealIndex || 1));
-                this.buzzDisplayText = String(q.q || '').slice(0, charIndex);
+                const shownText = Array.from(String(q.q || '')).slice(0, this.currentTextRevealIndex || 1).join('');
+                charIndex = Math.max(1, Math.min(len, shownText.length));
+                this.buzzDisplayText = shownText;
+                if (this.app.quizConfirmPointMode) charIndex = Math.min(charIndex, this.currentQuestionPositionLimit);
             } else {
                 elapsedMs = Math.max(0, performance.now() - (this.app.currentVoiceStartedAt || performance.now()));
                 charIndex = this.app.currentVoiceCharIndex;
                 if (!charIndex) {
-                    charIndex = Math.max(1, Math.min(len, Math.round(len * Math.min(1, elapsedMs / Math.max(1, this.app.currentVoiceEstimatedMs)))));
+                    const positionLimit = this.app.quizConfirmPointMode ? this.currentQuestionPositionLimit : len;
+                    charIndex = Math.max(1, Math.min(positionLimit, Math.round(positionLimit * Math.min(1, elapsedMs / Math.max(1, this.app.currentVoiceEstimatedMs)))));
                     source = 'estimated';
                 }
+                if (this.app.quizConfirmPointMode) charIndex = Math.min(charIndex, this.currentQuestionPositionLimit);
             }
 
             this.app.pendingBuzzRecord = {
@@ -528,12 +552,15 @@ class QuizManager {
      * 問題文を1文字ずつ表示する初速120msのアニメーションを開始
      * @param {string} text - 表示対象の問題文
      */
-    startTextReveal(text) {
+    startTextReveal(text, maxCharacters = null) {
         this.stopTextReveal();
         const el = document.getElementById('quiz-text-reveal');
         if (!el) return;
 
-        const chars = Array.from(String(text || ''));
+        const allChars = Array.from(String(text || ''));
+        const chars = Number.isFinite(maxCharacters)
+            ? allChars.slice(0, Math.max(0, maxCharacters))
+            : allChars;
         let index = 0;
         this.currentTextRevealIndex = 0;
         el.textContent = '';

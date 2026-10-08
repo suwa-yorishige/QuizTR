@@ -146,15 +146,29 @@ class AudioManager {
         );
     }
 
-    buildQuestionSSML(q, isLast, includeExp) {
+    buildQuestionSSML(q, isLast, includeExp, mode = 'full') {
+        if (typeof mode === 'boolean') mode = mode ? 'continue' : 'full';
+        if (!['full', 'continue', 'answer'].includes(mode)) mode = 'full';
+
         const prefix = isLast
             ? '最終問題です'
             : '問題';
 
-        const question =
-            this.escapeXML(
-                this.app.applyPronunciations(q.q, q)
-            );
+        let question;
+        let questionAnswerBreak = '1s';
+        if (mode !== 'full') {
+            const parts = this.app.splitQuestionAtConfirmPoint(q);
+            const pronounced = this.app.applyPronunciationsAtPosition(q.q, parts.point, q);
+            question = this.escapeXML(pronounced.text.slice(0, pronounced.position));
+            const remainder = pronounced.text.slice(pronounced.position);
+            if (mode === 'continue' && remainder) {
+                question += `<break time="3s"/>${this.escapeXML(remainder)}`;
+            } else if (mode === 'answer') {
+                questionAnswerBreak = '3s';
+            }
+        } else {
+            question = this.escapeXML(this.app.applyPronunciations(q.q, q));
+        }
 
         const answer =
             this.escapeXML(
@@ -169,7 +183,7 @@ class AudioManager {
                 )
             );
 
-        return `<speak>${prefix}<break time="1s"/>${question}<break time="1s"/>${answer}${
+        return `<speak>${prefix}<break time="1s"/>${question}<break time="${questionAnswerBreak}"/>${answer}${
             includeExp && explanation
                 ? `<break time="1s"/>${explanation}`
                 : ''
@@ -184,6 +198,7 @@ class AudioManager {
         if (!totalQuestionCount) return this.app.showToast('対象のセットに問題が登録されていません', 'error');
         const count = parseInt(document.getElementById('audio-export-count').value, 10);
         const includeExp = document.getElementById('audio-export-explanation').checked;
+        const questionMode = document.getElementById('audio-export-question-mode')?.value || 'full';
         const prioritySelect = document.getElementById('audio-export-priority');
         const priorityMode = prioritySelect && prioritySelect.value ? prioritySelect.value : 'unanswered';
         const allocations = this.allocateQuestionsByRatio(selectedSets, Math.min(count, totalQuestionCount));
@@ -206,7 +221,7 @@ class AudioManager {
             decodeCtx = new (window.AudioContext || window.webkitAudioContext)({sampleRate: targetSampleRate});
             let completed = 0;
             const buffers = await Utils.mapWithConcurrency(selected, 3, async (q, i) => {
-                const ssml = this.buildQuestionSSML(q, i === selected.length - 1, includeExp);
+                const ssml = this.buildQuestionSSML(q, i === selected.length - 1, includeExp, questionMode);
                 const b64 = await this.app.fetchCloudTextToSpeechAPI(ssml);
                 const buffer = this.base64ToAudioBuffer(b64, decodeCtx);
                 completed++;

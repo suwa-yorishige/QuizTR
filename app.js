@@ -22,6 +22,7 @@ const app = {
     currentVoiceStartedAt: 0,
     currentVoiceEstimatedMs: 0,
     pendingBuzzRecord: null,
+    quizConfirmPointMode: false,
 
     synth: window.speechSynthesis,
     voices: [],
@@ -133,11 +134,14 @@ const app = {
 
             this.geminiApiKey = localStorage.getItem('quiz_gemini_key') || "";
             this.ttsApiKey = localStorage.getItem('quiz_tts_key') || "";
+            this.quizConfirmPointMode = localStorage.getItem('quiz_confirm_point_mode') === 'true';
             this.theme = this.getStoredTheme();
             this.applyTheme(this.theme);
 
             document.getElementById('setting-gemini-key').value = this.geminiApiKey;
             document.getElementById('setting-tts-key').value = this.ttsApiKey;
+            const confirmPointModeToggle = document.getElementById('quiz-confirm-point-mode');
+            if (confirmPointModeToggle) confirmPointModeToggle.checked = this.quizConfirmPointMode;
             document.querySelector(`input[name="setting-theme"][value="${this.theme}"]`).checked = true;
         } catch (e) {
             console.error("Data loading error", e);
@@ -165,6 +169,15 @@ const app = {
     getTodayKey() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; },
     getTodayAnsweredCount() { const key = this.getTodayKey(); return Number(this.dailyStats[key]) || 0; },
     incrementTodayAnsweredCount() { const key = this.getTodayKey(); this.dailyStats[key] = this.getTodayAnsweredCount() + 1; this.saveDailyStats(); },
+
+    setQuizConfirmPointMode(enabled) {
+        this.quizConfirmPointMode = !!enabled;
+        try {
+            localStorage.setItem('quiz_confirm_point_mode', String(this.quizConfirmPointMode));
+        } catch (error) {
+            console.warn('Quiz mode preference could not be saved.', error);
+        }
+    },
 
     saveSettings() {
         this.geminiApiKey = document.getElementById('setting-gemini-key').value.trim();
@@ -571,6 +584,21 @@ const app = {
         const len = Math.max(1, String(safeQ.q || '').length);
         return Math.max(1, Math.min(len, Number(safeQ.confirmPoint) || len));
     },
+    splitQuestionAtConfirmPoint(q) {
+        const text = String((q || {}).q || '');
+        let point = Math.min(text.length, Math.max(0, Math.round(this.getEffectiveConfirmPoint(q))));
+        if (point > 0 && point < text.length) {
+            const previous = text.charCodeAt(point - 1);
+            const next = text.charCodeAt(point);
+            if (previous >= 0xD800 && previous <= 0xDBFF && next >= 0xDC00 && next <= 0xDFFF) point++;
+        }
+        return {
+            before: text.slice(0, point),
+            after: text.slice(point),
+            point,
+            visibleCharacters: Array.from(text.slice(0, point)).length
+        };
+    },
     getBuzzPositionScore(q, record) {
         const safeQ = q || {};
         const len = Math.max(1, String(safeQ.q || '').length), cp = this.getEffectiveConfirmPoint(q);
@@ -838,7 +866,13 @@ const app = {
 
     applyDictionary(text) { return this.applyPronunciations(text, null); },
     applyPronunciations(text, question = null) {
+        return this.applyPronunciationsAtPosition(text, null, question).text;
+    },
+    applyPronunciationsAtPosition(text, position, question = null) {
         let res = String(text !== null && text !== undefined ? text : '');
+        let boundary = position !== null && Number.isFinite(Number(position))
+            ? Math.max(0, Math.min(res.length, Math.round(Number(position))))
+            : null;
         const local = question && Array.isArray(question.pronunciations) ? question.pronunciations : [];
         const global = Array.isArray(this.dictionary) ? this.dictionary : [];
         const used = new Set();
@@ -847,10 +881,23 @@ const app = {
             .sort((a, b) => b.word.length - a.word.length)
             .forEach(x => {
                 if (used.has(x.word)) return;
-                res = res.split(x.word).join(x.pronunciation);
+                let cursor = 0;
+                let nextBoundary = boundary;
+                let output = '';
+                let matchIndex = res.indexOf(x.word, cursor);
+                while (matchIndex !== -1) {
+                    output += res.slice(cursor, matchIndex) + x.pronunciation;
+                    if (boundary !== null && matchIndex < boundary) nextBoundary += x.pronunciation.length - x.word.length;
+                    cursor = matchIndex + x.word.length;
+                    matchIndex = res.indexOf(x.word, cursor);
+                }
+                if (cursor > 0) {
+                    res = output + res.slice(cursor);
+                    if (boundary !== null) boundary = Math.max(0, Math.min(res.length, nextBoundary));
+                }
                 used.add(x.word);
             });
-        return res;
+        return { text: res, position: boundary };
     },
 
     isSimilarQuestionCandidate(item, accepted, existingQuestions) {

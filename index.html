@@ -212,6 +212,14 @@
                     </button>
                 </div>
 
+                <label for="quiz-confirm-point-mode"
+                    class="flex items-center gap-3 bg-white border border-soft-green-200 rounded-xl p-4 text-sm font-semibold text-soft-green-800 cursor-pointer">
+                    <input type="checkbox" id="quiz-confirm-point-mode"
+                        onchange="app.setQuizConfirmPointMode(this.checked)"
+                        class="w-5 h-5 shrink-0 text-soft-green-600 border-soft-green-300 rounded focus:ring-soft-green-500">
+                    <span>確定ポイントモード（音声・文章モード共通）</span>
+                </label>
+
                 <div class="bg-white rounded-2xl shadow-sm border border-soft-green-100 p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold text-soft-green-800">
@@ -754,6 +762,14 @@
                         <p class="text-xs text-secondary mt-2">※正解率の低い問題は、回答済みかつ正解率50%未満です。消化後は未回答の問題を第2優先にします。</p>
                     </div>
 
+                    <div>
+                        <label for="audio-export-question-mode" class="block text-sm font-semibold text-primary mb-2">問題文の読み上げ方</label>
+                        <select id="audio-export-question-mode" class="form-select bg-white">
+                            <option value="full" selected>問題文全体を読み上げる</option>
+                            <option value="continue">確定ポイントまで読み上げ、3秒後に続きを読む</option>
+                            <option value="answer">確定ポイントまで読み上げ、3秒後に解答を読み上げる</option>
+                        </select>
+                    </div>
                     <div class="flex items-center mt-2 bg-white p-3 rounded-lg border border-soft-green-200">
                         <input type="checkbox" id="audio-export-explanation" checked
                             class="w-5 h-5 text-soft-green-600 border-soft-green-300 rounded focus:ring-soft-green-500 cursor-pointer">

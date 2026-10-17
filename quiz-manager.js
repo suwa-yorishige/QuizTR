@@ -586,7 +586,7 @@ class QuizManager {
 
     /**
      * デリバティブ問題作成フロー開始
-     * 現在の問題文からGemini APIを使用して固有名詞を抽出し、
+     * 現在の問題文と解説からGemini APIを使用して固有名詞を抽出し、
      * それを解答とする派生問題の生成フローを開始
      */
     async startDerivativeCreation() {
@@ -596,12 +596,12 @@ class QuizManager {
         if (!current) return;
 
         this.openDerivativeModal();
-        this.setDerivativeView('derivative-loading', '問題文から固有名詞を抽出中...');
+        this.setDerivativeView('derivative-loading', '問題文と解説から固有名詞を抽出中...');
 
         try {
-                        const parsed = this.app.aiManager.parseAIJSON(await this.app.fetchGemini(`次の早押しクイズ問題文から、
+            const parsed = this.app.aiManager.parseAIJSON(await this.app.fetchGemini(`次の早押しクイズの問題文と解説から、
 別のクイズの解答にできる固有名詞を
-重複なしで最大6件抽出してください。
+重複なしで最大10件抽出してください。
 
 元の解答「${current.a}」は除外してください。
 
@@ -629,8 +629,11 @@ class QuizManager {
 ]
 
 問題文:
-${current.q}`, true));
-            this.app.derivativeCandidates = (Array.isArray(parsed) ? parsed : []).map(x => ({ word: String(x.word || '').trim(), reason: String(x.reason || '').trim(), selected: false })).filter(x => x.word && x.word !== current.a).slice(0, 6);
+${current.q}
+
+解説:
+${current.explanation || ''}`, true));
+            this.app.derivativeCandidates = (Array.isArray(parsed) ? parsed : []).map(x => ({ word: String(x.word || '').trim(), reason: String(x.reason || '').trim(), selected: false })).filter(x => x.word && x.word !== current.a).slice(0, 10);
             if (!this.app.derivativeCandidates.length) throw new Error('候補を抽出できませんでした');
             document.getElementById('derivative-candidate-list').innerHTML = this.app.derivativeCandidates.map((x, i) => `<label class="flex gap-3 p-4 rounded-xl border border-soft-green-200 hover:bg-amber-50 cursor-pointer"><input type="checkbox" onchange="app.derivativeCandidates[${i}].selected=this.checked"><span><span class="block font-bold text-soft-green-900">${this.app.escapeHTML(x.word)}</span><span class="block text-xs text-soft-green-600 mt-1">${this.app.escapeHTML(x.reason || '候補')}</span></span></label>`).join('');
             document.getElementById('derivative-step-text').textContent = '解答候補を複数選択してください';

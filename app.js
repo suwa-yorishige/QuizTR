@@ -868,13 +868,66 @@ const app = {
     applyPronunciations(text, question = null) {
         return this.applyPronunciationsAtPosition(text, null, question).text;
     },
+    /**
+     * 指定位置を考慮して、テキストにフリガナと読み上げ辞書を適用します。
+     * @param {string} text - 読み上げ用に変換するテキスト。
+     * @param {number|null} position - 変換後の位置も更新する境界位置。
+     * @param {object|null} question - 問題ごとの読み上げ設定。
+     * @returns {object} 変換後のテキストと更新後の境界位置。
+     */
     applyPronunciationsAtPosition(text, position, question = null) {
         let res = String(text !== null && text !== undefined ? text : '');
         let boundary = position !== null && Number.isFinite(Number(position))
             ? Math.max(0, Math.min(res.length, Math.round(Number(position))))
             : null;
+        const sourceBoundary = boundary;
+        let mappedBoundary = boundary;
+        let boundaryMappedInsideFurigana = false;
+        const furiganaPattern = /([\p{Script=Han}々〆ヵヶ]+)(?:（([\p{Script=Hiragana}\p{Script=Katakana}ー・･·]+)）|\(([\p{Script=Hiragana}\p{Script=Katakana}ー・･·]+)\))/gu;
         const local = question && Array.isArray(question.pronunciations) ? question.pronunciations : [];
         const global = Array.isArray(this.dictionary) ? this.dictionary : [];
+        const pronunciationEntries = [...local, ...global]
+            .filter(x => x && x.word && x.pronunciation)
+            .sort((a, b) => b.word.length - a.word.length);
+        let cursor = 0;
+        let furiganaMatch;
+        let furiganaText = '';
+        let boundaryDelta = 0;
+        while ((furiganaMatch = furiganaPattern.exec(res)) !== null) {
+            const annotation = furiganaMatch[2] || furiganaMatch[3];
+            const kanji = furiganaMatch[1];
+            const kanjiCharacters = Array.from(kanji);
+            const explicitEntry = pronunciationEntries.find(x => kanji.endsWith(x.word));
+            const reading = explicitEntry ? explicitEntry.pronunciation : annotation;
+            const matchedWord = explicitEntry ? explicitEntry.word : kanji;
+            const annotatedLength = Array.from(matchedWord).length;
+            const retainedPrefix = kanjiCharacters.slice(0, kanjiCharacters.length - annotatedLength).join('');
+            const replacement = retainedPrefix + reading;
+            const matchStart = furiganaMatch.index;
+            const matchEnd = matchStart + furiganaMatch[0].length;
+            const outputStart = matchStart + boundaryDelta;
+
+            furiganaText += res.slice(cursor, matchStart) + replacement;
+            if (sourceBoundary !== null) {
+                if (sourceBoundary >= matchEnd) {
+                    boundaryDelta += replacement.length - furiganaMatch[0].length;
+                } else if (sourceBoundary > matchStart) {
+                    mappedBoundary = sourceBoundary <= matchStart + retainedPrefix.length
+                        ? outputStart + sourceBoundary - matchStart
+                        : outputStart + replacement.length;
+                    boundaryMappedInsideFurigana = true;
+                }
+            }
+            cursor = matchEnd;
+        }
+        if (cursor > 0) {
+            furiganaText += res.slice(cursor);
+            res = furiganaText;
+            if (sourceBoundary !== null) {
+                boundary = boundaryMappedInsideFurigana ? mappedBoundary : sourceBoundary + boundaryDelta;
+            }
+            if (boundary !== null) boundary = Math.max(0, Math.min(res.length, boundary));
+        }
         const used = new Set();
         [...local, ...global]
             .filter(x => x && x.word && x.pronunciation)
@@ -939,9 +992,25 @@ const app = {
             this.openPronunciationModal(set.questions[this.currentQuestionIndex]);
         }
     },
-    openPronunciationModalFromDetail() { const id = document.getElementById('detail-question-id').value; this.openPronunciationModal(this.getQuestionByIdAcrossSets(id).q); },
+    openPronunciationModalFromDetail() { const id = document.getElementById('detail-question-id').value; this.openPronunciationModal(this.getQuestionByIdAcrossSets(id).q, true); },
     getQuestionByIdAcrossSets(id) { for (const set of this.studySets) { const index = set.questions.findIndex(q => this.getQuestionId(q) === id); if (index >= 0) return { set, q: this.normalizeQuestionData(set.questions[index]), index }; } return { set: null, q: null, index: -1 }; },
-    openPronunciationModal(q) { if (!q) return; this.pronunciationTargetQuestion = q; document.getElementById('pronunciation-question-id').value = this.getQuestionId(q); const globals = new Set(this.dictionary.map(x => x.word)); this.aiManager.pronunciationCandidates = (q.pronunciations || []).filter(x => !globals.has(x.word)).map(x => ({ ...x, selected: true, scope: 'question', saved: true })); this.renderPronunciationCandidates(); const m = document.getElementById('pronunciation-modal'), p = document.getElementById('pronunciation-panel'); m.classList.remove('hidden'); void m.offsetWidth; m.classList.remove('opacity-0'); p.classList.remove('scale-95'); },
+    openPronunciationModal(q, fromDetail = false) {
+        if (!q) return;
+        this.pronunciationTargetQuestion = q;
+        this.pronunciationFromDetail = fromDetail;
+        document.getElementById('pronunciation-question-id').value = this.getQuestionId(q);
+        document.getElementById('pronunciation-extract-controls').classList.toggle('hidden', !fromDetail);
+        const globals = new Set(this.dictionary.map(x => x.word));
+        this.aiManager.pronunciationCandidates = (q.pronunciations || [])
+            .filter(x => !globals.has(x.word))
+            .map(x => ({ ...x, selected: true, scope: 'question', saved: true }));
+        this.renderPronunciationCandidates();
+        const m = document.getElementById('pronunciation-modal'), p = document.getElementById('pronunciation-panel');
+        m.classList.remove('hidden');
+        void m.offsetWidth;
+        m.classList.remove('opacity-0');
+        p.classList.remove('scale-95');
+    },
 
     closePronunciationModal() {
         this.synth.cancel();
@@ -949,10 +1018,153 @@ const app = {
         m.classList.add('opacity-0');
         p.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300);
     },
-    renderPronunciationCandidates() { const list = document.getElementById('pronunciation-candidate-list'), empty = document.getElementById('pronunciation-empty'), globals = new Set(this.dictionary.map(x => x.word)); this.aiManager.pronunciationCandidates = (this.aiManager.pronunciationCandidates || []).filter(x => !globals.has(x.word)); empty.classList.toggle('hidden', this.aiManager.pronunciationCandidates.length > 0); list.innerHTML = this.aiManager.pronunciationCandidates.map((x, i) => `<div class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_auto] gap-2 items-center border rounded-xl p-3"><input type="checkbox" ${x.selected !== false ? 'checked' : ''} onchange="app.aiManager.pronunciationCandidates[${i}].selected=this.checked"><input class="px-2 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.word)}" oninput="app.aiManager.pronunciationCandidates[${i}].word=this.value"><input class="col-start-2 sm:col-start-auto px-2 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.pronunciation)}" oninput="app.aiManager.pronunciationCandidates[${i}].pronunciation=this.value"><div class="col-start-2 sm:col-start-auto flex gap-1"><select class="px-2 py-2 border rounded-lg text-xs" onchange="app.aiManager.pronunciationCandidates[${i}].scope=this.value"><option value="question" ${x.scope !== 'global' ? 'selected' : ''}>この問題だけ</option><option value="global" ${x.scope === 'global' ? 'selected' : ''}>すべての問題</option></select><button onclick="app.aiManager.pronunciationCandidates.splice(${i},1);app.renderPronunciationCandidates()" class="text-red-600 text-xs">削除</button></div></div>`).join(''); },
+    extractPronunciationCandidatesFromQuestion() {
+        if (!this.pronunciationFromDetail) return;
+        const questionInput = document.getElementById('detail-question-q');
+        const text = questionInput.value || '';
+        const pattern = /([\p{Script=Han}々〆ヵヶ]+)(?:（([\p{Script=Hiragana}\p{Script=Katakana}ー・･·]+)）|\(([\p{Script=Hiragana}\p{Script=Katakana}ー・･·]+)\))/gu;
+        let match;
+        let added = 0;
+        let extracted = 0;
+        while ((match = pattern.exec(text)) !== null) {
+            const pronunciation = (match[2] || match[3]).replace(/[・･·]/g, '');
+            if (!pronunciation) continue;
+            const kanjiCharacters = Array.from(match[1]);
+            const readingLength = Array.from(pronunciation).length;
+            // 読みが漢字列より短い場合は、末尾の人名などへの注釈として対象範囲を推定する。
+            const annotatedLength = kanjiCharacters.length > readingLength
+                ? Math.min(kanjiCharacters.length, Math.ceil(readingLength / 2))
+                : kanjiCharacters.length;
+            const word = kanjiCharacters.slice(-annotatedLength).join('');
+            const parentheticalStart = match.index + match[1].length;
+            const parentheticalText = text.slice(parentheticalStart, pattern.lastIndex);
+            let candidate = this.aiManager.pronunciationCandidates.find(x => x.word.trim() === word);
+            if (!candidate) {
+                candidate = { word, pronunciation, selected: true, scope: 'question' };
+                this.aiManager.pronunciationCandidates.push(candidate);
+                added++;
+            } else {
+                candidate.pronunciation = pronunciation;
+            }
+            if (!Array.isArray(candidate.furiganaMatches)) candidate.furiganaMatches = [];
+            if (!candidate.furiganaMatches.some(x => x.start === parentheticalStart)) {
+                candidate.furiganaMatches.push({ start: parentheticalStart, text: parentheticalText, remove: false });
+                extracted++;
+            }
+        }
+        this.renderPronunciationCandidates();
+        this.showToast(extracted ? `${extracted}件の括弧書きを抽出しました（新規候補${added}件）` : '抽出できる括弧書きはありませんでした', extracted ? 'success' : 'info');
+    },
+    renderPronunciationCandidates() {
+        const list = document.getElementById('pronunciation-candidate-list');
+        const empty = document.getElementById('pronunciation-empty');
+        const globals = new Set(this.dictionary.map(x => x.word));
+        this.aiManager.pronunciationCandidates = (this.aiManager.pronunciationCandidates || [])
+            .filter(x => !globals.has(x.word) || (Array.isArray(x.furiganaMatches) && x.furiganaMatches.length));
+        empty.classList.toggle('hidden', this.aiManager.pronunciationCandidates.length > 0);
+        list.innerHTML = this.aiManager.pronunciationCandidates.map((x, i) => `
+            <div class="border rounded-xl p-3 space-y-2">
+                <div class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_auto] gap-2 items-center">
+                    <input type="checkbox" ${x.selected !== false ? 'checked' : ''} aria-label="読み方候補を登録"
+                        onchange="app.aiManager.pronunciationCandidates[${i}].selected=this.checked">
+                    <input class="px-2 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.word)}" aria-label="読み方の対象語"
+                        oninput="app.aiManager.pronunciationCandidates[${i}].word=this.value">
+                    <input class="col-start-2 sm:col-start-auto px-2 py-2 border rounded-lg text-sm" value="${this.escapeHTML(x.pronunciation)}" aria-label="読み方"
+                        oninput="app.aiManager.pronunciationCandidates[${i}].pronunciation=this.value">
+                    <div class="col-start-2 sm:col-start-auto flex gap-1">
+                        <select class="px-2 py-2 border rounded-lg text-xs" onchange="app.aiManager.pronunciationCandidates[${i}].scope=this.value">
+                            <option value="question" ${x.scope !== 'global' ? 'selected' : ''}>この問題だけ</option>
+                            <option value="global" ${x.scope === 'global' ? 'selected' : ''}>すべての問題</option>
+                        </select>
+                        <button onclick="app.aiManager.pronunciationCandidates.splice(${i},1);app.renderPronunciationCandidates()" class="text-red-600 text-xs">削除</button>
+                    </div>
+                </div>
+                ${Array.isArray(x.furiganaMatches) ? x.furiganaMatches.map((match, matchIndex) => `
+                    <label class="flex items-center gap-2 text-xs text-soft-green-700">
+                        <input type="checkbox" ${match.remove ? 'checked' : ''}
+                            onchange="app.aiManager.pronunciationCandidates[${i}].furiganaMatches[${matchIndex}].remove=this.checked">
+                        問題文から「${this.escapeHTML(match.text)}」を削除する
+                    </label>`).join('') : ''}
+            </div>`).join('');
+    },
     addPronunciationCandidate() { this.aiManager.pronunciationCandidates.push({ word: '', pronunciation: '', selected: true, scope: 'question' }); this.renderPronunciationCandidates(); },
     testSelectedPronunciations() { const x = this.aiManager.pronunciationCandidates.filter(x => x.selected && x.pronunciation); if (!x.length) return this.showToast('候補を選択してください', 'error'); const u = new SpeechSynthesisUtterance(x.map(x => x.pronunciation).join('、')); u.lang = 'ja-JP'; this.synth.cancel(); this.synth.speak(u); },
-    savePronunciationSettings() { const r = this.getQuestionByIdAcrossSets(document.getElementById('pronunciation-question-id').value), globals = new Set(this.dictionary.map(x => x.word)), selected = this.aiManager.pronunciationCandidates.filter(x => x.selected && x.word.trim() && x.pronunciation.trim() && !globals.has(x.word.trim())); if (!selected.length) return this.showToast('登録候補を選択してください', 'error'); const local = r.q.pronunciations || []; selected.forEach(x => { const e = { word: x.word.trim(), pronunciation: x.pronunciation.trim() }; if (x.scope === 'global') { this.dictionary.push(e); const i = local.findIndex(y => y.word === e.word); if (i >= 0) local.splice(i, 1); } else { const i = local.findIndex(y => y.word === e.word); if (i >= 0) local[i] = e; else local.push(e); } }); r.q.pronunciations = local; r.set.questions[r.index] = r.q; this.saveDictionary(); this.dictionaryManager.render(); this.saveStudySets(); this.renderDetailPronunciations(r.q); this.closePronunciationModal(); this.showToast(`${selected.length}件登録しました`, 'success'); },
+    savePronunciationSettings() {
+        const result = this.getQuestionByIdAcrossSets(document.getElementById('pronunciation-question-id').value);
+        if (!result.q || !result.set) return this.showToast('問題が見つかりません', 'error');
+        const candidates = this.aiManager.pronunciationCandidates || [];
+        const globals = new Set(this.dictionary.map(x => x.word));
+        const selected = candidates.filter(x => x.selected && x.word.trim() && x.pronunciation.trim() && !globals.has(x.word.trim()));
+        const removals = candidates
+            .filter(x => Array.isArray(x.furiganaMatches))
+            .flatMap(x => x.furiganaMatches.filter(match => match.remove));
+        if (!selected.length && !removals.length) return this.showToast('登録候補を選択するか、括弧書きの削除を選択してください', 'error');
+
+        let updatedQuestionText = null;
+        let updatedConfirmPoint = null;
+        let removedCount = 0;
+        if (removals.length && this.pronunciationFromDetail) {
+            const questionInput = document.getElementById('detail-question-q');
+            const currentText = questionInput.value || '';
+            const uniqueRemovals = [...new Map(removals.map(x => [`${x.start}:${x.text}`, x])).values()]
+                .sort((a, b) => b.start - a.start);
+            if (uniqueRemovals.some(x => currentText.slice(x.start, x.start + x.text.length) !== x.text)) {
+                return this.showToast('問題文が抽出後に変更されています。もう一度抽出してください', 'error');
+            }
+            updatedQuestionText = currentText;
+            const confirmPointInput = document.getElementById('detail-confirm-point');
+            const rawConfirmPoint = Number(confirmPointInput && confirmPointInput.value ? confirmPointInput.value : currentText.length);
+            const confirmPoint = Number.isFinite(rawConfirmPoint) ? rawConfirmPoint : currentText.length;
+            updatedConfirmPoint = confirmPoint;
+            removedCount = uniqueRemovals.length;
+            uniqueRemovals.forEach(x => {
+                const end = x.start + x.text.length;
+                if (end <= updatedConfirmPoint) updatedConfirmPoint -= x.text.length;
+                else if (x.start < updatedConfirmPoint) updatedConfirmPoint = x.start;
+                updatedQuestionText = updatedQuestionText.slice(0, x.start) + updatedQuestionText.slice(end);
+            });
+        }
+
+        const local = Array.isArray(result.q.pronunciations) ? result.q.pronunciations : [];
+        let addedGlobal = false;
+        const processedWords = new Set();
+        selected.forEach(x => {
+            const entry = { word: x.word.trim(), pronunciation: x.pronunciation.trim() };
+            if (processedWords.has(entry.word)) return;
+            processedWords.add(entry.word);
+            if (x.scope === 'global') {
+                this.dictionary.push(entry);
+                const index = local.findIndex(y => y.word === entry.word);
+                if (index >= 0) local.splice(index, 1);
+                addedGlobal = true;
+            } else {
+                const index = local.findIndex(y => y.word === entry.word);
+                if (index >= 0) local[index] = entry;
+                else local.push(entry);
+            }
+        });
+        result.q.pronunciations = local;
+        if (updatedQuestionText !== null) {
+            result.q.q = updatedQuestionText;
+            result.q.confirmPoint = Math.max(0, Math.min(updatedQuestionText.length, Math.round(updatedConfirmPoint)));
+            document.getElementById('detail-question-q').value = updatedQuestionText;
+            document.getElementById('detail-confirm-point').value = result.q.confirmPoint || updatedQuestionText.length;
+            this.syncConfirmPointLimit();
+        }
+        result.set.questions[result.index] = result.q;
+        if (addedGlobal) {
+            this.saveDictionary();
+            this.dictionaryManager.render();
+        }
+        this.saveStudySets();
+        this.questionManager.renderQuestionList();
+        this.renderDetailPronunciations(result.q);
+        this.closePronunciationModal();
+        const messages = [];
+        if (selected.length) messages.push(`${processedWords.size}件の読み方を登録`);
+        if (removedCount) messages.push(`${removedCount}件の括弧書きを削除`);
+        this.showToast(`${messages.join('、')}しました`, 'success');
+    },
     renderDetailPronunciations(q) { const box = document.getElementById('detail-pronunciation-list'); if (!box) return; const x = q && q.pronunciations ? q.pronunciations : []; box.innerHTML = x.length ? x.map((d, i) => `<div class="flex justify-between bg-white border rounded-lg px-3 py-2"><span class="text-sm">${Utils.escapeHTML(d.word)} → ${Utils.escapeHTML(d.pronunciation)}</span><button onclick="app.removeLocalPronunciation(${i})" class="text-red-600 text-xs">削除</button></div>`).join('') : '<p class="text-xs text-soft-green-500">この問題固有の読み方は未設定です。</p>'; },
     removeLocalPronunciation(i) { const r = this.getQuestionByIdAcrossSets(document.getElementById('detail-question-id').value); r.q.pronunciations.splice(i, 1); r.set.questions[r.index] = r.q; this.saveStudySets(); this.renderDetailPronunciations(r.q); },
     switchAIGeneratorTab(tab) {
@@ -1082,5 +1294,3 @@ window.addEventListener('DOMContentLoaded', () => {
     app.init();
     app.dataManager.switchTab('import');
 });
-
-

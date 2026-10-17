@@ -1417,6 +1417,11 @@
                         <p class="text-xs text-soft-green-600 mt-1">保存済み設定を確認し、必要なときだけAI候補を作成できます。</p>
                     </div><button onclick="app.closePronunciationModal()" class="font-bold text-xl">×</button>
                 </div><input type="hidden" id="pronunciation-question-id">
+                <div id="pronunciation-extract-controls" class="hidden">
+                    <button type="button" onclick="app.extractPronunciationCandidatesFromQuestion()"
+                        class="px-3 py-2 bg-soft-green-100 text-soft-green-800 rounded-lg font-bold text-xs">問題文から括弧書きを抽出</button>
+                    <p class="text-xs text-soft-green-600 mt-2">抽出した読み方は確認・編集できます。問題文から括弧書きを削除するかどうかも候補ごとに選べます。</p>
+                </div>
                 <div class="flex flex-wrap gap-2"><button id="pronunciation-ai-btn"
                         onclick="app.generatePronunciationCandidatesWithAI()"
                         class="px-3 py-2 bg-amber-500 text-white rounded-lg font-bold text-xs">AIで候補を作成</button><button

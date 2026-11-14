@@ -494,11 +494,13 @@ class QuestionManager {
 
         const btn = document.getElementById('detail-ai-explanation-btn');
         const oldText = btn.textContent;
+        const mode = document.getElementById('detail-ai-explanation-mode').value;
+        const existingExplanation = document.getElementById('detail-question-explanation').value.trim();
         btn.disabled = true;
         btn.textContent = '生成中...';
 
         try {
-            const prompt = this.app.buildAIExplanationPrompt(q, a);
+            const prompt = this.app.buildAIExplanationPrompt(q, a, mode, existingExplanation);
             const exp = (await this.app.fetchGemini(prompt, false)).trim().replace(/^```[a-z]*|```$/gi, '').trim();
             document.getElementById('detail-question-explanation').value = exp;
             this.app.showToast('AI解説を再セットしました', 'success');

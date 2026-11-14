@@ -119,11 +119,17 @@ class UIManager {
      * @param {*} tab 
      */
     switchManagerTab(tab) {
-        this.app.managerTab = ['overview', 'questions', 'bulk'].includes(tab) ? tab : 'overview';
+        this.app.managerTab = ['overview', 'questions', 'bulk', 'merge'].includes(tab) ? tab : 'overview';
         document.querySelectorAll('.manager-overview-section').forEach(element => element.classList.toggle('hidden', this.app.managerTab !== 'overview'));
         document.querySelectorAll('.manager-questions-section').forEach(element => element.classList.toggle('hidden', this.app.managerTab !== 'questions'));
         document.querySelectorAll('.manager-bulk-section').forEach(element => element.classList.toggle('hidden', this.app.managerTab !== 'bulk'));
-        const buttons = { overview: document.getElementById('manager-tab-btn-overview'), questions: document.getElementById('manager-tab-btn-questions'), bulk: document.getElementById('manager-tab-btn-bulk') };
+        document.querySelectorAll('.manager-merge-section').forEach(element => element.classList.toggle('hidden', this.app.managerTab !== 'merge'));
+        const buttons = {
+            overview: document.getElementById('manager-tab-btn-overview'),
+            questions: document.getElementById('manager-tab-btn-questions'),
+            bulk: document.getElementById('manager-tab-btn-bulk'),
+            merge: document.getElementById('manager-tab-btn-merge')
+        };
         Object.entries(buttons).forEach(([key, button]) => { if (button) button.className = `flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${this.app.managerTab === key ? 'bg-soft-green-600 text-white shadow-sm' : 'text-soft-green-800 hover:bg-soft-green-100'}`; });
         if (this.app.managerTab === 'questions') this.app.questionManager.renderQuestionList();
         if (this.app.managerTab === 'bulk') this.app.questionManager.renderBulkEditList();

@@ -35,7 +35,127 @@ class SetManager {
             select.innerHTML = createOptions(includeNew);
             if (value) select.value = value;
         });
+        this.renderMergeSetSelectors();
         this.renderAudioExportSetSelector();
+    }
+
+    renderMergeSetSelectors() {
+        const sets = this.getDisplayOrderedSets();
+        const optionHTML = sets.map(set =>
+            `<option value="${Utils.escapeHTML(set.id)}">${Utils.escapeHTML(set.name)}（${set.questions.length}問）</option>`
+        ).join('');
+        const source = document.getElementById('manager-merge-source');
+        const target = document.getElementById('manager-merge-target');
+        if (!source || !target) return;
+
+        const previousTargetValue = target.value;
+        const sourceValue = sets.some(set => set.id === source.value) ? source.value : (sets[0] ? sets[0].id : '');
+        const targetValue = sets.some(set => set.id === target.value && set.id !== sourceValue)
+            ? target.value
+            : ((sets.find(set => set.id !== sourceValue) || {}).id || '');
+        source.innerHTML = optionHTML;
+        target.innerHTML = optionHTML;
+        source.value = sourceValue;
+        target.value = targetValue;
+        source.disabled = sets.length < 2;
+        target.disabled = sets.length < 2;
+
+        const button = document.getElementById('manager-merge-button');
+        if (button) button.disabled = sets.length < 2;
+        if (previousTargetValue !== targetValue) this.changeMergeTarget();
+        else this.updateMergeQuestionCount();
+    }
+
+    changeMergeTarget() {
+        const targetSelect = document.getElementById('manager-merge-target');
+        const nameInput = document.getElementById('manager-merge-name');
+        if (!targetSelect || !nameInput) return;
+        const target = this.app.studySets.find(set => set.id === targetSelect.value);
+        nameInput.value = target ? target.name : '';
+        this.updateMergeQuestionCount();
+    }
+
+    updateMergeQuestionCount() {
+        const sourceSelect = document.getElementById('manager-merge-source');
+        const targetSelect = document.getElementById('manager-merge-target');
+        const count = document.getElementById('manager-merge-question-count');
+        if (!sourceSelect || !targetSelect || !count) return;
+
+        const source = this.app.studySets.find(set => set.id === sourceSelect.value);
+        const target = this.app.studySets.find(set => set.id === targetSelect.value);
+        count.textContent = source && target
+            ? `${source.questions.length}問を移動（統合後: ${source.questions.length + target.questions.length}問）`
+            : '統合元と統合先を選択してください';
+    }
+
+    async mergeStudySets() {
+        const sourceId = document.getElementById('manager-merge-source').value;
+        const targetId = document.getElementById('manager-merge-target').value;
+        const nameInput = document.getElementById('manager-merge-name');
+        const source = this.app.studySets.find(set => set.id === sourceId);
+        const target = this.app.studySets.find(set => set.id === targetId);
+        if (!source || !target) return this.app.showToast('統合元と統合先を選択してください', 'error');
+        if (source.id === target.id) return this.app.showToast('統合元と統合先には別のセットを選択してください', 'error');
+
+        const name = nameInput.value.trim().substring(0, MAX_SET_NAME_LENGTH);
+        if (!name) return this.app.showToast('統合後のセット名を入力してください', 'error');
+
+        const mergedQuestionCount = source.questions.length + target.questions.length;
+        if (mergedQuestionCount > MAX_QUESTIONS_PER_SET) {
+            return this.app.showToast(`統合後の問題数がセット上限の${MAX_QUESTIONS_PER_SET}問を超えます`, 'error');
+        }
+
+        const confirmed = await this.app.showModal(
+            '学習セットの統合',
+            `「${source.name}」の${source.questions.length}問を「${target.name}」へ移動します。\n統合後の名称: ${name}（${mergedQuestionCount}問）\n統合元のセットは削除され、出題サイクル情報はリセットされます。問題の重複はそのまま残ります。`,
+            '統合する'
+        );
+        if (!confirmed) return;
+
+        const usedQuestionIds = new Set();
+        this.app.studySets.filter(set => set.id !== source.id).forEach(set => {
+            set.questions.forEach(question => {
+                [question.id, question.questionId].filter(Boolean).forEach(id => usedQuestionIds.add(String(id)));
+            });
+        });
+        const movedQuestions = source.questions.map(question => {
+            const moved = this.app.normalizeQuestionData({ ...question });
+            let id = String(this.app.getQuestionId(moved) || '');
+            if (!id || usedQuestionIds.has(id)) {
+                do {
+                    id = `q-${Date.now()}${Math.random().toString(36).substring(2)}`;
+                } while (usedQuestionIds.has(id));
+            }
+            moved.id = id;
+            moved.questionId = id;
+            usedQuestionIds.add(id);
+            return moved;
+        });
+
+        const originalSets = this.app.studySets;
+        const mergedTarget = {
+            ...target,
+            name,
+            favorite: !!(source.favorite || target.favorite),
+            questions: target.questions.concat(movedQuestions),
+            cycleSeenQuestionIds: [],
+            cycleStartedAt: null
+        };
+        this.app.studySets = originalSets
+            .filter(set => set.id !== source.id)
+            .map(set => set.id === target.id ? mergedTarget : set);
+
+        if (!this.app.saveStudySets()) {
+            this.app.studySets = originalSets;
+            return;
+        }
+
+        if (this.app.activeSetId === source.id) this.app.activeSetId = target.id;
+        this.app.managerSetId = target.id;
+        this.app.statsManager.updateStats();
+        this.updateSetSelectors();
+        this.changeManagerSet(target.id);
+        this.app.uiManager.showToast(`${source.questions.length}問を「${name}」に統合しました`, 'success');
     }
 
     renderAudioExportSetSelector() {

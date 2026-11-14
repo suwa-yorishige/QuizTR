@@ -156,13 +156,15 @@ const app = {
     saveStudySets() {
         try {
             localStorage.setItem('quiz_study_sets', JSON.stringify(this.studySets));
-            this.statsManager.updateStats();
-            if (!document.getElementById('view-manager').classList.contains('hidden')) {
-                this.statsManager.renderManagerStats();
-            }
         } catch (e) {
             this.showToast('保存容量の上限に達しました。一部の問題を削除してください。', 'error');
+            return false;
         }
+        this.statsManager.updateStats();
+        if (!document.getElementById('view-manager').classList.contains('hidden')) {
+            this.statsManager.renderManagerStats();
+        }
+        return true;
     },
 
     saveDailyStats() { localStorage.setItem('quiz_daily_stats', JSON.stringify(this.dailyStats)); },
@@ -484,8 +486,8 @@ const app = {
         return this.aiManager.getAIExplanationInstruction();
     },
 
-    buildAIExplanationPrompt(q, a) {
-        return this.aiManager.buildAIExplanationPrompt(q, a);
+    buildAIExplanationPrompt(q, a, mode = 'standard', existingExplanation = '') {
+        return this.aiManager.buildAIExplanationPrompt(q, a, mode, existingExplanation);
     },
 
     buildBatchAIExplanationPrompt(items) {

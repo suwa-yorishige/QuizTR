@@ -63,10 +63,26 @@ class AIManager {
      * AI解説プロンプトを構築する
      * @param {string} q 
      * @param {string} a 
+     * @param {string} mode
+     * @param {string} existingExplanation
      * @returns {string}
      */
-    buildAIExplanationPrompt(q, a) {
-        return `${this.getAIExplanationInstruction()}\n出力は解説文のみ。\nQ:${q}\nA:${a}`;
+    buildAIExplanationPrompt(q, a, mode = 'standard', existingExplanation = '') {
+        const modeInstructions = {
+            simple: '小学生・中学生にも伝わる言葉を使い、日常的な知識だけを前提にしてください。難しい言葉は避け、必要な場合はその場で簡単に説明します。既存の解説があれば、要点や事実関係を保って書き直してください。必要なら身近な例を1つ使い、正確さを保ちながら簡潔に説明してください。',
+            humanities: '理系の予備知識がない人にも伝わるよう、数式や専門用語を日常の言葉に置き換えるか、短く説明してください。必要なら身近な例を1つ使い、内容の正確さを保って簡潔に説明してください。',
+            clues: '問題文の前振りに登場する単語、固有名詞、専門用語などを中心に、その意味や由来・背景、関連する知識を取り上げて話を広げてください。クイズの構造、手掛かりを順番に解く過程、解答に至る推理の説明はしないでください。前振りの語句に関係する知識を1〜2点に絞り、解答とのつながりは最後に短く触れる程度にしてください。',
+            domain_beginner: '対象ジャンルの知識がほとんどない一般読者に向けて説明してください。ただし、一般的な語彙や基礎知識はあるものとします。鉄道、コスメ、ファッション、アイドルなどを含め、問題の理解に必要なジャンル固有の用語、分類、慣習、背景を簡潔に補足してください。必要なら他分野との比較を1つだけ使ってください。性別、年齢、趣味から知識や関心を決めつけず、初歩的すぎる説明や無関係な雑学の羅列は避け、正確さを保ってください。'
+        };
+        const instruction = Object.prototype.hasOwnProperty.call(modeInstructions, mode) ? modeInstructions[mode] : '';
+        const baseInstruction = instruction
+            ? '問題文の言い換えだけで終わらず、正確で理解しやすい解説を作成してください。本文と「暗記のコツ:」の一文を合わせ、標準モードの通常の解説の3倍以内の分量にしてください。本文は最大6文とし、不要な補足や長い前置きは避けてください。最後に短く実用的な暗記ポイントを1文だけ付けてください。'
+            : this.getAIExplanationInstruction();
+        const existingText = String(existingExplanation || '').trim();
+        const existingContext = mode === 'simple' && existingText
+            ? `\n既存の解説（書き直しの参考）:${existingText}`
+            : '';
+        return `${baseInstruction}${instruction ? `\n${instruction}` : ''}\n出力は解説文のみ。\nQ:${q}\nA:${a}${existingContext}`;
     }
 
     /**

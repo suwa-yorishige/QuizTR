@@ -76,7 +76,7 @@ class AIManager {
         };
         const instruction = Object.prototype.hasOwnProperty.call(modeInstructions, mode) ? modeInstructions[mode] : '';
         const baseInstruction = instruction
-            ? '問題文の言い換えだけで終わらず、正確で理解しやすい解説を作成してください。本文と「暗記のコツ:」の一文を合わせ、標準モードの通常の解説の3倍以内の分量にしてください。本文は最大6文とし、不要な補足や長い前置きは避けてください。最後に短く実用的な暗記ポイントを1文だけ付けてください。'
+            ? '問題文の言い換えだけで終わらず、正確で理解しやすい解説を作成してください。標準モードの通常の解説の1.5倍以内の分量を目安にし、本文は1〜2文にしてください。本文と「暗記のコツ:」を合わせて全体を2〜3文に抑え、最後に短く実用的な暗記ポイントを1文だけ付けてください。不要な補足や長い前置きは避けてください。'
             : this.getAIExplanationInstruction();
         const existingText = String(existingExplanation || '').trim();
         const existingContext = mode === 'simple' && existingText

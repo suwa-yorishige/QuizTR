@@ -351,6 +351,12 @@ class QuizManager {
 
         const quizAnswerText = document.getElementById('quiz-answer-text');
         if (quizAnswerText) quizAnswerText.textContent = q.a;
+        const quizAliases = document.getElementById('quiz-answer-aliases');
+        if (quizAliases) {
+            const aliases = Array.isArray(q.news?.aliases) ? q.news.aliases : [];
+            quizAliases.textContent = aliases.length ? `別解（要確認）: ${aliases.join('、')}` : '';
+            quizAliases.classList.toggle('hidden', !aliases.length);
+        }
 
         const quizExplanationText = document.getElementById('quiz-explanation-text');
         if (quizExplanationText) quizExplanationText.textContent = q.explanation || '解説はありません。';

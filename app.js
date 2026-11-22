@@ -28,6 +28,7 @@ const app = {
     voices: [],
 
     geminiApiKey: "",
+    tavilyApiKey: "",
     ttsApiKey: "",
     theme: 'default',
 
@@ -133,12 +134,14 @@ const app = {
             if (savedDaily) this.dailyStats = JSON.parse(savedDaily);
 
             this.geminiApiKey = localStorage.getItem('quiz_gemini_key') || "";
+            this.tavilyApiKey = localStorage.getItem('quiz_tavily_key') || "";
             this.ttsApiKey = localStorage.getItem('quiz_tts_key') || "";
             this.quizConfirmPointMode = localStorage.getItem('quiz_confirm_point_mode') === 'true';
             this.theme = this.getStoredTheme();
             this.applyTheme(this.theme);
 
             document.getElementById('setting-gemini-key').value = this.geminiApiKey;
+            document.getElementById('setting-tavily-key').value = this.tavilyApiKey;
             document.getElementById('setting-tts-key').value = this.ttsApiKey;
             const confirmPointModeToggle = document.getElementById('quiz-confirm-point-mode');
             if (confirmPointModeToggle) confirmPointModeToggle.checked = this.quizConfirmPointMode;
@@ -181,13 +184,22 @@ const app = {
         }
     },
 
+    setApiKeyVisibility(visible) {
+        document.getElementById('setting-show-api-keys').checked = visible;
+        document.querySelectorAll('#view-settings .setting-api-key').forEach(input => {
+            input.type = visible ? 'text' : 'password';
+        });
+    },
+
     saveSettings() {
         this.geminiApiKey = document.getElementById('setting-gemini-key').value.trim();
+        this.tavilyApiKey = document.getElementById('setting-tavily-key').value.trim();
         this.ttsApiKey = document.getElementById('setting-tts-key').value.trim();
         const selectedTheme = document.querySelector('input[name="setting-theme"]:checked')?.value;
         this.theme = this.normalizeTheme(selectedTheme);
         this.applyTheme(this.theme);
         localStorage.setItem('quiz_gemini_key', this.geminiApiKey);
+        localStorage.setItem('quiz_tavily_key', this.tavilyApiKey);
         localStorage.setItem('quiz_tts_key', this.ttsApiKey);
         localStorage.setItem('quiz_theme', this.theme);
         this.showToast('設定を保存しました', 'success');
@@ -326,7 +338,14 @@ const app = {
 
     createQuestionData(q, a, explanation = '', meta = {}) {
         const id = 'q-' + Date.now() + Math.random().toString(36).substring(2);
-        return { id, questionId: id, q, a, explanation: explanation || '', genre: meta.genre || '', subgenre: meta.subgenre || '', difficulty: meta.difficulty || '', correct: 0, total: 0, accuracy: 0, lastAnsweredAt: null, lastResult: null, streak: 0, level: 0, confirmPoint: 0, buzzRecords: [] };
+        const question = { id, questionId: id, q, a, explanation: explanation || '', genre: meta.genre || '', subgenre: meta.subgenre || '', difficulty: meta.difficulty || '', correct: 0, total: 0, accuracy: 0, lastAnsweredAt: null, lastResult: null, streak: 0, level: 0, confirmPoint: 0, buzzRecords: [] };
+        if (Array.isArray(meta.sources) && meta.sources.length) question.sources = meta.sources;
+        if (meta.news) {
+            const { reading, ...news } = meta.news;
+            question.news = news;
+            question.pronunciations = [{ word: a, pronunciation: reading }];
+        }
+        return question;
     },
 
     normalizeLearningData() {

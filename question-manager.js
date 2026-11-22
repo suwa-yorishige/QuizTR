@@ -177,6 +177,30 @@ class QuestionManager {
         const mastery = this.app.getMasteryMetrics(r.q);
         document.getElementById('question-detail-meta').textContent = `回答 ${r.q.total}回 / 正解 ${r.q.correct}回 / 習熟度 ${mastery.score}点 / 平均確定ポイント比 ${mastery.avgRatioText}`;
         document.getElementById('detail-question-explanation').value = r.q.explanation || '';
+        const sourceList = document.getElementById('detail-question-sources-list');
+        sourceList.replaceChildren();
+        const sources = Array.isArray(r.q.sources) ? r.q.sources : [];
+        for (const source of sources) {
+            try {
+                const url = new URL(source.url);
+                if (url.protocol !== 'https:' && url.protocol !== 'http:') continue;
+                const link = document.createElement('a');
+                link.href = url.href;
+                link.textContent = source.title || url.href;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.className = 'block text-soft-green-700 underline break-all';
+                sourceList.appendChild(link);
+            } catch (e) {
+                console.warn('参考資料のURLが不正です', e);
+            }
+        }
+        document.getElementById('detail-question-sources').classList.toggle('hidden', !sourceList.children.length);
+        const news = r.q.news;
+        document.getElementById('detail-question-news').classList.toggle('hidden', !news);
+        document.getElementById('detail-question-news-meta').textContent = news
+            ? `基準年月: ${news.referenceMonth} / タイプ: ${news.type} / 関連タグ: ${(news.tags || []).join('、')}` : '';
+        document.getElementById('detail-question-news-aliases').value = news && Array.isArray(news.aliases) ? news.aliases.join('\n') : '';
 
         const moveSelect = document.getElementById('detail-question-move-set');
         if (moveSelect) {
@@ -240,6 +264,7 @@ class QuestionManager {
         const cpInput = Number(confirmPointElement && confirmPointElement.value ? confirmPointElement.value : 0);
         r.q.confirmPoint = Number.isFinite(cpInput) && cpInput > 0 ? Math.min(qText.length, Math.round(cpInput)) : 0;
         r.q.a = aText;
+        if (r.q.news) r.q.news.aliases = [...new Set(document.getElementById('detail-question-news-aliases').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean))];
         r.q.explanation = document.getElementById('detail-question-explanation').value.trim();
         r.q.genre = document.getElementById('detail-question-genre').value || '';
         r.q.subgenre = r.q.genre ? (document.getElementById('detail-question-subgenre').value || '') : '';
@@ -261,6 +286,10 @@ class QuestionManager {
         if (current && this.app.getQuestionId(current) === id) {
             document.getElementById('quiz-question-text').textContent = r.q.q;
             document.getElementById('quiz-answer-text').textContent = r.q.a;
+            const aliases = Array.isArray(r.q.news?.aliases) ? r.q.news.aliases : [];
+            const aliasesElement = document.getElementById('quiz-answer-aliases');
+            aliasesElement.textContent = aliases.length ? `別解（要確認）: ${aliases.join('、')}` : '';
+            aliasesElement.classList.toggle('hidden', !aliases.length);
             document.getElementById('quiz-explanation-text').textContent = r.q.explanation || '解説はありません。';
         }
         this.closeQuestionDetail();
@@ -912,6 +941,23 @@ class QuestionManager {
             });
         });
         if (pronunciationMap.size) keeper.pronunciations = [...pronunciationMap.values()];
+
+        const newsEntries = ordered.map(x => x.q.news).filter(Boolean);
+        if (newsEntries.length) {
+            const primary = keeper.news || newsEntries[0];
+            keeper.news = {
+                ...primary,
+                aliases: [...new Set(newsEntries.flatMap(news => Array.isArray(news.aliases) ? news.aliases : []))],
+                tags: [...new Set(newsEntries.flatMap(news => Array.isArray(news.tags) ? news.tags : []))]
+            };
+        }
+        const sourceMap = new Map();
+        ordered.forEach(x => {
+            (Array.isArray(x.q.sources) ? x.q.sources : []).forEach(source => {
+                if (source && source.url && !sourceMap.has(source.url)) sourceMap.set(source.url, source);
+            });
+        });
+        if (sourceMap.size) keeper.sources = [...sourceMap.values()];
 
         const remove = new Set(ordered.slice(1).map(x => x.q));
         set.questions = set.questions.filter(q => !remove.has(q));

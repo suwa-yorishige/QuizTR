@@ -9,6 +9,9 @@ class UIManager {
      * @param {*} viewId 
      */
     switchView(viewId) {
+        if (viewId === 'settings') {
+            this.app.setApiKeyVisibility(false);
+        }
         if (viewId === 'csv-import') {
             setTimeout(() => {
                 const source = document.getElementById('manager-question-set-select');

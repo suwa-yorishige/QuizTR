@@ -872,6 +872,24 @@
                             class="form-select bg-white"></select>
                     </div>
                     <div id="ai-tab-normal" class="space-y-4">
+                        <div><label for="ai-generation-mode" class="block text-sm font-semibold text-soft-green-800 mb-2">生成モード</label>
+                            <select id="ai-generation-mode" class="form-select bg-white" onchange="document.getElementById('ai-news-period-container').classList.toggle('hidden', this.value !== 'news')">
+                                <option value="standard">通常</option>
+                                <option value="news">時事クイズ</option>
+                            </select>
+                        </div>
+                        <div id="ai-news-period-container" class="hidden">
+                            <label for="ai-news-period" class="block text-sm font-semibold text-soft-green-800 mb-2">遡る期間</label>
+                            <select id="ai-news-period" class="form-select bg-white">
+                                <option value="1w">1週間</option>
+                                <option value="2w">2週間</option>
+                                <option value="1m">1か月</option>
+                                <option value="3m">3か月</option>
+                                <option value="6m">6か月</option>
+                                <option value="1y" selected>1年</option>
+                            </select>
+                            <p class="text-xs text-soft-green-600 mt-2">Tavilyで検索します。ジャンル・テーマ未指定の場合は訃報も追加検索します。検索にはAPIキーと利用料金が必要な場合があります。生成結果と出典を必ず確認してください。</p>
+                        </div>
                         <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">ジャンル</label><select
                                 id="ai-genre" onchange="app.handleAIGenreChange()"
                                 class="form-select bg-white">
@@ -910,7 +928,8 @@
                             </select></div>
                         <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">生成する問題数</label><select
                                 id="ai-count" class="form-select bg-white">
-                                <option value="10">10問</option>
+                                <option value="5">5問</option>
+                                <option value="10" selected>10問</option>
                                 <option value="20">20問</option>
                                 <option value="30">30問</option>
                                 <option value="40">40問</option>
@@ -928,6 +947,21 @@
 峰竜太　タレント
 峰竜太　競艇選手" class="form-textarea"></textarea>
                             <p id="ai-memo-count" class="text-xs font-bold text-soft-green-700 mt-2">有効候補数: 0 / 10</p>
+                        </div>
+                        <label class="flex items-start gap-2 text-sm text-soft-green-800"><input type="checkbox" id="ai-memo-search" class="mt-1" onchange="document.getElementById('ai-memo-news-period-container').classList.toggle('hidden', !this.checked)">
+                            <span>ウェブ検索で最新情報を参照する（Tavily APIキーが必要。検索ごとに料金が発生する場合があります）</span>
+                        </label>
+                        <div id="ai-memo-news-period-container" class="hidden">
+                            <label for="ai-memo-news-period" class="block text-sm font-semibold text-soft-green-800 mb-2">時事クイズの遡る期間</label>
+                            <select id="ai-memo-news-period" class="form-select bg-white">
+                                <option value="1w">1週間</option>
+                                <option value="2w">2週間</option>
+                                <option value="1m">1か月</option>
+                                <option value="3m">3か月</option>
+                                <option value="6m">6か月</option>
+                                <option value="1y" selected>1年</option>
+                            </select>
+                            <p class="text-xs text-soft-green-600 mt-2">選択した期間内に起きた出来事を問題にします。</p>
                         </div>
                         <div><label class="block text-sm font-semibold text-soft-green-800 mb-2">難易度</label><select
                                 id="ai-memo-difficulty"
@@ -1085,25 +1119,37 @@
                                 </label>
                             </div>
                         </fieldset>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-soft-green-800 cursor-pointer">
+                            <input type="checkbox" id="setting-show-api-keys"
+                                onchange="app.setApiKeyVisibility(this.checked)"
+                                class="w-4 h-4 rounded text-soft-green-600">
+                            <span>すべてのAPIキーを表示する</span>
+                        </label>
                         <div class="bg-white p-4 rounded-xl border border-soft-green-200">
                             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mb-1">
-                                <label class="block text-sm font-bold text-soft-green-800">Gemini APIキー</label>
+                                <label for="setting-gemini-key" class="block text-sm font-bold text-soft-green-800">Gemini APIキー</label>
                                 <span
                                     class="text-xs font-semibold text-soft-green-700 bg-soft-green-100 px-2 py-1 rounded-md self-start sm:self-auto">利用モデル:
-                                    gemini-3.6-flash</span>
+                                    gemini-3.8-flash</span>
                             </div>
                             <p class="text-xs text-soft-green-600 mb-2">用途: AI問題生成、CSV取り込み時の自動解説生成、読み上げ用SSML(ふりがな)付与</p>
-                            <input type="text" id="setting-gemini-key" placeholder="AIzaSy... (未設定時はCanvas内蔵キーを試行します)"
-                                class="form-input text-sm font-mono">
+                            <input type="password" id="setting-gemini-key" placeholder="AIzaSy... (未設定時はCanvas内蔵キーを試行します)"
+                                class="setting-api-key form-input text-sm font-mono">
                         </div>
 
                         <div class="bg-white p-4 rounded-xl border border-soft-green-200">
-                            <label class="block text-sm font-bold text-soft-green-800 mb-1">Google Cloud Text-to-Speech
+                            <label for="setting-tavily-key" class="block text-sm font-bold text-soft-green-800 mb-1">Tavily APIキー</label>
+                            <p class="text-xs text-soft-green-600 mb-2">用途: 時事クイズとメモ取り込みのウェブ検索。検索語と検索結果はTavilyとGeminiに送信されます。</p>
+                            <input type="password" id="setting-tavily-key" placeholder="tvly-..." class="setting-api-key form-input text-sm font-mono">
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-soft-green-200">
+                            <label for="setting-tts-key" class="block text-sm font-bold text-soft-green-800 mb-1">Google Cloud Text-to-Speech
                                 APIキー</label>
                             <p class="text-xs text-soft-green-600 mb-2">用途: MP3音声ファイルの作成<br><span
                                     class="text-red-500">※GCPプロジェクトでText-to-Speech APIを有効化したキーが必要です。</span></p>
-                            <input type="text" id="setting-tts-key" placeholder="AIzaSy..."
-                                class="form-input text-sm font-mono">
+                            <input type="password" id="setting-tts-key" placeholder="AIzaSy..."
+                                class="setting-api-key form-input text-sm font-mono">
                         </div>
 
                         <div class="flex justify-end pt-2">
@@ -1202,6 +1248,7 @@
                             <p class="text-sm text-soft-green-400 mb-1 md:mb-2 font-semibold tracking-widest">解答</p>
                             <p id="quiz-answer-text" class="text-2xl md:text-4xl font-bold text-red-300 mb-6 md:mb-8">
                             </p>
+                            <p id="quiz-answer-aliases" class="hidden text-sm text-soft-green-200 mb-4 break-words"></p>
                             <p id="quiz-explanation-text"
                                 class="text-sm md:text-base text-soft-green-200 mb-4 text-left bg-soft-green-900 p-4 rounded-xl border border-soft-green-700">
                             </p>
@@ -1347,6 +1394,17 @@
                             class="px-3 py-1.5 bg-soft-green-100 hover:bg-soft-green-200 text-soft-green-800 rounded-lg font-bold transition-colors text-xs">AI解説を再セット</button>
                     </div><textarea id="detail-question-explanation" rows="4"
                         class="form-textarea text-sm"></textarea>
+                </div>
+                <div id="detail-question-sources" class="hidden text-sm space-y-1">
+                    <p class="font-bold text-soft-green-800">生成時の参考資料（内容をご確認ください）</p>
+                    <div id="detail-question-sources-list" class="space-y-1"></div>
+                </div>
+                <div id="detail-question-news" class="hidden text-sm space-y-2">
+                    <p class="font-bold text-soft-green-800">時事問題のAI生成情報（要確認）</p>
+                    <p id="detail-question-news-meta" class="text-xs text-secondary break-words"></p>
+                    <label for="detail-question-news-aliases" class="block text-xs font-semibold text-secondary">別解（1行に1件）</label>
+                    <textarea id="detail-question-news-aliases" rows="2" class="form-textarea text-sm"></textarea>
+                    <p class="text-xs text-secondary">読み方は「詳細設定」の「読み方を一括設定」で確認・修正できます。解答を変更した場合は別解と読み方も確認してください。</p>
                 </div>
                 <div>
                     <div class="flex items-center justify-between gap-2 mb-2">

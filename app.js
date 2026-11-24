@@ -553,8 +553,8 @@ const app = {
         return await this.aiManager.generatePronunciationCandidatesWithAI();
     },
 
-    async generateDerivativeData(answer, contextText = '', difficulty = '中級') {
-        return await this.aiManager.generateDerivativeData(answer, contextText, difficulty);
+    async generateDerivativeData(answer, contextText = '', difficulty = '中級', length = 'standard') {
+        return await this.aiManager.generateDerivativeData(answer, contextText, difficulty, [], null, length);
     },
 
     getGenreOptionsHTML(selectedGenre = '', includeAll = false) { const genres = Object.keys(AI_SUBGENRES); let html = includeAll ? '<option value="">ジャンル: すべて</option><option value="__UNSET__">未設定</option>' : '<option value="">未設定</option>'; html += genres.map(g => `<option value="${Utils.escapeHTML(g)}" ${g === selectedGenre ? 'selected' : ''}>${Utils.escapeHTML(g)}</option>`).join(''); return html; },
@@ -1199,6 +1199,7 @@ const app = {
     resetMemoImport(showMessage = true) {
         const memo = document.getElementById('ai-memo-list'); if (memo) memo.value = '';
         const difficulty = document.getElementById('ai-memo-difficulty'); if (difficulty) difficulty.value = '中級';
+        const length = document.getElementById('ai-memo-question-length'); if (length) length.value = 'standard';
         this.aiManager.memoNormalizedAnswers = []; this.aiManager.pendingMemoQuestions = [];
         const normalizedList = document.getElementById('ai-memo-normalized-list'); if (normalizedList) normalizedList.innerHTML = '';
         const previewList = document.getElementById('ai-memo-preview-list'); if (previewList) previewList.innerHTML = '';

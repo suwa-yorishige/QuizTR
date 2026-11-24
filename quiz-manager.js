@@ -705,9 +705,10 @@ ${current.explanation || ''}`, true));
         if (!selected.length) return this.app.showToast('候補を1つ以上選択してください', 'error');
         const targetSet = this.app.studySets.find(s => s.id === this.app.activeSetId);
         const source = targetSet && targetSet.questions && this.app.currentQuestionIndex >= 0 ? targetSet.questions[this.app.currentQuestionIndex] : null;
+        const length = document.getElementById('derivative-question-length').value;
         this.setDerivativeView('derivative-loading', '選択した候補の問題を作成中...');
         const results = await Utils.mapWithConcurrency(selected, 2, async x => {
-            try { return await this.app.generateDerivativeData(x.word, source && source.q ? source.q : '', '中級'); }
+            try { return await this.app.generateDerivativeData(x.word, source && source.q ? source.q : '', '中級', length); }
             catch (e) {
                 return {
                     a: x.word, error: e.message, selected: false

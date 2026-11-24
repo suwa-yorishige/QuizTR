@@ -133,6 +133,40 @@ test('news prompts prefer one full date while allowing year-only clues', async (
     assert.match(prompts[1], /死亡日が期間外でも、期間内に発表または報道された/);
 });
 
+test('all question creation and regeneration prompts request quiz-style phrasing', async () => {
+    const elements = {
+        'detail-question-q': { value: '元の問題' }, 'detail-question-a': { value: '人物' },
+        'regenerate-before-text': {}, 'regenerate-after-text': {}, 'regenerate-compare-policy': {},
+        'regenerate-compare-modal': { classList: { remove() {} } },
+        'regenerate-compare-panel': { classList: { remove() {} } }
+    };
+    const Manager = load('ai-manager.js', 'AIManager', {
+        AI_SUBGENRES: defs, Utils: utils,
+        document: { getElementById: id => elements[id], querySelector: () => ({ value: 'correct' }) }
+    });
+    const manager = new Manager({ geminiApiKey: 'key', closeRegeneratePolicyModal() {}, showToast() {} });
+    const prompts = [];
+    manager.fetchGemini = async (prompt, json) => {
+        prompts.push(prompt);
+        if (!json) return '再作成した問題';
+        if (prompt.startsWith('次の設計案')) return '[]';
+        return JSON.stringify({ ...validNews, genre: '理系', subgenre: '化学', sourceIndexes: [0], eventDate: '2026-10-07' });
+    };
+    const range = { start: '2026-10-01', end: '2026-10-31' };
+    await manager.generateQuestionBatchFromPlans([{}], '中級', []);
+    await manager.generateQuestionBatchFromPlans([{ fact: '事実' }], '中級', []);
+    await manager.generateDerivativeData('人物');
+    await manager.generateDerivativeData('人物', '', '中級', [source], range);
+    await manager.regenerateQuestionForDetail();
+    assert.equal(prompts.length, 5);
+    for (const prompt of prompts) {
+        assert.match(prompt, /別名を『春告草』や『好文木』といい、/);
+        assert.match(prompt, /別名を『春告草』や『好文木』という、/);
+        assert.match(prompt, /文意や文法に合うように/);
+    }
+    assert.equal(manager.pendingRegeneratedQuestion.after, '再作成した問題');
+});
+
 test('only unrestricted news plans request an optional mix of obituaries', async () => {
     const manager = new AIManager({});
     const prompts = [];
@@ -215,6 +249,7 @@ test('memo search uses the selected news period without changing non-search gene
         'ai-memo-search': { checked: true },
         'ai-memo-news-period': { value: '1m' },
         'ai-memo-difficulty': { value: '中級' },
+        'ai-memo-question-length': { value: 'long' },
         'ai-loading': { classList: { add() {}, remove() {} } },
         'ai-memo-preview': { classList: { remove() {} } },
         'ai-memo-preview-list': { innerHTML: '' }
@@ -243,10 +278,13 @@ test('memo search uses the selected news period without changing non-search gene
     await manager.generateMemoQuestions();
     assert.equal(searches[0][2].start, '2026-10-01');
     assert.equal(generated[0][4].end, '2026-10-31');
+    assert.equal(generated[0][5], 'long');
     elements['ai-memo-search'].checked = false;
+    elements['ai-memo-question-length'].value = 'short';
     await manager.generateMemoQuestions();
     assert.equal(searches.length, 1);
     assert.equal(generated[1][4], null);
+    assert.equal(generated[1][5], 'short');
 });
 
 test('batch generation keeps search evidence and saves source references', async () => {
@@ -268,17 +306,149 @@ test('batch generation keeps search evidence and saves source references', async
 
 test('news metadata and character limits are validated for both generation paths', () => {
     const manager = new AIManager({});
-    for (const length of [60, 110]) {
-        const result = manager.validateNewsResult({ ...validNews, q: '問'.repeat(length), aliases: ['別名', '別名'] }, '人物', '2026-10-07');
-        assert.equal(result.aliases.length, 1);
-        assert.equal(result.referenceMonth, '2026-10');
+    for (const [preset, min, max] of [['short', 40, 60], ['standard', 60, 80], ['long', 80, 120]]) {
+        for (const length of [min, max]) {
+            const result = manager.validateNewsResult({ ...validNews, q: '😀'.repeat(length), aliases: ['別名', '別名'] }, '人物', '2026-10-07', preset);
+            assert.equal(result.aliases.length, 1);
+            assert.equal(result.referenceMonth, '2026-10');
+        }
+        for (const length of [min - 1, max + 1]) {
+            assert.throws(() => manager.validateNewsResult({ ...validNews, q: '問'.repeat(length) }, '人物', '2026-10-07', preset), new RegExp(`${min}〜${max}`));
+        }
     }
     for (const invalid of [
-        { q: '問'.repeat(59) }, { q: '問'.repeat(111) },
         { explanation: '説'.repeat(101) }, { reading: '' }, { reading: 'カタカナ' },
         { aliases: null }, { aliases: [''] }, { referenceMonth: '2026-09' },
         { newsType: 'D' }, { relatedTags: [] }
     ]) assert.throws(() => manager.validateNewsResult({ ...validNews, ...invalid }, '人物', '2026-10-07'));
+});
+
+test('all length selectors display the actual ranges and default to standard', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const manager = new AIManager({});
+    for (const id of ['ai-question-length', 'ai-memo-question-length', 'derivative-question-length']) {
+        const select = html.match(new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)</select>`));
+        assert.ok(select, id);
+        for (const preset of ['short', 'standard', 'long']) {
+            const { min, max } = manager.getQuestionLengthRange(preset);
+            assert.match(select[1], new RegExp(`<option value="${preset}"[^>]*>[^<]*${min}〜${max}文字`));
+        }
+        assert.match(select[1], /<option value="standard" selected>/);
+    }
+});
+
+test('all question generation prompts use the selected length without conflicting news limits', async () => {
+    const manager = new AIManager({});
+    const prompts = [];
+    manager.fetchGemini = async text => {
+        prompts.push(text);
+        if (text.startsWith('次の設計案')) return '[]';
+        return JSON.stringify({ ...validNews, q: '問'.repeat(80), genre: '理系', subgenre: '化学', sourceIndexes: [0], eventDate: '2026-10-07' });
+    };
+    const range = { start: '2026-10-01', end: '2026-10-31' };
+    for (const [preset, min, max] of [['short', 40, 60], ['standard', 60, 80], ['long', 80, 120]]) {
+        await manager.generateQuestionBatchFromPlans([{}], '中級', [], preset);
+        await manager.generateQuestionBatchFromPlans([{ fact: '事実' }], '中級', [], preset);
+        await manager.generateDerivativeData('人物', '', '中級', [], null, preset);
+        const responseLength = preset === 'short' ? 60 : 80;
+        manager.fetchGemini = async text => {
+            prompts.push(text);
+            return JSON.stringify({ ...validNews, q: '問'.repeat(responseLength), genre: '理系', subgenre: '化学', sourceIndexes: [0], eventDate: '2026-10-07' });
+        };
+        await manager.generateDerivativeData('人物', '', '中級', [source], range, preset);
+        for (const prompt of prompts.splice(0)) {
+            assert.match(prompt, new RegExp(`問題文は${min}〜${max}文字`));
+            assert.doesNotMatch(prompt, /問題文は60〜110文字/);
+        }
+        manager.fetchGemini = async text => {
+            prompts.push(text);
+            if (text.startsWith('次の設計案')) return '[]';
+            return JSON.stringify({ ...validNews, q: '問'.repeat(80), genre: '理系', subgenre: '化学' });
+        };
+    }
+    await assert.rejects(manager.generateQuestionBatchFromPlans([], '中級', [], 'invalid'), /長さの指定が不正/);
+});
+
+test('selected news length is enforced by batch and memo generation', async () => {
+    const manager = new AIManager({ isSimilarQuestionCandidate: () => false });
+    const plan = { answer: '人物', aliases: [], angle: '', keywords: [], genre: '理系', subgenre: '化学', eventDate: '2026-10-07', fact: '事実', sources: [source] };
+    let questionLength = 120, passedLength;
+    manager.generateQuestionBatchFromPlans = async (plans, difficulty, summaries, length) => {
+        passedLength = length;
+        return [{ ...validNews, q: '問'.repeat(questionLength), a: '人物' }];
+    };
+    const accepted = [];
+    assert.equal(await manager._generateAndAcceptBatch([plan], '中級', accepted, [], new Set(), [], {}, 'long'), 1);
+    assert.equal(passedLength, 'long');
+    questionLength = 121;
+    assert.equal(await manager._generateAndAcceptBatch([plan], '中級', [], [], new Set(), [], {}, 'long'), 0);
+
+    const range = { start: '2026-10-01', end: '2026-10-31' };
+    manager.fetchGemini = async () => JSON.stringify({ ...validNews, q: '問'.repeat(questionLength), genre: '理系', subgenre: '化学', sourceIndexes: [0], eventDate: '2026-10-07' });
+    await assert.rejects(manager.generateDerivativeData('人物', '', '中級', [source], range, 'long'), /80〜120/);
+    assert.equal((await manager.generateDerivativeData('人物', '', '中級', [], null, 'long')).q.length, 121);
+});
+
+test('normal and news generation capture the selected length from the form', async () => {
+    const elements = {
+        'ai-genre': { value: '理系' }, 'ai-subgenre': { value: '' },
+        'ai-topic': { value: '' }, 'ai-count': { value: '1' },
+        'ai-difficulty': { value: '中級' }, 'ai-question-length': { value: 'long' },
+        'ai-generation-mode': { value: 'standard' }, 'ai-news-period': { value: '1m' }
+    };
+    const Manager = load('ai-manager.js', 'AIManager', {
+        AI_SUBGENRES: defs, Utils: utils, MAX_QUESTIONS_PER_SET: 100, MAX_TOTAL_QUESTIONS: 100,
+        document: { getElementById: id => elements[id] },
+        api: { searchTavily: async () => [source] }
+    });
+    const messages = [], seen = [];
+    const manager = new Manager({
+        geminiApiKey: 'key', tavilyApiKey: 'key',
+        dataManager: { getTargetSetId: async () => 'set' },
+        studySets: [{ id: 'set', questions: [] }], getTotalQuestionCount: () => 0,
+        showToast: (...args) => messages.push(args)
+    });
+    manager._setupGenerationUI = () => ({});
+    manager.generateQuestionPlansWithAI = async () => [{}];
+    manager._validateAndFilterPlans = plans => plans;
+    manager._generateAndAcceptBatch = async (plans, difficulty, accepted, angles, answers, existing, ui, length) => {
+        seen.push(length);
+        accepted.push({ a: '人物' });
+    };
+    manager._finalizeGeneration = () => {};
+    await manager.generateQuestionsWithAI();
+    elements['ai-generation-mode'].value = 'news';
+    elements['ai-question-length'].value = 'short';
+    await manager.generateQuestionsWithAI();
+    assert.deepEqual(seen, ['long', 'short']);
+    elements['ai-question-length'].value = 'invalid';
+    await manager.generateQuestionsWithAI();
+    assert.match(messages[0][0], /長さの指定が不正/);
+    assert.equal(messages[0][1], 'error');
+});
+
+test('derivative selection passes its length through the app to the AI manager', async () => {
+    const elements = {
+        'derivative-question-length': { value: 'short' },
+        'derivative-preview-list': { innerHTML: '' },
+        'derivative-target-set': { innerHTML: '', value: '' },
+        'derivative-step-text': { textContent: '' }
+    };
+    const QuizManager = load('quiz-manager.js', 'QuizManager', { Utils: utils, window: {}, document: { getElementById: id => elements[id] } });
+    const app = load('app.js', 'app', { Utils: { escapeHTML: String }, window: { speechSynthesis: {}, addEventListener() {} } });
+    let received;
+    app.aiManager = { generateDerivativeData: async (...args) => { received = args; return { a: args[0], q: '問題', selected: true }; } };
+    app.derivativeCandidates = [{ word: '人物', selected: true }];
+    app.activeSetId = 'set';
+    app.studySets = [{ id: 'set', questions: [{ q: '元の問題' }] }];
+    app.currentQuestionIndex = 0;
+    app.getDisplayOrderedSets = () => app.studySets;
+    app.escapeHTML = String;
+    const manager = new QuizManager(app);
+    manager.setDerivativeView = () => {};
+    await manager.generateSelectedDerivativeQuestions();
+    assert.equal(received[1], '元の問題');
+    assert.equal(received[5], 'short');
 });
 
 test('ordinary generation continues to accept short questions without news metadata', async () => {
